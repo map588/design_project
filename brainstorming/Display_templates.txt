@@ -1,0 +1,41 @@
+
+Initialation Template:
+"Which wire?"
+
+ "easy   medium  hard"
+{green} {blue}  {red} {scissors on selection}
+   1       2      3        
+
+"Press Enter to Start"
+
+Loading:
+{loading bar}
+
+
+Game Start:
+"DIFFUSE THE BOMB!"
+{bomb image} 
+
+
+Main UI:
+"Score: %d          Remaining %d"
+
+        {"Cut it!", "Pull it!", "Connect it!"} [action graphic]
+
+        {Bomb Image}   [circle decreases in size every interval]
+
+
+"?Time: %d"          ?##########(-= 1/10*time)"
+
+*correct response flash*
+
+[update interval, new random]
+
+*reset UI*
+
+
+Game Over Win:
+
+
+Game Over Loss:
+

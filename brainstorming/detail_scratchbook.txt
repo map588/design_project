@@ -1,0 +1,25 @@
+Core 1 (Logic Core):
+
+Handles game logic, state transitions, and I/O.
+Adjusts the frequency of the countdown based on the game level.
+Sends pulses to Core 2 for screen updates.
+Uses shared memory to update values like score, level, and current time period.
+Sends an interrupt to Core 2 when there's a significant game event that requires a UI change (e.g., game over, level up).
+Core 2 (Display Core):
+
+Listens for interrupts from Core 1.
+Updates the display based on the received pulses.
+Reads shared memory to get the latest values for score, level, etc., and updates the display accordingly.
+Synchronization:
+
+Use atomic operations or simple locks when updating shared memory variables to ensure data consistency.
+Use inter-core interrupts for event-driven notifications and transitions.
+
+
+(in header)
+enum display_state(START, DIFFICULTY, MAIN_UI, WIN, LOSS) others?
+frame_buffer[num_states] = {state_1, state_2, state_3, state_4 .... }
+
+(in source)
+ frame_buffer *current_display;
+ frame_buffer *updating_display;
