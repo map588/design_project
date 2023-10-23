@@ -2,4 +2,4 @@
 file(GLOB SOURCES "*.c")
 
 # Specify the executable and its source files
-add_executable(bomb_it ${SOURCES})
+add_executable(main ${SOURCES})
