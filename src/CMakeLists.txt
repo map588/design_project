@@ -1,22 +1,47 @@
-
-aux_source_directory(. DIR_SRCS)
-
-
+# add source files
 add_executable(main
-        ${DIR_SRCs}
-        )
+  main.c
+  display_manager.c
+)
 
-include_directories(../lib/Config)
-include_directories(../lib/GUI)
-include_directories(../lib/LCD)
+# add include paths
+target_include_directories(main PRIVATE
+    ../include
+    ../lib/Config
+    ../lib/Fonts
+    ../lib/GUI
+    ../lib/LCD
+)
 
 
+# preprocessor macros
+target_compile_definitions(main PRIVATE 
+    PICO_HEAP_SIZE=2048
+    PICO_XOSC_STARTUP_DELAY_MULTIPLIER=64
+)
 
 
+# enable usb output, disable uart output
 pico_enable_stdio_usb(main 1)
 pico_enable_stdio_uart(main 0)
 
-# create map/bin/hex/uf2 file etc.
+# create map/bin/hex file etc.
 pico_add_extra_outputs(main)
+pico_add_dis_output2(main)
+  
+target_link_libraries(main PUBLIC
+    pico_multicore
+    pico_stdlib
+    pico_rand
+    hardware_spi
+    hardware_timer
+    Config
+    LCD
+    GUI
+    Fonts
+    )
 
-target_link_libraries(main PUBLIC display pico_stdlib pico_multicore pico_rand )
+# linker options
+target_link_options(main 
+    PRIVATE "LINKER:--print-memory-usage"
+)

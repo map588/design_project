@@ -8,7 +8,11 @@ int main(void)
 {
     stdio_init_all();
 
-    init_display();
+    
+   if(init_display()){
+    start_game_display();
+    }   
+
     
     return 0;
 }

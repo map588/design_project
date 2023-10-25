@@ -68,3 +68,6 @@ _deps
 /build/*
 
 .vscode
+
+
+pico_sdk_import.cmake

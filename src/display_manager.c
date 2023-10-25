@@ -1,7 +1,5 @@
 
 #include "display_manager.h"
-#include "pico/stdlib.h"
-#include "pico/multicore.h"
 
 //       _______________________________
 //      |0,0                         X  |
@@ -16,37 +14,62 @@
 // 320 - 70 - 70 - 24 = 156 / 3 = 52
 //Y - 120
 
-void init_display(){
+static UWORD thisBuffer[IMAGE_SIZE];
+//static UWORD nextBuffer[IMAGE_SIZE];
 
-    Paint_NewImage(WELCOME, 320, 240, 0, BLACK);
-    Paint_NewImage(LOADING, 320, 240, 0, BLACK);
-    Paint_NewImage(MENU, 320, 240, 0, BLACK);
-    Paint_NewImage(UI, 320, 240, 0, BLACK);
-    Paint_NewImage(GAME_OVER, 320, 240, 0, BLACK);
-    Paint_NewImage(WIN, 320, 240, 0, BLACK);
+bool reserved_addr(uint8_t addr) {
+  return (addr & 0x78) == 0 || (addr & 0x78) == 0x78;
+}
 
-    Paint_SelectImage(MENU);
+bool init_display() { 
+  
+  DEV_Delay_ms(100);
 
-    Paint_DrawString_EN(80, 160, "Which One?", &Font16, WHITE, BLACK);
+  if (DEV_Module_Init() != 0) {
+    return false;
+  }
+
+  DEV_SET_PWM(50);
+
+  LCD_2IN_Init(HORIZONTAL);
+  LCD_2IN_Clear(BLACK);
+
+  Paint_NewImage((UBYTE *)thisBuffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, 0, WHITE);
+  Paint_SetScale(65);
+  Paint_Clear(BLACK);
+
+  // Paint_NewImage((UBYTE *)nextBuffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, 0, WHITE);
+  // Paint_SetScale(65);
+  // Paint_Clear(BLACK);
+  return true;
+}
+
+void start_game_display(){
+
+  UBYTE *START = (UBYTE *)thisBuffer;
+
+  Paint_SelectImage(START);
+
+  Paint_DrawString_EN(80, 160, "Which One?", &Font16, WHITE, BLACK);
+
+  Paint_DrawLine(70, 80, 70, 160, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+
+  Paint_DrawLine(70 + 56, 80, 70 + 56 * 1, 160, RED, DOT_PIXEL_4X4,
+                 LINE_STYLE_SOLID);
+
+  Paint_DrawLine(70 + 56 * 2, 80, 70 + 56 * 2, 160, RED, DOT_PIXEL_4X4,
+                 LINE_STYLE_SOLID);
+
+  Paint_DrawString_EN(60, 200, "(easy)", &Font16, WHITE, BLACK);
+  Paint_DrawString_EN(60 + 56, 200, "(medium)", &Font16, WHITE, BLACK);
+  Paint_DrawString_EN(60 + 56 * 2, 200, "(hard)", &Font16, WHITE, BLACK);
 
 
-    Paint_DrawLine(70, 80, 70, 160, GREEN, DOT_PIXEL_4x4, LINE_STYLE_SOLID);
+  LCD_2IN_Display(START);
 
-    Paint_DrawLine(70 + 56, 80, 70 + 56 * 1, 160, RED, DOT_PIXEL_4x4, LINE_STYLE_SOLID);
+  // Will need to shift by 56 left or right (guarded) on arrow press
+  // Paint_DrawRectangle(60, 90, 70, 170, WHITE);
 
-    Paint_DrawLine(70 + 56 * 2, 80, 70 + 56 * 2, 160, RED, DOT_PIXEL_4x4, LINE_STYLE_SOLID);
-
-    Paint_DrawString_EN(60, 200, "(easy)", &Font16, WHITE, BLACK);
-    Paint_DrawString_EN(60 + 56, 200, "(medium)", &Font16, WHITE, BLACK);
-    Paint_DrawString_EN(60 + 56 * 2, 200, "(hard)", &Font16, WHITE, BLACK);
-
-    Paint_SelectImage(MENU);
-
-
-    //Will need to shift by 56 left or right (guarded) on arrow press
-    //Paint_DrawRectangle(60, 90, 70, 170, WHITE);
-
-    
 }
 
 

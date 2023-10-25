@@ -1,8 +1,9 @@
 #include "GUI_Paint.h"
 #include "DEV_Config.h"
 #include "Debug.h"
-#include "hardware/platform_defs.h"
+#include <stdint.h>
 #include "pico/stdlib.h"
+//#include <string.h> //memset()
 
 PAINT Paint;
 
