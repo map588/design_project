@@ -14,12 +14,11 @@
 #ifndef __LCD_2IN_H
 #define __LCD_2IN_H
 
-#include "DEV_Config.h"
+#include "../Config/DEV_Config.h"
 #include <stdint.h>
 
-#include <stdlib.h>     //itoa()
+#include <stdlib.h>   //itoa()
 #include <stdio.h>
-
 
 #define LCD_2IN_HEIGHT 240
 #define LCD_2IN_WIDTH 320
