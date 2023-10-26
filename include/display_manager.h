@@ -6,8 +6,9 @@
 #include "../lib/LCD/LCD_2in.h"
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
+#include "pico/time.h"
 
-#define IMAGE_SIZE 153600
+#define IMAGE_SIZE LCD_2IN_HEIGHT * LCD_2IN_WIDTH  * 2
 
 
 bool init_display(void);
