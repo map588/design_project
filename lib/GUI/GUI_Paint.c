@@ -3,7 +3,10 @@
 #include "Debug.h"
 #include <stdint.h>
 #include "pico/stdlib.h"
-//#include <string.h> //memset()
+#include "pico/mem_ops.h"
+#include <string.h> //memset()
+#include <stdlib.h> //malloc()
+#include "pico/printf.h"
 
 PAINT Paint;
 
