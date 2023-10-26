@@ -2,7 +2,7 @@
 #include "display_manager.h"
 
 //       _______________________________
-//      |0,0                         X  |
+//      |0,0 ${score}         STAGE {n} |
 //      |                               |
 // 240  |                               |
 //      |                               |
@@ -14,22 +14,18 @@
 // 320 - 70 - 70 - 24 = 156 / 3 = 52
 //Y - 120
 
-//static UWORD *sharedBuffer;
-static UWORD *s_buffer;
 
 bool reserved_addr(uint8_t addr) {
   return (addr & 0x78) == 0 || (addr & 0x78) == 0x78;
 }
 
 bool init_display() {
-  UWORD buffer[IMAGE_SIZE];
+  UWORD *buffer;
 
-  s_buffer = buffer;
-
-  // if( (thisBuffer = (UWORD *)malloc(IMAGE_SIZE)) == NULL) {
-  //   printf("Failed to apply for black memory...\r\n");
-  //   exit(0);
-  // }
+  if( (buffer = (UWORD *)malloc(IMAGE_SIZE)) == NULL) {
+    printf("Failed to apply for black memory...\r\n");
+    exit(0);
+  }
 
   DEV_Delay_ms(100);
 
@@ -44,10 +40,7 @@ bool init_display() {
 
 
   Paint_NewImage((UBYTE *)buffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, 90, WHITE);
-
-  // Paint_NewImage((UBYTE *)nextBuffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, 0, WHITE);
-  // Paint_SetScale(65);
-  // Paint_Clear(BLACK);
+  
 
   return true;
 }
@@ -55,7 +48,7 @@ bool init_display() {
 void start_game_display(){
 
 
-  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_SelectImage((UBYTE *)Paint.Image);
 
   Paint_DrawString_EN(80, 160, "Which One?", &Font16, WHITE, BLACK);
 
@@ -71,7 +64,7 @@ void start_game_display(){
   Paint_DrawString_EN(60 + 56, 200, "(medium)", &Font16, WHITE, BLACK);
   Paint_DrawString_EN(60 + 56 * 2, 200, "(hard)", &Font16, WHITE, BLACK);
 
-  LCD_2IN_Display((UBYTE *)s_buffer);
+  LCD_2IN_Display((UBYTE *));
 
   // Will need to shift by 56 left or right (guarded) on arrow press
   // Paint_DrawRectangle(60, 90, 70, 170, WHITE);
@@ -84,6 +77,10 @@ s_buffer = NULL;
 
   DEV_Module_Exit();
 }
+
+
+
+
 
 
 

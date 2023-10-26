@@ -3,7 +3,7 @@ Initialation Template:
 "Which wire?"
 
  "easy   medium  hard"
-{green} {blue}  {red} {scissors on selection}
+{green}  {blue}  {red} 
    1       2      3        
 
 "Press Enter to Start"
