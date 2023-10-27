@@ -1,32 +1,31 @@
+// Description: This file contains the code for the second core of the RP2040. 
+// This core is responsible for displaying the game on the screen. 
+// It receives data from the first core and displays the appropriate screen.
 
-#include "pico/stdlib.h"
-#include "pico/multicore.h"
-#include "hardware/irq.h"
-
-#include "display_manager.h"
+#include "core_one.h"
 
 void core_one_interrupt_handler(void) {
 while (multicore_fifo_rvalid())
     {
         uint32_t data =  multicore_fifo_pop_blocking();
-        uint8_t state =  data >> 28;
-        uint8_t score = (data >> 20) & 0xFF;
-        uint8_t stage = (data >> 16) & 0x0F;
-        uint8_t time  =  data        & 0xFF;
-    //...
+
+        uint16_t value =  data >> 16 & 0xFFFF;      // 16 MSBs for data, time remaining
+         uint8_t score = (data >> 8) &   0xFF;      // 0 - 255 , score should only reach 100
+         uint8_t stage = data        &   0xF0;      // 0 - 15, stage should only reach 5, used for L, R, and ENTER in selection
+         uint8_t state = data        &   0x0F;      // 0 - 15, INIT, SELECT, LOADING, GAME, CORRECT, INCORRECT, RESTART
 
         switch(state){
             case INIT:
                 init_game_disp();
                 break;
             case SELECT:
-                selection_disp(data & 0x0F);
+                selection_disp(stage);
                 break;
             case LOADING:
                 loading_disp((data & 0x0F) / 10.0);
                 break;
             case GAME:
-                game_disp(score, stage, time);
+                game_disp(score, stage, value);
                 break;
             case CORRECT:
                 correct_disp();

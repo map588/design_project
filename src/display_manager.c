@@ -1,54 +1,55 @@
 
 #include "display_manager.h"
 
+//                     320              X
 //       _______________________________
 //      |0,0 ${score}         STAGE {n} |
 //      |                               |
-// 240  |                               |
+//      |                               |
+//  240 |                               |
 //      |                               |
 //      |                               |
-//      | Y                             |
-//      |_______________________________|
-//                    320        
+//   Y  |_______________________________|
+//
 
-// 320 - 70 - 70 - 24 = 156 / 3 = 52
-//Y - 120
-
-
+static UWORD *buffer;
 bool reserved_addr(uint8_t addr) {
   return (addr & 0x78) == 0 || (addr & 0x78) == 0x78;
 }
 
 bool init_display() {
-  UWORD *buffer;
-
-  if( (buffer = (UWORD *)malloc(IMAGE_SIZE)) == NULL) {
-    printf("Failed to apply for black memory...\r\n");
-    exit(0);
-  }
-
   DEV_Delay_ms(100);
+    if(DEV_Module_Init()!=0){
+        return false;
+    }
+    DEV_SET_PWM(50);
+   
 
-  if (DEV_Module_Init() != 0) {
-    return false;
-  }
+    LCD_2IN_Init(HORIZONTAL);
+    LCD_2IN_Clear(WHITE);
+    
+    UDOUBLE Imagesize = LCD_2IN_HEIGHT*LCD_2IN_WIDTH*2;
 
-  DEV_SET_PWM(50);
+    if((buffer = (UWORD *)malloc(Imagesize)) == NULL) {
+        printf("Failed to apply for black memory...\r\n");
+        exit(0);
+    }
 
-  LCD_2IN_Init(HORIZONTAL);
-  LCD_2IN_Clear(WHITE);
+    // /*1.Create a new image cache named buffer and fill it with white*/
+    Paint_NewImage((UBYTE *)buffer,LCD_2IN.WIDTH,LCD_2IN.HEIGHT, 90, WHITE);
+    Paint_SetScale(65);
+    Paint_Clear(WHITE);
+    Paint_SetRotate(ROTATE_270);
+    printf("drawing...\r\n");
 
-
-  Paint_NewImage((UBYTE *)buffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, 90, WHITE);
-  
-
-  return true;
+    return true;
 }
 
-void start_game_display(){
+
+void select_display(UWORD *buffer, select key) {
 
 
-  Paint_SelectImage((UBYTE *)Paint.Image);
+  Paint_SelectImage((UBYTE *)buffer);
 
   Paint_DrawString_EN(80, 160, "Which One?", &Font16, WHITE, BLACK);
 
@@ -64,7 +65,7 @@ void start_game_display(){
   Paint_DrawString_EN(60 + 56, 200, "(medium)", &Font16, WHITE, BLACK);
   Paint_DrawString_EN(60 + 56 * 2, 200, "(hard)", &Font16, WHITE, BLACK);
 
-  LCD_2IN_Display((UBYTE *));
+  LCD_2IN_Display((UBYTE *)buffer);
 
   // Will need to shift by 56 left or right (guarded) on arrow press
   // Paint_DrawRectangle(60, 90, 70, 170, WHITE);
@@ -72,8 +73,8 @@ void start_game_display(){
   busy_wait_ms(1999);
   DEV_Delay_ms(2000);
 
-free(s_buffer);
-s_buffer = NULL;
+free(buffer);
+buffer = NULL;
 
   DEV_Module_Exit();
 }

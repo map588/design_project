@@ -20,7 +20,6 @@ function(pico_add_dis_output2 TARGET)
     )
 endfunction()
 
-#添加编译子目录
 add_subdirectory(lib/Config)
 add_subdirectory(lib/LCD)
 add_subdirectory(lib/Fonts)
@@ -29,7 +28,6 @@ add_subdirectory(src)
 
 
 
-#添加头文件目录
 include_directories(src)
 include_directories(./lib/Config)
 include_directories(./lib/GUI)
