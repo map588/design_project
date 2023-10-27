@@ -9,10 +9,10 @@ void core_one_interrupt_handler(void) {
 while (multicore_fifo_rvalid())
     {
         uint32_t data =  multicore_fifo_pop_blocking();
-        u_int8_t state =  data >> 28;
-        u_int8_t score = (data >> 20) & 0xFF;
-        u_int8_t stage = (data >> 16) & 0x0F;
-        u_int8_t time  =  data & 0xFF;
+        uint8_t state =  data >> 28;
+        uint8_t score = (data >> 20) & 0xFF;
+        uint8_t stage = (data >> 16) & 0x0F;
+        uint8_t time  =  data        & 0xFF;
     //...
 
         switch(state){
