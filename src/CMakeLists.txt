@@ -2,7 +2,6 @@
 add_executable(main
   main.c
   display_manager.c
-  core_one.c
 )
 
 # add include paths

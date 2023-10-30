@@ -57,8 +57,6 @@
 #define LCD_SCL_PIN  7
 #define LCD_SDA_PIN  6
 /*------------------------------------------------------------------------------------------------------*/
-void DEV_Digital_Write(UWORD Pin, UBYTE Value);
-UBYTE DEV_Digital_Read(UWORD Pin);
 
 void DEV_GPIO_Mode(UWORD Pin, UWORD Mode);
 void DEV_KEY_Config(UWORD Pin);
