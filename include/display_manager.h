@@ -46,7 +46,7 @@ const text_properties UI_Text[4] = {
 
 enum promt {ARM, REWIRE, YANK};
 const text_properties UI_Prompt[3] = {
-  {  62,  110, GRED  , BLACK, &Font20, "   ARM IT    ", 196},  //bottom left 14 * 14
+  {  62,  110, GRED  , BLACK, &Font20, "   ARM IT    ", 196},  //bottom left
   {  62,  110, GRED  , BLACK, &Font20, "  REWIRE IT  ", 196},  //bottom left
   {  62,  110, GRED  , BLACK, &Font20, "   YANK IT   ", 196},  //bottom left
 };
@@ -59,7 +59,6 @@ typedef enum //Lookup for the state of the game
 
 typedef enum //Lookup for the action of the game
 {ACTION_1 = 0x10000, ACTION_2 = 0x20000, ACTION_3 = 0x30000, ACTION_4 = 0x40000} actions;
-
 
 
 void core_one_interrupt_handler(void);

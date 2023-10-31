@@ -56,7 +56,7 @@ void select_display (uint8_t key){
 
   LCD_2IN_Clear(BLACK);
   Paint_SelectImage ((UBYTE *)s_buffer);
-
+  Paint_ClearWindows(0, 200, 319, 239, BLACK); //bottom bar
 
   Paint_DrawString_EN (110, 25, "Which Wire?",&Font16, WHITE, BLACK);
   Paint_DrawString_EN ( 44, 55, "(easy)",     &Font12, WHITE, BLACK);
@@ -76,39 +76,33 @@ void select_display (uint8_t key){
 }
 
 
-void draw_loading_rectangle(uint8_t offset){
+
+
+void countdown_bar(uint8_t index){
  uint16_t x1;
  uint16_t x2;
  uint16_t y1;
  uint16_t y2;
-  if(offset == 0){
+  if(index == 0){
+  Paint_SelectImage ((UBYTE *)s_buffer);
+  Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
   x1 = load_properties.x1;
   x2 = load_properties.x1 + load_properties.width - 5;
   } else {
-  x1 = load_properties.x1 + load_properties.width * offset;
-  x2 = load_properties.x1 + load_properties.width * (offset + 1) - 5;
+  x1 = load_properties.x1 + load_properties.width * index;
+  x2 = load_properties.x1 + load_properties.width * (index + 1) - 5;
   } 
   y1 = load_properties.y1;
   y2 = load_properties.y2;
   Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
   LCD_2IN_Display((UBYTE *)s_buffer);
-}
-
-void countdown_bar(uint8_t index){
-  if(index == 0){
-  Paint_SelectImage ((UBYTE *)s_buffer);
-  Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 -2, 319, 239, BLACK);
-  }
-
-  draw_loading_rectangle(index);
-
   if(index == 9){
-  Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
-  LCD_2IN_Display((UBYTE *)s_buffer);
+   Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
+   LCD_2IN_Display((UBYTE *)s_buffer);
   }
-  Paint_ClearWindows(load_properties.y1 - 15, load_properties.x1 - 2, 319, 239, BLACK);
-  LCD_2IN_Display((UBYTE *)s_buffer);
 }
+
+
 void populate_UI_elements(uint16_t countdown, uint8_t score){
 Paint_ClearWindows(0,   0, 319,  20, BLACK);    // top bar
 Paint_ClearWindows(0, 220,  80, 239, BLACK);    //approximately time window
@@ -128,10 +122,18 @@ sprintf(time_str , "%s %u ms", UI_Text[TIME].text  , countdown);
 
 Paint_SelectImage ((UBYTE *)s_buffer);
 
-Paint_DrawString_EN (UI_Text[SCORE].x, UI_Text[SCORE].y, score_str, UI_Text[SCORE].font_size, UI_Text[SCORE].color, UI_Text[SCORE].background);
-Paint_DrawString_EN (UI_Text[ROUND].x, UI_Text[ROUND].y, round_str, UI_Text[ROUND].font_size, UI_Text[ROUND].color, UI_Text[ROUND].background);
-Paint_DrawString_EN (UI_Text[NEXT].x , UI_Text[NEXT].y , nextR_str, UI_Text[NEXT].font_size , UI_Text[NEXT].color , UI_Text[NEXT].background );
-Paint_DrawString_EN (UI_Text[TIME].x , UI_Text[TIME].y , time_str , UI_Text[TIME].font_size , UI_Text[TIME].color , UI_Text[TIME].background );
+Paint_DrawString_EN (UI_Text[SCORE].x, UI_Text[SCORE].y, score_str, 
+UI_Text[SCORE].font_size, UI_Text[SCORE].color, UI_Text[SCORE].background);
+
+Paint_DrawString_EN (UI_Text[ROUND].x, UI_Text[ROUND].y, round_str, 
+UI_Text[ROUND].font_size, UI_Text[ROUND].color, UI_Text[ROUND].background);
+
+Paint_DrawString_EN (UI_Text[NEXT].x , UI_Text[NEXT].y , nextR_str, 
+UI_Text[NEXT].font_size , UI_Text[NEXT].color , UI_Text[NEXT].background );
+
+Paint_DrawString_EN (UI_Text[TIME].x , UI_Text[TIME].y , time_str , 
+UI_Text[TIME].font_size , UI_Text[TIME].color , UI_Text[TIME].background );
+
 
 LCD_2IN_Display((UBYTE *)s_buffer);
 
@@ -141,11 +143,20 @@ free(nextR_str);
 free(time_str);
 }
 
+
+
+
 write_prompt(uint8_t action){
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(0, 90, 319, 150, BLACK); //rough prompt window
-  Paint_DrawString_EN (UI_Prompt[action].x, UI_Prompt[action].y, UI_Prompt[action].text, UI_Prompt[action].font_size, UI_Prompt[action].color, UI_Prompt[action].background);
-  Paint_DrawRectangle(UI_Prompt[action].x - 5, UI_Prompt[action].y - 5, UI_Prompt[action].x + UI_Prompt[action].text_length + 5, UI_Prompt[action].y + 19, UI_Prompt[action].color, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+
+  Paint_DrawString_EN (UI_Prompt[action].x, UI_Prompt[action].y, UI_Prompt[action].text,
+   UI_Prompt[action].font_size, UI_Prompt[action].color, UI_Prompt[action].background);
+
+  Paint_DrawRectangle (UI_Prompt[action].x - 5, UI_Prompt[action].y - 5,
+   UI_Prompt[action].x + UI_Prompt[action].text_length + 5, UI_Prompt[action].y + 19,
+   UI_Prompt[action].color, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
@@ -159,6 +170,10 @@ void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
   }
   countdown_bar(index);
 }
+
+
+
+
 
 void core_one_interrupt_handler (void){
   //Allows for retriggers
@@ -204,10 +219,8 @@ void core_one_interrupt_handler (void){
           break;
         }
       LCD_2IN_Display ((uint8_t *)s_buffer);
-
     }
-
-  //multicore_fifo_drain ();
+  
   
 }
 

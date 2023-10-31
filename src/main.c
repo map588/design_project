@@ -24,9 +24,9 @@ int key3 = 19;
 
 void action_isr(void)
 {
+  irq_clear(IO_IRQ_BANK0);
 
   uint32_t gpio = *(volatile uint32_t *)(IO_BANK0_BASE + 0x0f8);
-
   printf("GPIO_IRQ: %u\n", gpio);  // these aren't right
   bool key0_pressed = (bool) gpio & (1 << 3);
   bool key1_pressed = (bool) gpio & (1 << 7);
@@ -51,9 +51,7 @@ void action_isr(void)
     packet |= ACTION_4;
   }
 
-
   multicore_fifo_push_blocking(packet);
-  irq_clear(IO_IRQ_BANK0);
 }
 
 
@@ -132,18 +130,38 @@ int main(void)
   uint8_t score = 0;
   uint8_t index;
   actions action;
-  states state;
+  states  state;
   
+  //500ms load
+ 
+  do{
+    //Wait for select
+
+
+  }while(1);
+  
+  //500ms load
+
   //Game Logic
-  
+
+  //Press Enter to start
+
+  do{
+
+
+  }while(1);
+
+  //generate random number and pass to core 1
+  //wait for response
+  //if correct, increment score and time rate
+  //if incorrect, decrement score and time rate
 
 
 
+
+  display_exit();
 
   while(1){tight_loop_contents();}
-
-
-
 
   return 0;
 }
