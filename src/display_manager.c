@@ -14,49 +14,7 @@
 //
 
 uint16_t *s_buffer;
-uint8_t state;
 
-typedef struct
-{
-  uint16_t x1;
-  uint16_t y1;
-  uint16_t y2;
-  uint16_t width;
-} bar_properties;
-
-const bar_properties load_properties = {
-220, //start x
-225, //start y
-235, //end y
- 10, //width
-     //end x is start x + width * offset
-};
-
-typedef struct 
-{
-  uint16_t x;
-  uint16_t y;
-  uint16_t color;
-  uint16_t background;
-  sFONT *font_size;
-  const char *text;
-  uint8_t text_length;
-} text_properties;
-
-enum text {SCORE, NEXT, ROUND, TIME};
-const text_properties UI_Text[4] = {
-  {  2,    2, GREEN , BLACK, &Font12, "SCORE :", 56},  //top left row 1
-  {  2,   16, YELLOW, BLACK, &Font12, "NEXT_R:", 56},  //top left row 2
-  {260,    2, RED   , BLACK, &Font12, "ROUND :", 56},  //top right
-  {  2,  226, CYAN  , BLACK, &Font12, "TIME  :", 56},  //bottom left
-};
-
-enum promt {ARM, REWIRE, YANK};
-const text_properties UI_Prompt[3] = {
-  {  62,  110, GRED  , BLACK, &Font20, "   ARM IT    ", 196},  //bottom left 14 * 14
-  {  62,  110, GRED  , BLACK, &Font20, "  REWIRE IT  ", 196},  //bottom left
-  {  62,  110, GRED  , BLACK, &Font20, "   YANK IT   ", 196},  //bottom left
-};
 
 uint16_t *const alloc_const_buffer (UDOUBLE size){
 uint16_t *const buffer = (UWORD *)malloc (size);
@@ -154,9 +112,10 @@ void countdown_bar(uint8_t index){
 void populate_UI_elements(uint16_t countdown, uint8_t score){
 Paint_ClearWindows(0,   0, 319,  20, BLACK);    // top bar
 Paint_ClearWindows(0, 220,  80, 239, BLACK);    //approximately time window
-uint8_t round   = score / 20;
+uint8_t round   =       score / 20;
 uint8_t n_round = 20 - (score % 20);
-                               //All have an extra 2 bytes for a null and a mistake
+
+//All have an extra 2 bytes for a null and a mistake
 char *score_str  = malloc(14); //8 + 1 + 2 + 1 + 2 = 14
 char *round_str  = malloc(14); //8 + 1 + 2 + 1 + 2 = 14
 char *nextR_str  = malloc(14); //8 + 1 + 2 + 1 + 2 = 14
@@ -202,6 +161,8 @@ void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
 }
 
 void core_one_interrupt_handler (void){
+  //Allows for retriggers
+  multicore_fifo_clear_irq();
 
   while(multicore_fifo_rvalid ()){
       uint32_t data = multicore_fifo_pop_blocking ();
@@ -247,7 +208,7 @@ void core_one_interrupt_handler (void){
     }
 
   //multicore_fifo_drain ();
-  multicore_fifo_clear_irq ();
+  
 }
 
 void core_one_entry (void){
