@@ -14,10 +14,7 @@ typedef enum //Lookup for the state of the game
 {LOADING, SELECT, GAME, CORRECT, INCORRECT, RESTART} states;
 
 typedef enum //Lookup for the action of the game
-{ACTION1 = 0x10000, ACTION2 = 0x20000, ACTION3 = 0x30000, ACTION4 = 0x40000} actions;
-
-typedef enum  //Lookup for the stage of the game
-{STAGE_1 = 0x10, STAGE_2 = 0x20, STAGE_3 = 0x30, STAGE_4 = 0x40, STAGE_5 = 0x50} stage;
+{ACTION_1 = 0x10000, ACTION_2 = 0x20000, ACTION_3 = 0x30000, ACTION_4 = 0x40000} actions;
 
 
 
@@ -26,9 +23,9 @@ void core_one_entry(void);
 
 bool init_display(void);
 
-// inline void selection_disp(select key);
+inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint32_t data);
 
-// inline void loading_disp(float progress);
+// inline void selection_display(select key);
 
 // inline void init_game_disp(void);
 

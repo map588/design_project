@@ -6,9 +6,13 @@
 #include "hardware/irq.h"
 
 //multipliers for adding to the FIFO packet
+//  V = value, A = action (enum), P = Points, I = index, S = state (enum)
+//  packet =>  0xVVVAPPIS
+#define INDEX  0x00000010
 #define SCORE  0x00000100
 #define VALUE  0x00100000
-#define EDGE_LOW_MASK 0b100010001000100;
+#define EDGE_LOW_MASK  0x4444
+#define EDGE_HIGH_MASK 0x8888
 
 uint32_t packet;
 
@@ -23,30 +27,31 @@ void action_isr(void)
 
   uint32_t gpio = *(volatile uint32_t *)(IO_BANK0_BASE + 0x0f8);
 
-  printf("GPIO_IRQ: %u\n", gpio);
-  bool key0_pressed = (bool) gpio & (1 << 2);
-  bool key1_pressed = (bool) gpio & (1 << 6);
-  bool key2_pressed = (bool) gpio & (1 << 10);
-  bool key3_pressed = (bool) gpio & (1 << 14);
+  printf("GPIO_IRQ: %u\n", gpio);  // these aren't right
+  bool key0_pressed = (bool) gpio & (1 << 3);
+  bool key1_pressed = (bool) gpio & (1 << 7);
+  bool key2_pressed = (bool) gpio & (1 << 11);
+  bool key3_pressed = (bool) gpio & (1 << 15);
+
 
   if (key0_pressed)
   {
-    packet |= ACTION1;
+    packet |= ACTION_1;
   }
   else if (key1_pressed)
   {
-    packet |= ACTION2;
+    packet |= ACTION_2;
   }
   else if (key2_pressed)
   {
-    packet |= ACTION3;
+    packet |= ACTION_3;
   }
   else if (key3_pressed)
   {
-    packet |= ACTION4;
+    packet |= ACTION_4;
   }
 
-  
+
   multicore_fifo_push_blocking(packet);
   irq_clear(IO_IRQ_BANK0);
 }
@@ -94,17 +99,28 @@ int init(void)
     exit(1);
   }
 }
-inline uint32_t assemble_packet(states state, stage stage, actions action, uint8_t score, uint32_t data)
+inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint32_t data)
 {
   uint32_t packet = 0;
   packet |= state;
-  packet |= stage;
   packet |= action;
+  packet |= index   * INDEX;
   packet |= score   * SCORE;
   packet |= data    * VALUE;
   return packet;
 }
 
+void loading_disp(uint16_t countdown, uint8_t iterations){
+  uint16_t interval = countdown / 10;
+  for(int j = 0; j < iterations; j++){
+    for (int i = 0; i < 10; i++)
+    {
+      packet = assemble_packet(LOADING, i, 0, 0, countdown);
+      multicore_fifo_push_blocking(packet);
+      busy_wait_ms(interval);
+    }
+  }
+}
 
 int main(void)
 {
@@ -112,22 +128,19 @@ int main(void)
 
   int16_t time_rate = 0;
 
+  int16_t time;
   uint8_t score = 0;
-  int16_t time = 2000;
-  actions action = ACTION1;
-  stage stage = STAGE_1;
-  states state = LOADING;
+  uint8_t index;
+  actions action;
+  states state;
   
-
-  packet = assemble_packet(state, stage, action, score, time);
-
+  //Game Logic
+  
 
 
 
 
   while(1){tight_loop_contents();}
-
-  //Game Logic
 
 
 
