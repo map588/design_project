@@ -24,11 +24,12 @@ typedef struct
   uint16_t width;
 } bar_properties;
 
-bar_properties loading_properties(){
-  uint16_t x1 = 215;
-  uint16_t y1 = 225;
-  uint16_t y2 = 235;
-  uint8_t width = 10;
+const bar_properties load_properties = {
+220, //start x
+225, //start y
+235, //end y
+ 10, //width
+     //end x is start x + width * offset
 };
 
 
@@ -46,7 +47,7 @@ bool init_display (void){
   DEV_SET_PWM (50);
 
   LCD_2IN_Init (HORIZONTAL);
-  LCD_2IN_Clear (WHITE);
+  LCD_2IN_Clear (BLACK);
 
   UDOUBLE Imagesize = LCD_2IN_HEIGHT * LCD_2IN_WIDTH * 2;
   uint16_t *const buffer = alloc_const_buffer (Imagesize);
@@ -57,60 +58,74 @@ bool init_display (void){
     }
   s_buffer = buffer;
   // /*1.Create a new image cache buffer and fill it with white*/
-  Paint_NewImage ((UBYTE *)s_buffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, 90, WHITE);
+  Paint_NewImage ((UBYTE *)s_buffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, 90, BLACK);
   Paint_SetScale (65);
-  Paint_Clear (WHITE);
+  Paint_Clear (BLACK);
   Paint_SetRotate (ROTATE_270);
 
   return true;
 }
 
-void select_display (select key){
+
+
+void select_display (uint8_t key){
 
   LCD_2IN_Clear(BLACK);
-
   Paint_SelectImage ((UBYTE *)s_buffer);
 
 
-  Paint_DrawString_EN (110, 40, "Which One?", &Font16, WHITE, BLACK);
-  Paint_DrawString_EN ( 60, 60, "(easy)",     &Font16, WHITE, BLACK);
-  Paint_DrawString_EN (112, 60, "(medium)",   &Font16, WHITE, BLACK);
-  Paint_DrawString_EN (164, 60, "(hard)",     &Font16, WHITE, BLACK);
+  Paint_DrawString_EN (110, 25, "Which Wire?",&Font16, WHITE, BLACK);
+  Paint_DrawString_EN ( 44, 55, "(easy)",     &Font12, WHITE, BLACK);
+  Paint_DrawString_EN (124, 55, "(medium)",   &Font12, WHITE, BLACK);
+  Paint_DrawString_EN (224, 55, "(hard)",     &Font12, WHITE, BLACK);
 
 
-  Paint_DrawLine ( 70, 80,  70, 160, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-  Paint_DrawLine (122, 80, 122, 160,  BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-  Paint_DrawLine (174, 80, 174, 160,   RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+  Paint_DrawLine ( 70, 80,  70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+  Paint_DrawLine (158, 80, 158, 200,  BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+  Paint_DrawLine (246, 80, 246, 200,   RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
 
-  int arrow_pos  = (70 + 52 + key) - 2;
+  int pos[3] = {70, 158, 246};
 
-  Paint_DrawString_EN (arrow_pos, 170, "^", &Font16, WHITE, BLACK);
+  int arrow_pos  = pos[key%3] - 6;
+
+  Paint_DrawString_EN (arrow_pos, 210, "^", &Font20, WHITE, BLACK);
 
   LCD_2IN_Display ((UBYTE *)s_buffer);
 }
 
-void draw_offset_rectangle(uint8_t offset){
- bar_properties properties = loading_properties();
+
+
+
+void draw_loading_rectangle(uint8_t offset){
  uint16_t x1;
  uint16_t x2;
-
+ uint16_t y1;
+ uint16_t y2;
   if(offset == 0){
-  x1 = properties.x1;
-  x2 = properties.x1 + properties.width;
+  x1 = load_properties.x1;
+  x2 = load_properties.x1 + load_properties.width - 5;
   } else {
-  x1 = properties.x1 + properties.width * offset;
-  x2 = properties.x1 + properties.width * (offset + 1);
+  x1 = load_properties.x1 + load_properties.width * offset;
+  x2 = load_properties.x1 + load_properties.width * (offset + 1) - 5;
   } 
-  Paint_DrawRectangle(x1, properties.y1, x2, properties.y2, WHITE, DOT_PIXEL_4X4, DRAW_FILL_FULL);
-  LCD_2IN_DisplayWindows(x1, properties.y1, 239, 319, (uint8_t *)s_buffer);
+  y1 = load_properties.y1;
+  y2 = load_properties.y2;
+  Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  LCD_2IN_Display((UBYTE *)s_buffer);
+  //LCD_2IN_DisplayWindows(load_properties.y1 - 2, load_properties.x1 - 15, 319, 239, s_buffer);
 }
 
 void countdown_bar(uint16_t countdown){
+  Paint_SelectImage ((UBYTE *)s_buffer);
+  //Paint_Clear(BLACK);
+  Paint_ClearWindows(load_properties.y1 - 15, load_properties.x1 -2, 319, 239, BLACK);
   uint16_t interval = countdown / 10;
   for(int i = 0; i < 10; i++){
-    draw_offset_rectangle(i);
-    DEV_Delay_ms(interval);
+    draw_loading_rectangle(i);
+    busy_wait_ms(interval);
   }
+  Paint_ClearWindows(load_properties.y1 - 15, load_properties.x1 - 2, 319, 239, BLACK);
+  LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
 void game_UI(uint16_t countdown, uint8_t score, uint8_t stage){
@@ -120,27 +135,30 @@ void game_UI(uint16_t countdown, uint8_t score, uint8_t stage){
 
 void core_one_interrupt_handler (void){
 
-  while (multicore_fifo_rvalid ()){
+  if(multicore_fifo_rvalid ()){
       uint32_t data = multicore_fifo_pop_blocking ();
 
       
-      uint16_t value   =  data   & 0xFFFF0000;
-      uint8_t  score   =  data   & 0x0000FF00;
-      uint8_t  stage   =  data   & 0x000000F0;
+      uint32_t value   =  data   & 0xFFF00000;
+      uint16_t score   =  data   & 0x0000FF00;
+      actions  action  =  data   & 0x000F0000;
+      stage    stage   =  data   & 0x000000F0;
       states   state   =  data   & 0x0000000F;
 
-      value >>= 16;
+      value >>= 20;
       score >>= 8;
-      stage >>= 4;
+      
+      uint8_t idx_action = (action >> 16) - 1;
+
 
       switch (state)
         {
         case SELECT:
-          select_display(stage);
+          select_display(idx_action);
           break;
         case LOADING:
           countdown_bar(value);
-          // oading_disp((data & 0x0F) / 10.0);
+          busy_wait_ms(200);
           break;
         // case GAME:
         //     game_disp(score, stage, value);
@@ -160,6 +178,7 @@ void core_one_interrupt_handler (void){
       LCD_2IN_Display ((uint8_t *)s_buffer);
     }
 
+  multicore_fifo_drain ();
   multicore_fifo_clear_irq ();
 }
 
@@ -168,6 +187,8 @@ void core_one_entry (void){
   multicore_fifo_clear_irq ();
   irq_set_exclusive_handler (SIO_IRQ_PROC1, core_one_interrupt_handler);
   irq_set_enabled (SIO_IRQ_PROC1, true);
+
+  //irq_set_exclusive_handler (TIMER_IRQ_0, core_one_interrupt_handler);
 
   // pico specific efficent sleep function to call in a "tight_loop"
   while (1){

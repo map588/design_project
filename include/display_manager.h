@@ -10,13 +10,14 @@
 #include "pico/multicore.h"
 
 
-typedef enum {LOADING, SELECT, GAME, CORRECT, INCORRECT, RESTART} states;
+typedef enum //Lookup for the state of the game
+{LOADING, SELECT, GAME, CORRECT, INCORRECT, RESTART} states;
 
-// top 4 bits for stage, bottom 4 bits for state
-typedef enum {LEFT = 0x10, RIGHT = 0x20, ENTER = 0x30} select;
+typedef enum //Lookup for the action of the game
+{ACTION1 = 0x10000, ACTION2 = 0x20000, ACTION3 = 0x30000, ACTION4 = 0x40000} actions;
 
-typedef enum {STAGE_1 = 0x10, STAGE_2 = 0x20, STAGE_3 = 0x30, 
-                              STAGE_4 = 0x40, STAGE_5 = 0x50} stage;
+typedef enum  //Lookup for the stage of the game
+{STAGE_1 = 0x10, STAGE_2 = 0x20, STAGE_3 = 0x30, STAGE_4 = 0x40, STAGE_5 = 0x50} stage;
 
 
 

@@ -15,8 +15,8 @@ target_include_directories(main PRIVATE
 
 
 # enable usb output, disable uart output
-pico_enable_stdio_usb(main 0)
-pico_enable_stdio_uart(main 1)
+pico_enable_stdio_usb(main 1)
+pico_enable_stdio_uart(main 0)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(main)
