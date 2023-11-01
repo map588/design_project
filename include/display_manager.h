@@ -9,6 +9,8 @@
 #include "hardware/irq.h"
 #include "pico/multicore.h"
 
+uint32_t packet;
+
 typedef struct
 {
   uint16_t x1;
@@ -37,6 +39,7 @@ typedef struct
 } text_properties;
 
 enum text {SCORE, NEXT, ROUND, TIME};
+
 const text_properties UI_Text[4] = {
   {  2,    2, GREEN , BLACK, &Font12, "SCORE :", 56},  //top left row 1
   {  2,   16, YELLOW, BLACK, &Font12, "NEXT_R:", 56},  //top left row 2
@@ -44,29 +47,38 @@ const text_properties UI_Text[4] = {
   {  2,  226, CYAN  , BLACK, &Font12, "TIME  :", 56},  //bottom left
 };
 
-enum promt {ARM, REWIRE, YANK};
+enum prompt {ARM, REWIRE, YANK};
+
 const text_properties UI_Prompt[3] = {
   {  62,  110, GRED  , BLACK, &Font20, "   ARM IT    ", 196},  //bottom left
   {  62,  110, GRED  , BLACK, &Font20, "  REWIRE IT  ", 196},  //bottom left
   {  62,  110, GRED  , BLACK, &Font20, "   YANK IT   ", 196},  //bottom left
 };
 
-
+const text_properties key_text = {
+  2, // Border on 0,0
+  2, // ^
+  WHITE,
+  BLACK,
+  &Font16, // Text is 11 wide, 16 tall
+  "FILLER_", //Dummy text, we are concerned with the other members
+  13 //Width + 2 offset pixels
+  };
 
 
 typedef enum //Lookup for the state of the game
-{LOADING, SELECT, GAME, CORRECT, INCORRECT, RESTART} states;
+{LOADING, SELECT, GAME, CORRECT, INCORRECT, RESTART, KEYPRESS} states;
 
 typedef enum //Lookup for the action of the game
 {ACTION_1 = 0x10000, ACTION_2 = 0x20000, ACTION_3 = 0x30000, ACTION_4 = 0x40000} actions;
 
+inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint16_t data);
 
 void core_one_interrupt_handler(void);
 void core_one_entry(void);
 
 bool init_display(void);
 
-inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint16_t data);
 
 void display_exit();
 

@@ -145,8 +145,6 @@ free(time_str);
 }
 
 
-
-
 int write_prompt(uint8_t action){
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(0, 90, 319, 150, BLACK); //rough prompt window
@@ -172,6 +170,27 @@ void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
   countdown_bar(index);
 }
 
+
+
+static uint8_t x_input_idx = 0;
+static uint8_t y_input_idx = 0;
+void display_key(uint16_t character){
+  
+  int char_x = key_text.x + (key_text.text_length * x_input_idx);
+  int char_y = key_text.y + (18 * y_input_idx);
+
+  if(char_x >= LCD_2IN_WIDTH){
+     x_input_idx = 0;
+
+     if((++y_input_idx) * 18 >= LCD_2IN_HEIGHT)
+        y_input_idx = 0; 
+  }
+  Paint_SelectImage((uint8_t *) s_buffer);
+  Paint_ClearWindows(char_x, char_y, char_x + key_text.text_length, char_y + 18, BLACK);
+  Paint_DrawChar(char_x, char_y, character, key_text.font_size, key_text.color, key_text.background);
+
+  LCD_2IN_Display((uint8_t *)s_buffer);
+}
 
 
 
@@ -204,6 +223,8 @@ void core_one_interrupt_handler (void){
         case GAME:
             game_UI(value, score, index, action);
             break;
+        case KEYPRESS:
+            display_key(score);
         // case CORRECT:
         //     correct_disp();
         //     break;

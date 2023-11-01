@@ -1,30 +1,4 @@
-﻿#include "display_manager.h"
-#include "pico/multicore.h"
-#include "pico/rand.h"
-#include "pico/stdlib.h"
-#include "hardware/timer.h"
-#include "hardware/irq.h"
-
-//multipliers for adding to the FIFO packet
-//  V = value, A = action (enum), P = Points, I = index, S = state (enum)
-//  packet =>  0xVVVAPPIS
-#define INDEX  0x00000010
-#define SCORE  0x00000100
-#define VALUE  0x00100000
-#define EDGE_LOW_MASK  0x4444
-#define EDGE_HIGH_MASK 0x8888
-
-
-// TODO: Decide if we want to store more values as globals and assemble them in the irq handler
-uint32_t packet;
-states state;
-bool user_input = false;
-
-int key0 = 16;
-int key1 = 17;
-int key2 = 18;
-int key3 = 19;
-
+﻿#include "main.h"
 
 void action_isr(void)
 {
@@ -56,6 +30,7 @@ void action_isr(void)
   }
 
   multicore_fifo_push_blocking(packet);
+
 }
 
 
@@ -79,6 +54,7 @@ int init(void)
   gpio_set_irq_enabled_with_callback(key2, GPIO_IRQ_EDGE_RISE, true, (void *) &action_isr);
   gpio_set_irq_enabled_with_callback(key3, GPIO_IRQ_EDGE_RISE, true, (void *) &action_isr);
 
+  keyboard_init();
   multicore_launch_core1(core_one_entry);
 
   if (!init_display())
@@ -86,7 +62,6 @@ int init(void)
     exit(1);
   }
 }
-
 
 inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint16_t data)
 {
@@ -158,8 +133,6 @@ int main(void)
   //wait for response
   //if correct, increment score and time rate
   //if incorrect, decrement score and time rate
-
-
 
 
   display_exit();

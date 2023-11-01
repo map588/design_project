@@ -6,7 +6,7 @@ add_executable(main
 
 
 # add include paths
-target_include_directories(main PRIVATE
+target_include_directories(main PUBLIC
     ../include
     ../lib/Config
     ../lib/Fonts

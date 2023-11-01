@@ -4,50 +4,65 @@
 #include "hardware/pio.h"
 #include "hardware/irq.h"
 #include "keyboard.h"
-
 #include "keyboard.pio.h"
 
 #define DATA_PIN 14
 #define CLOCK_PIN 15
 
-#define SEND_DATA 30
-
 PIO pio = pio1;
 uint sm = 0;
-unsigned int keycode_buffer = 0;
-bool a_pressed = false, d_pressed = false, w_pressed = false;
+
 
 void get_code()
 {
     int got = pio_sm_get_blocking(pio, sm);
     int data = (got >> 22) & 0xff; //right justify
 
-    keycode_buffer = keycode_buffer << 8;
-    keycode_buffer &= 0xffffff00;
-    keycode_buffer += data;
-    bool not_break_code = !((keycode_buffer & 0x0000ff00) == 0xf000);
-    switch (data)
-    {
-    case 0x1c: //a
-        a_pressed = not_break_code;
-        break;
-    case 0x23: //d
-        d_pressed = not_break_code;
-        break;
-        break;
-    case 0x1d: //w
-        w_pressed = not_break_code;
-        break;
+  static int shifted = 0;
+	static int released = 0;
+	if (released)  // last key was a break code
+	{
+		switch (data)
+		{
+			case 0x59:
+			case 0x12:
+				shifted = 0;
+				break;
+			default:
+				break;
+		}
+		released = 0;
+	}
+	else
+		switch (data)
+		{
+			case 0x59:  // right shift
+            case 0x12:  // left shift
+                shifted = 1;
+				break;
+			case 0xF0:  // break code
+				released = 1;
+				break;
+			default:
+                int i;
+				for (i = 0 ; data != scan_codes[i][0] ; i++)
+				    if (scan_codes[i][0] == 0)
+				    break;
 
-    default:
-        break;
-    }
+			        if (data == scan_codes[i][0])
+				         if (shifted)
+				        	input = (scan_codes[i][2]);
+				         else
+					        input = (scan_codes[i][1]);
+
+                    packet = assemble_packet(KEYPRESS, 0, 0, (uint8_t) input, 0);
+                    multicore_fifo_push_blocking(packet);
+                    break;
+		}
 }
 
-int read_keyboard()
+void keyboard_init()
 {
-    stdio_init_all();
-
     // Set up the state machine we're going to use to receive them.
     uint offset = pio_add_program(pio, &keyboard_pio_program);
 
@@ -64,10 +79,5 @@ int read_keyboard()
     irq_set_exclusive_handler(PIO0_IRQ_0, &get_code);
     irq_set_enabled(PIO0_IRQ_0, true);
 
-    printf("\nstarting\n");
-    while (true)
-    {
-        printf("a: %i, d: %i, w: %i\n", a_pressed, d_pressed, w_pressed);
-        busy_wait_ms(100);
-    }
+    printf("\nstarting keypad\n");
 }
