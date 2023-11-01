@@ -14,7 +14,11 @@
 #define EDGE_LOW_MASK  0x4444
 #define EDGE_HIGH_MASK 0x8888
 
+
+// TODO: Decide if we want to store more values as globals and assemble them in the irq handler
 uint32_t packet;
+states state;
+bool user_input = false;
 
 int key0 = 16;
 int key1 = 17;
@@ -55,21 +59,6 @@ void action_isr(void)
 }
 
 
-void timer_callback()
-{
-  // Handle the timer interrupt
-  // Check if the action was completed within the interval
-  // Send the result to core 1 via the FIFO
-}
-
-void setup_timer(uint32_t interval_ms)
-{
-  uint32_t alarm_time = timer_hw->timerawl + interval_ms * 1000;
-  irq_set_exclusive_handler(TIMER_IRQ_0, timer_callback);
-  irq_set_enabled(TIMER_IRQ_0, true);
-  timer_hw->alarm[0] = alarm_time;
-}
-
 int init(void)
 {
 
@@ -97,7 +86,9 @@ int init(void)
     exit(1);
   }
 }
-inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint32_t data)
+
+
+inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint16_t data)
 {
   uint32_t packet = 0;
   packet |= state;
@@ -120,19 +111,31 @@ void loading_disp(uint16_t countdown, uint8_t iterations){
   }
 }
 
+void main_disp(uint16_t countdown, uint8_t score)
+{
+  uint16_t interval = countdown / 10;
+    for (int i = 0; i < 10; i++)
+    {
+      packet = assemble_packet(GAME, i, 0, 0, countdown);
+      multicore_fifo_push_blocking(packet);
+      busy_wait_ms(interval);
+    }
+}
+
 int main(void)
 {
   init();
 
   int16_t time_rate = 0;
 
-  int16_t time;
-  uint8_t score = 0;
+  int16_t time = 500;
+  uint8_t score;
   uint8_t index;
   actions action;
-  states  state;
+
+  state = LOADING;
   
-  //500ms load
+  loading_disp(time, 2);
  
   do{
     //Wait for select

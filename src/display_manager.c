@@ -52,7 +52,7 @@ bool init_display (void){
 //The positions of the arrow when in select state
 const int arr_pos[3] = {64, 152, 240};
 
-void select_display (uint8_t key){
+void select_display (actions key){  //TODO: Something needs to hold the state for the arrow position
 
   LCD_2IN_Clear(BLACK);
   Paint_SelectImage ((UBYTE *)s_buffer);
@@ -68,7 +68,8 @@ void select_display (uint8_t key){
   Paint_DrawLine (158, 80, 158, 200,  BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
   Paint_DrawLine (246, 80, 246, 200,   RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
 
-  int arrow_pos  = arr_pos[key%3];  // %3 to prevent overflow, in case that is possible
+  uint8_t key_index = (key >> 16) - 1;  
+  int arrow_pos  = arr_pos[key_index%3];  // %3 to prevent overflow, in case that is possible
 
   Paint_DrawString_EN (arrow_pos, 210, "^", &Font20, WHITE, BLACK);
 
@@ -174,7 +175,6 @@ void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
 
 
 
-
 void core_one_interrupt_handler (void){
   //Allows for retriggers
   multicore_fifo_clear_irq();
@@ -188,8 +188,6 @@ void core_one_interrupt_handler (void){
       uint8_t  index      =  data   & 0x000000F0;
       actions  action     =  data   & 0x000F0000;
       states   state      =  data   & 0x0000000F;
-      uint8_t enum_action = (action >> 16) - 1;
-
 
       value >>= 20;
       score >>= 8;
@@ -198,13 +196,13 @@ void core_one_interrupt_handler (void){
       switch (state)
         {
         case SELECT:
-          select_display(enum_action);
+          select_display(action);
           break;
         case LOADING:
           countdown_bar(index);
           break;
         case GAME:
-            game_UI(value, score, index, enum_action);
+            game_UI(value, score, index, action);
             break;
         // case CORRECT:
         //     correct_disp();
@@ -221,7 +219,7 @@ void core_one_interrupt_handler (void){
       LCD_2IN_Display ((uint8_t *)s_buffer);
     }
   
-  
+
 }
 
 void core_one_entry (void){
