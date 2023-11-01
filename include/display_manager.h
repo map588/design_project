@@ -66,7 +66,7 @@ void core_one_entry(void);
 
 bool init_display(void);
 
-inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint32_t data);
+inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint16_t data);
 
 // inline void selection_display(select key);
 
