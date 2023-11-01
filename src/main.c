@@ -111,12 +111,12 @@ void loading_disp(uint16_t countdown, uint8_t iterations){
   }
 }
 
-void main_disp(uint16_t countdown, uint8_t score)
+void main_disp(uint16_t countdown, uint8_t score, actions action)
 {
   uint16_t interval = countdown / 10;
     for (int i = 0; i < 10; i++)
     {
-      packet = assemble_packet(GAME, i, 0, 0, countdown);
+      packet = assemble_packet(GAME, i, 0, action, countdown);
       multicore_fifo_push_blocking(packet);
       busy_wait_ms(interval);
     }

@@ -1,9 +1,9 @@
 #ifndef DISPLAY_MANAGER_H
 #define DISPLAY_MANAGER_H
 
-#include "../Config/DEV_Config.h"
-#include "../lib/GUI/GUI_Paint.h"
-#include "../lib/LCD/LCD_2in.h"
+#include "DEV_Config.h"
+#include "GUI_Paint.h"
+#include "LCD_2in.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "hardware/irq.h"
@@ -67,6 +67,8 @@ void core_one_entry(void);
 bool init_display(void);
 
 inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint16_t data);
+
+void display_exit();
 
 // inline void selection_display(select key);
 

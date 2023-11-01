@@ -147,7 +147,7 @@ free(time_str);
 
 
 
-write_prompt(uint8_t action){
+int write_prompt(uint8_t action){
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(0, 90, 319, 150, BLACK); //rough prompt window
 
