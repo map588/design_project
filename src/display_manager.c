@@ -190,6 +190,8 @@ void display_key(uint16_t character){
   Paint_DrawChar(char_x, char_y, character, key_text.font_size, key_text.color, key_text.background);
 
   LCD_2IN_Display((uint8_t *)s_buffer);
+
+  x_input_idx++;
 }
 
 

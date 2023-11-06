@@ -4,12 +4,12 @@ void action_isr(void)
 {
   irq_clear(IO_IRQ_BANK0);
 
-  uint32_t gpio = *(volatile uint32_t *)(IO_BANK0_BASE + 0x0f8);
-  printf("GPIO_IRQ: %u\n", gpio);  // these aren't right
-  bool key0_pressed = (bool) gpio & (1 << 3);
-  bool key1_pressed = (bool) gpio & (1 << 7);
-  bool key2_pressed = (bool) gpio & (1 << 11);
-  bool key3_pressed = (bool) gpio & (1 << 15);
+  uint32_t gpio_states = *(volatile uint32_t *)(IO_BANK0_BASE + 0x0f8);
+  printf("GPIO_IRQ: %u\n", gpio_states);  // these aren't right
+  bool key0_pressed = (bool) gpio_states & (1 << 3);
+  bool key1_pressed = (bool) gpio_states & (1 << 7);
+  bool key2_pressed = (bool) gpio_states & (1 << 11);
+  bool key3_pressed = (bool) gpio_states & (1 << 15);
 
 
   if (key0_pressed)
