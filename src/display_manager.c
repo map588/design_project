@@ -172,26 +172,27 @@ void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
 
 
 
-static uint8_t x_input_idx = 0;
-static uint8_t y_input_idx = 0;
-void display_key(uint16_t character){
-  
-  int char_x = key_text.x + (key_text.text_length * x_input_idx);
-  int char_y = key_text.y + (18 * y_input_idx);
+void display_key(uint8_t character){
+  static int  str_idx = 0;
+  static char str_buffer[256];
 
-  if(char_x >= LCD_2IN_WIDTH){
-     x_input_idx = 0;
 
-     if((++y_input_idx) * 18 >= LCD_2IN_HEIGHT)
-        y_input_idx = 0; 
-  }
   Paint_SelectImage((uint8_t *) s_buffer);
-  Paint_ClearWindows(char_x, char_y, char_x + key_text.text_length, char_y + 18, BLACK);
-  Paint_DrawChar(char_x, char_y, character, key_text.font_size, key_text.color, key_text.background);
+  if(character == 0x66){ //backspace
+    str_buffer[str_idx] = '\0';
+    if(str_idx > 0){str_idx--;}
+  }
+  else{
+  str_buffer[str_idx] = (char)character;
+  str_buffer[str_idx + 1] = '\0';
+  str_idx++;
+  }
+
+  Paint_ClearWindows(0, 0, 320, 18, BLACK);
+  Paint_DrawString_EN(2, 2, str_buffer, key_text.font_size, key_text.color, key_text.background);
 
   LCD_2IN_Display((uint8_t *)s_buffer);
 
-  x_input_idx++;
 }
 
 
@@ -205,7 +206,7 @@ void core_one_interrupt_handler (void){
 
       
       uint32_t value      =  data   & 0xFFF00000;
-      uint16_t score      =  data   & 0x0000FF00;
+      uint8_t score       =  data   & 0x0000FF00;
       uint8_t  index      =  data   & 0x000000F0;
       actions  action     =  data   & 0x000F0000;
       states   state      =  data   & 0x0000000F;

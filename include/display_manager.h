@@ -50,8 +50,8 @@ const text_properties UI_Text[4] = {
 enum prompt {ARM, REWIRE, YANK};
 
 const text_properties UI_Prompt[3] = {
-  {  62,  110, GRED  , BLACK, &Font20, "   ARM IT    ", 196},  //bottom left
-  {  62,  110, GRED  , BLACK, &Font20, "  REWIRE IT  ", 196},  //bottom left
+  {  62,  110, GRED  , BLACK, &Font20, "   TURN IT   ", 196},  //bottom left
+  {  62,  110, GRED  , BLACK, &Font20, "   WIRE IT   ", 196},  //bottom left
   {  62,  110, GRED  , BLACK, &Font20, "   YANK IT   ", 196},  //bottom left
 };
 
