@@ -1,36 +1,73 @@
-﻿#include "main.h"
+﻿
+#include "pico/multicore.h"
+#include "pico/rand.h"
+#include "pico/stdlib.h"
+#include "hardware/timer.h"
+#include "hardware/irq.h"
+#include "display_manager.h"
+
+
+//multipliers for adding to the FIFO packet
+//  V = value, A = action (enum), P = Points, I = index, S = state (enum)
+//  packet =>  0xVVVAPPIS
+
+#define EDGE_LOW_MASK  0x4444
+#define EDGE_HIGH_MASK 0x8888
+
+    // TODO: Decide if we want to store more values as globals and assemble them in the irq handler
+
+void main_disp(uint16_t countdown, uint8_t score, actions prompt);
+void loading_disp(uint16_t countdown, uint8_t iterations);
+
+    uint32_t packet;
+
+const int key0 = 16;
+const int key1 = 17;
+const int key2 = 18;
+const int key3 = 19;
+
+static uint8_t score = 0;
+states state;
 
 void action_isr(void)
 {
   irq_clear(IO_IRQ_BANK0);
+  volatile uint32_t regValue;
+  int8_t irq_pin;
+  // Inline assembly to read the value of R0 into regValue
+  asm("mov %0, r5" : "=r"(regValue));
 
-  uint32_t gpio_states = *(volatile uint32_t *)(IO_BANK0_BASE + 0x0f8);
-  printf("GPIO_IRQ: %u\n", gpio_states);  // these aren't right
-  bool key0_pressed = (bool) gpio_states & (1 << 3);
-  bool key1_pressed = (bool) gpio_states & (1 << 7);
-  bool key2_pressed = (bool) gpio_states & (1 << 11);
-  bool key3_pressed = (bool) gpio_states & (1 << 15);
+  
+  actions prompt;
 
-
-  if (key0_pressed)
+  switch (regValue)
   {
-    packet |= ACTION_1;
+    case key0:
+      packet = assemble_packet(LOADING, 0, 0, 0, 500);
+      break; 
+    case key1:
+      prompt = (actions)(((get_rand_32() % 3)  + 1) * ACTION);
+      packet = assemble_packet(GAME, 0, prompt, score, 1000);
+      score++;
+      multicore_fifo_push_blocking(packet);
+      break;
+    case key2:
+      irq_pin = 1;
+      packet = assemble_packet(SELECT,0,0,0,0);
+      break;
+    case key3: 
+      irq_pin = 1;
+      packet = assemble_packet(SELECT,1,0,0,0);
+      break;
+    default:
+    packet = assemble_packet(LOADING, 1, 0, 0, 200);
+    multicore_fifo_push_blocking(packet);
+    break;
   }
-  else if (key1_pressed)
-  {
-    packet |= ACTION_2;
+  if(irq_pin != 0){
+    multicore_fifo_push_blocking(packet);
   }
-  else if (key2_pressed)
-  {
-    packet |= ACTION_3;
-  }
-  else if (key3_pressed)
-  {
-    packet |= ACTION_4;
-  }
-
-  multicore_fifo_push_blocking(packet);
-
+  irq_pin = 0;
 }
 
 
@@ -63,60 +100,25 @@ int init(void)
   }
 }
 
-inline uint32_t assemble_packet(states state, uint8_t index, actions action, uint8_t score, uint16_t data)
-{
-  uint32_t packet = 0;
-  packet |= state;
-  packet |= action;
-  packet |= index   * INDEX;
-  packet |= score   * SCORE;
-  packet |= data    * VALUE;
-  return packet;
-}
-
-void loading_disp(uint16_t countdown, uint8_t iterations){
-  uint16_t interval = countdown / 10;
-  for(int j = 0; j < iterations; j++){
-    for (int i = 0; i < 10; i++)
-    {
-      packet = assemble_packet(LOADING, i, 0, 0, countdown);
-      multicore_fifo_push_blocking(packet);
-      busy_wait_ms(interval);
-    }
-  }
-}
-
-void main_disp(uint16_t countdown, uint8_t score, actions action)
-{
-  uint16_t interval = countdown / 10;
-    for (int i = 0; i < 10; i++)
-    {
-      packet = assemble_packet(GAME, i, 0, action, countdown);
-      multicore_fifo_push_blocking(packet);
-      busy_wait_ms(interval);
-    }
-}
 
 int main(void)
 {
   init();
 
-  int16_t time_rate = 0;
-
-  int16_t time = 500;
-  uint8_t score;
-  uint8_t index;
-  actions action;
+  int16_t time_rate = 20;
+  int16_t time = 100;
+  actions action = (actions)(((rand() % 3)  + 1) * ACTION);
 
   state = LOADING;
   
-  loading_disp(time, 2);
- 
-  do{
-    //Wait for select
+  packet = assemble_packet(state, 0, action, score, time);
+  multicore_fifo_push_blocking(packet);
+
+  // do{
+  //   //Wait for select
 
 
-  }while(1);
+  // }while(1);
   
   //500ms load
 
@@ -124,10 +126,10 @@ int main(void)
 
   //Press Enter to start
 
-  do{
+  // do{
 
 
-  }while(1);
+  // }while(1);
 
   //generate random number and pass to core 1
   //wait for response
@@ -135,9 +137,11 @@ int main(void)
   //if incorrect, decrement score and time rate
 
 
-  display_exit();
-
+  
   while(1){tight_loop_contents();}
+
+
+  display_exit();
 
   return 0;
 }

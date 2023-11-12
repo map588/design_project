@@ -1,9 +1,5 @@
-#include "pico/stdio.h"
-#include "pico/stdlib.h"
-#include "pico/printf.h"
-#include "hardware/pio.h"
-#include "hardware/irq.h"
 #include "keyboard.h"
+#include "pico/printf.h"
 #include "keyboard.pio.h"
 
 #define DATA_PIN 14
@@ -12,6 +8,7 @@
 PIO pio = pio1;
 uint sm = 0;
 
+uint32_t key_packet;
 
 void get_code()
 {
@@ -55,8 +52,8 @@ void get_code()
 				         else
 					        input = (scan_codes[i][1]);
 
-                    packet = assemble_packet(KEYPRESS, 0, 0, (uint8_t) input, 0);
-                    multicore_fifo_push_blocking(packet);
+                    key_packet = assemble_packet(KEYPRESS, 0, 0, (uint8_t) input, 0);
+                    multicore_fifo_push_blocking(key_packet);
                     break;
 		}
 }

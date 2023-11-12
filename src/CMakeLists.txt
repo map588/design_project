@@ -31,10 +31,16 @@ target_link_libraries(main LINK_PUBLIC
     Fonts
     )
 
+    target_compile_definitions(main PUBLIC
+        PICO_STACK_SIZE=4096
+        PICO_CORE1_STACK_SIZE=4096
+        PICO_HEAP_SIZE=8192
+        )
 
 # disable usb output, enable uart output
 pico_enable_stdio_usb(main 0)
 pico_enable_stdio_uart(main 1)
+
 
 
     # create disassembly with source

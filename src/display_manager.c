@@ -1,6 +1,7 @@
 
 #include "display_manager.h"
 #include "pico/stdlib.h"
+#include "text_properties.h"
 
 //    0,0             320              X
 //       _______________________________
@@ -14,6 +15,16 @@
 //
 
 uint16_t *s_buffer;
+
+bool select_state = false;
+bool game_state = false;
+bool load_state = false;
+
+void clearflags(){
+  select_state = false;
+  game_state = false;
+  load_state = false;
+}
 
 
 uint16_t *const alloc_const_buffer (UDOUBLE size){
@@ -52,96 +63,104 @@ bool init_display (void){
 //The positions of the arrow when in select state
 const int arr_pos[3] = {64, 152, 240};
 
-void select_display (actions key){  //TODO: Something needs to hold the state for the arrow position
+void select_display (uint8_t key){  //TODO: Something needs to hold the state for the arrow position
 
-  LCD_2IN_Clear(BLACK);
+  static uint8_t last_key = 0;
+
+  if(last_key > 0      && key == 0)
+    last_key--;
+  else if(last_key < 2 && key == 1)
+    last_key++;
+
+ 
   Paint_SelectImage ((UBYTE *)s_buffer);
-  Paint_ClearWindows(0, 200, 319, 239, BLACK); //bottom bar
 
-  Paint_DrawString_EN (110, 25, "Which Wire?",&Font16, WHITE, BLACK);
-  Paint_DrawString_EN ( 44, 55, "(easy)",     &Font12, WHITE, BLACK);
-  Paint_DrawString_EN (124, 55, "(medium)",   &Font12, WHITE, BLACK);
-  Paint_DrawString_EN (224, 55, "(hard)",     &Font12, WHITE, BLACK);
+  if(!select_state){
+   LCD_2IN_Clear(BLACK);
+   Paint_Clear(BLACK);
+  }
+  else{
+   Paint_ClearWindows(0, 200, 319, 239, BLACK); // bottom bar
+  }
+   Paint_DrawString_EN(110, 25, "Which Wire?", &Font16, WHITE, BLACK);
+   Paint_DrawString_EN(44, 55, "(easy)", &Font12, WHITE, BLACK);
+   Paint_DrawString_EN(124, 55, "(medium)", &Font12, WHITE, BLACK);
+   Paint_DrawString_EN(224, 55, "(hard)", &Font12, WHITE, BLACK);
 
+   Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+   Paint_DrawLine(158, 80, 158, 200, BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+   Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
 
-  Paint_DrawLine ( 70, 80,  70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-  Paint_DrawLine (158, 80, 158, 200,  BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-  Paint_DrawLine (246, 80, 246, 200,   RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+   int arrow_pos = arr_pos[last_key]; // %3 to prevent overflow, in case that is possible
 
-  uint8_t key_index = (key >> 16) - 1;  
-  int arrow_pos  = arr_pos[key_index%3];  // %3 to prevent overflow, in case that is possible
+   Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
 
-  Paint_DrawString_EN (arrow_pos, 210, "^", &Font20, WHITE, BLACK);
-
-  LCD_2IN_Display ((UBYTE *)s_buffer);
+   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
 
 
 
 void countdown_bar(uint8_t index){
- uint16_t x1;
- uint16_t x2;
- uint16_t y1;
- uint16_t y2;
-  if(index == 0){
-  Paint_SelectImage ((UBYTE *)s_buffer);
-  Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
-  x1 = load_properties.x1;
-  x2 = load_properties.x1 + load_properties.width - 5;
+  uint16_t x1;
+  uint16_t x2;
+  uint16_t y1;
+  uint16_t y2;
+  y1 = load_properties.y1;
+  y2 = load_properties.y2;
+ if (index == 0)
+ {
+   Paint_SelectImage((UBYTE *)s_buffer);
+   Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
+   x1 = load_properties.x1;
+   x2 = load_properties.x1 + load_properties.width - 5;
   } else {
   x1 = load_properties.x1 + load_properties.width * index;
   x2 = load_properties.x1 + load_properties.width * (index + 1) - 5;
   } 
-  y1 = load_properties.y1;
-  y2 = load_properties.y2;
+  
   Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  LCD_2IN_Display((UBYTE *)s_buffer);
+
   if(index == 9){
-   Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
-   LCD_2IN_Display((UBYTE *)s_buffer);
+  LCD_2IN_Display((UBYTE *)s_buffer);
+  Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
   }
+  LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
 
 void populate_UI_elements(uint16_t countdown, uint8_t score){
-Paint_ClearWindows(0,   0, 319,  20, BLACK);    // top bar
-Paint_ClearWindows(0, 220,  80, 239, BLACK);    //approximately time window
-uint8_t round   =       score / 20;
-uint8_t n_round = 20 - (score % 20);
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_ClearWindows(0, 0, 319, 20, BLACK);   // top bar
+  Paint_ClearWindows(0, 220, 80, 239, BLACK); // approximately time window
+  uint8_t round = score / 20;
+  uint8_t n_round = 20 - (score % 20);
 
-//All have an extra 2 bytes for a null and a mistake
-char *score_str  = malloc(14); //8 + 1 + 2 + 1 + 2 = 14
-char *round_str  = malloc(14); //8 + 1 + 2 + 1 + 2 = 14
-char *nextR_str  = malloc(14); //8 + 1 + 2 + 1 + 2 = 14
-char *time_str   = malloc(18); //8 + 1 + 4 + 1 + 2 + 2 = 18
+  // All have an extra 2 bytes for a null and a mistake
+  char score_str[14]; // 8 + 1 + 2 + 1 + 2 = 14
+  char round_str[14]; // 8 + 1 + 2 + 1 + 2 = 14
+  char nextR_str[14]; // 8 + 1 + 2 + 1 + 2 = 14
+  char time_str[18];  // 8 + 1 + 4 + 1 + 2 + 2 = 18
 
-sprintf(score_str, "%s %u"   , UI_Text[SCORE].text , score);
-sprintf(round_str, "%s %u"   , UI_Text[ROUND].text , round);
-sprintf(nextR_str, "%s %u"   , UI_Text[NEXT].text  , n_round);
-sprintf(time_str , "%s %u ms", UI_Text[TIME].text  , countdown);
+  sprintf(score_str, "%s %u", UI_Text[SCORE].text, score);
+  sprintf(round_str, "%s %u", UI_Text[ROUND].text, round);
+  sprintf(nextR_str, "%s %u", UI_Text[NEXT].text, n_round);
+  sprintf(time_str, "%s %u ms", UI_Text[TIME].text, countdown);
 
-Paint_SelectImage ((UBYTE *)s_buffer);
+  Paint_DrawString_EN(UI_Text[SCORE].x, UI_Text[SCORE].y, score_str,
+                      UI_Text[SCORE].font_size, UI_Text[SCORE].color, UI_Text[SCORE].background);
 
-Paint_DrawString_EN (UI_Text[SCORE].x, UI_Text[SCORE].y, score_str, 
-UI_Text[SCORE].font_size, UI_Text[SCORE].color, UI_Text[SCORE].background);
+  Paint_DrawString_EN(UI_Text[ROUND].x, UI_Text[ROUND].y, round_str,
+                      UI_Text[ROUND].font_size, UI_Text[ROUND].color, UI_Text[ROUND].background);
 
-Paint_DrawString_EN (UI_Text[ROUND].x, UI_Text[ROUND].y, round_str, 
-UI_Text[ROUND].font_size, UI_Text[ROUND].color, UI_Text[ROUND].background);
+  Paint_DrawString_EN(UI_Text[NEXT].x, UI_Text[NEXT].y, nextR_str,
+                      UI_Text[NEXT].font_size, UI_Text[NEXT].color, UI_Text[NEXT].background);
 
-Paint_DrawString_EN (UI_Text[NEXT].x , UI_Text[NEXT].y , nextR_str, 
-UI_Text[NEXT].font_size , UI_Text[NEXT].color , UI_Text[NEXT].background );
+  Paint_DrawString_EN(UI_Text[TIME].x, UI_Text[TIME].y, time_str,
+                      UI_Text[TIME].font_size, UI_Text[TIME].color, UI_Text[TIME].background);
 
-Paint_DrawString_EN (UI_Text[TIME].x , UI_Text[TIME].y , time_str , 
-UI_Text[TIME].font_size , UI_Text[TIME].color , UI_Text[TIME].background );
+  LCD_2IN_Display((UBYTE *)s_buffer);
 
-
-LCD_2IN_Display((UBYTE *)s_buffer);
-
-free(score_str);
-free(round_str);
-free(nextR_str);
-free(time_str);
 }
 
 
@@ -162,6 +181,10 @@ int write_prompt(uint8_t action){
 
 
 void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
+  if(!game_state){
+    Paint_Clear(BLACK);
+    game_state = true;
+  }
   if(index == 0){
   Paint_SelectImage ((UBYTE *)s_buffer);
   write_prompt(action);
@@ -170,14 +193,33 @@ void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
   countdown_bar(index);
 }
 
+const char *  state_str[7] = {"LOAD", "SEL ", "GAME", "PASS", "FAIL", "RST ", "KEY "};
+const char * action_str[4] = {"TURN", "WIRE", "YANK", "NOP "};
 
+
+void displayPacket(uint16_t value, uint8_t score, uint8_t index, uint8_t action, uint8_t state){
+  Paint_SelectImage ((UBYTE *)s_buffer);
+  Paint_ClearWindows(30, 32, 240, 45, BLACK); //bottom bar
+
+  char state_s[5];
+  char action_s[5];
+  char packet_s[23];
+
+  sprintf(action_s, "%s", action_str[action]);
+  sprintf(state_s, "%s", state_str[state]);
+  sprintf(packet_s, "%u_%u #%u %s %s", value, score, index, action_s, state_s);
+  Paint_DrawString_EN (30, 40, packet_s, &Font12, WHITE, BLACK);
+  packet_s[0] = '\0';
+  LCD_2IN_Display((UBYTE *)s_buffer);
+}
 
 void display_key(uint8_t character){
   static int  str_idx = 0;
-  static char str_buffer[256];
+  static char str_buffer[128];
 
 
   Paint_SelectImage((uint8_t *) s_buffer);
+
   if(character == 0x66){ //backspace
     str_buffer[str_idx] = '\0';
     if(str_idx > 0){str_idx--;}
@@ -188,43 +230,71 @@ void display_key(uint8_t character){
   str_idx++;
   }
 
-  Paint_ClearWindows(0, 0, 320, 18, BLACK);
-  Paint_DrawString_EN(2, 2, str_buffer, key_text.font_size, key_text.color, key_text.background);
+  //Paint_ClearWindows(0, 0, 320, 18, BLACK);
+  //Paint_DrawString_EN(2, 2, str_buffer, key_text.font_size, key_text.color, key_text.background);
 
   LCD_2IN_Display((uint8_t *)s_buffer);
 
 }
 
 
+void loading_disp(uint16_t countdown){
+  uint32_t interval = countdown / 10;
+    for (int i = 0; i < 10; i++)
+    {
+      countdown_bar(i);
+      busy_wait_ms(interval);    
+    }
+}
+
+void main_disp(uint16_t countdown, uint8_t score, uint8_t prompt)
+{
+  uint32_t interval = countdown / 10;
+    for (int i = 0; i < 10; i++)
+    {
+      game_UI(countdown, score, i, prompt);
+      busy_wait_ms(interval);
+    }
+}
+
+
 
 void core_one_interrupt_handler (void){
   //Allows for retriggers
-  multicore_fifo_clear_irq();
 
-  while(multicore_fifo_rvalid ()){
+  if(multicore_fifo_rvalid ()){
       uint32_t data = multicore_fifo_pop_blocking ();
+                      multicore_fifo_drain();
+                      multicore_fifo_clear_irq ();
 
-      
-      uint32_t value      =  data   & 0xFFF00000;
-      uint8_t score       =  data   & 0x0000FF00;
-      uint8_t  index      =  data   & 0x000000F0;
-      actions  action     =  data   & 0x000F0000;
-      states   state      =  data   & 0x0000000F;
+      uint16_t value      =  (data   & 0xFFF00000) >> 20;
+      uint8_t  action     =  (data   & 0x000F0000) >> 16;
+      uint8_t  score      =  (data   & 0x0000FF00) >> 8;
+      uint8_t  index      =  (data   & 0x000000F0) >> 4;
+      states   state      =   data   & 0x0000000F;
 
-      value >>= 20;
-      score >>= 8;
-      index >>= 4;
+
+      if(action!= 0)
+          action--;
+
+      displayPacket(value, score, index, action, (uint8_t)state);
 
       switch (state)
         {
         case SELECT:
-          select_display(action);
+          if(!select_state)
+            clearflags();
+
+          select_display(index);
+          select_state = true;
           break;
         case LOADING:
-          countdown_bar(index);
+          loading_disp(value);
           break;
         case GAME:
-            game_UI(value, score, index, action);
+          if(!game_state)
+            clearflags();
+            main_disp(value, score, action);
             break;
         case KEYPRESS:
             display_key(score);
@@ -240,10 +310,10 @@ void core_one_interrupt_handler (void){
         default:
           break;
         }
+      
       LCD_2IN_Display ((uint8_t *)s_buffer);
     }
   
-
 }
 
 void core_one_entry (void){

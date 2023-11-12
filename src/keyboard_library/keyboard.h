@@ -1,16 +1,20 @@
 
+#ifndef KEYBOARD_H
+#define KEYBOARD_H
+
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/irq.h"
-#include "display_manager.h"
-
+#include "pico/multicore.h"
+#include "definitions.h"
 
 // PIO program for scanning the keyboard matrix
 void get_code();
 void read_keyboard();
 
 unsigned char input;
+
 
 char scan_codes[][3] =
 {
@@ -55,14 +59,10 @@ char scan_codes[][3] =
 	0x49,'.',':',
 	0x4a,'-','_',
 	0x4b,'l','L',
-	0x4c,'ø',' ',
 	0x4d,'p','P',
 	0x4e,'+','*',
-	0x52,'æ',' ',
-	0x54,'å',' ',
 	0x55,'\\',' ',
 	0x5a,'\r','\r',
-	0x5b,'¨',' ',
 	0x5d,'\'',' ',
 	0x61,'<','>',
 	0x66,'\b','\b',
@@ -82,3 +82,5 @@ char scan_codes[][3] =
 	0x7d,'9',' ',
 	0,'\0','\0',
 };
+
+#endif
