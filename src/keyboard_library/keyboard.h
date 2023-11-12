@@ -10,11 +10,7 @@
 #include "definitions.h"
 
 // PIO program for scanning the keyboard matrix
-void get_code();
-void read_keyboard();
-
-unsigned char input;
-
+void keyboard_init();
 
 char scan_codes[][3] =
 {

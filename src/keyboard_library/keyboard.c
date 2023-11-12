@@ -5,10 +5,14 @@
 #define DATA_PIN 14
 #define CLOCK_PIN 15
 
+void get_code();
+
+
 PIO pio = pio1;
 uint sm = 0;
 
 uint32_t key_packet;
+unsigned char input;
 
 void get_code()
 {

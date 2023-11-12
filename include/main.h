@@ -1,6 +1,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+
 #include "display_manager.h"
 #include "pico/multicore.h"
 #include "pico/rand.h"
