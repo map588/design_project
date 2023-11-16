@@ -18,9 +18,16 @@
 uint16_t *s_buffer;
 
 bool select_state = false;
-bool game_state = false;
-bool load_state = false;
-bool key_state = false;
+bool game_state   = false;
+bool load_state   = false;
+bool key_state    = false;
+bool interrupt    = false;
+
+static uint16_t value;
+static uint8_t action;
+static uint8_t score;
+static uint8_t index;
+static states state;
 
 void clearflags(){
   select_state = false;
@@ -62,11 +69,12 @@ bool init_display (void){
   return true;
 }
 
-//The positions of the arrow when in select state
-const int arr_pos[3] = {64, 152, 240};
-static uint8_t last_key;
 
-void select_display (uint8_t key){ 
+
+void select_display (uint8_t key){
+  // The positions of the arrow when in select state
+  const int arr_pos[3] = {64, 152, 240};
+  static uint8_t last_key;
   
   Paint_SelectImage ((UBYTE *)s_buffer);
 
@@ -98,7 +106,6 @@ void select_display (uint8_t key){
 
    LCD_2IN_Display((UBYTE *)s_buffer);
 }
-
 
 
 
@@ -199,27 +206,19 @@ void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
   countdown_bar(index);
 }
 
-const char *  state_str[7] = {"LOAD", "SEL ", "GAME", "PASS", "FAIL", "RST ", "KEY "};
-const char * action_str[4] = {"TURN", "WIRE", "YANK", "NOP "};
 
 
-void displayPacket(uint8_t status, uint16_t value, uint8_t score, uint8_t index, uint8_t action, uint8_t state){
+void displayPacket( uint16_t value, uint8_t score, uint8_t index, uint8_t action, uint8_t state){
+
+  char packet_s[23];
+  char action_s[5];
+  char  state_s[5];
+
+  const char *state_str[7] = {"LOAD", "SEL ", "GAME", "PASS", "FAIL", "RST ", "KEY "};
+  const char *action_str[4] = {"TURN", "WIRE", "YANK", "NOP "};
+
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(30, 31, 240, 54, BLACK);
-  Paint_ClearWindows(5,  40,  27, 70, BLACK);
-   if(status & 8)
-    Paint_DrawString_EN (10, 30, "ROE", &Font12, WHITE, BLACK);
-   if(status & 4)
-    Paint_DrawString_EN (10, 43, "WOF", &Font12, WHITE, BLACK);
-   if(status & 2)
-    Paint_DrawString_EN (10, 56, "NF ", &Font12, WHITE, BLACK);
-   if(status & 1)
-    Paint_DrawString_EN (10, 69, "NE ", &Font12, WHITE, BLACK);
-  
- 
-  char state_s[5];
-  char action_s[5];
-  char packet_s[23];
 
   sprintf(action_s, "%s", action_str[action]);
   sprintf(state_s, "%s", state_str[state]);
@@ -229,7 +228,12 @@ void displayPacket(uint8_t status, uint16_t value, uint8_t score, uint8_t index,
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
+
 void display_key(uint8_t character){
+
+  static int  str_idx = 0;
+  static char str_buffer[256];
+
   if(!key_state || !load_state){
     clearflags();
     Paint_Clear(BLACK);
@@ -238,9 +242,6 @@ void display_key(uint8_t character){
     clearflags();
     key_state = true;
   }
-
-  static int  str_idx = 0;
-  static char str_buffer[256];
 
   Paint_SelectImage((uint8_t *) s_buffer);
   if(character == 0x66){ //backspace
@@ -256,12 +257,12 @@ void display_key(uint8_t character){
   Paint_ClearWindows(0, 0, 320, 18, BLACK);
   Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
 
-  //LCD_2IN_Display((uint8_t *)s_buffer);
+  LCD_2IN_Display((uint8_t *)s_buffer);
 
 }
 
 
-void loading_disp(uint16_t countdown){
+inline void loading_disp(uint16_t countdown){
   Paint_SelectImage ((uint8_t *)s_buffer);
   if (!load_state){
   clearflags();
@@ -289,27 +290,40 @@ void main_disp(uint16_t countdown, uint8_t score, uint8_t prompt)
 
 
 void core_one_interrupt_handler (void){
-  //Allows for retriggers
 
   if(multicore_fifo_rvalid ()){
       uint32_t data = multicore_fifo_pop_blocking ();
-                      multicore_fifo_drain();
-                      multicore_fifo_clear_irq ();
 
-      uint16_t value      =  (data   & 0xFFF00000) >> 20;
-      uint8_t  action     =  (data   & 0x000F0000) >> 16;
-      uint8_t  score      =  (data   & 0x0000FF00) >> 8;
-      uint8_t  index      =  (data   & 0x000000F0) >> 4;
-      states   state      =   data   & 0x0000000F;
-
-      int status      = multicore_fifo_get_status();
-      uint8_t status_fifo = status & 0x0000000F;
+    
+      value      =  (data   & 0xFFF00000) >> 20;
+      action     =  (data   & 0x000F0000) >> 16;
+      score      =  (data   & 0x0000FF00) >> 8;
+      index      =  (data   & 0x000000F0) >> 4;
+      state      =   data   & 0x0000000F;
 
       if(action!= 0)
           action--;
 
-      displayPacket(status_fifo ,value, score, index, action, (uint8_t)state);
 
+      multicore_fifo_clear_irq();
+      interrupt = 1;
+    }
+    return;
+}
+
+void core_one_entry (void){
+  uint8_t index = 0;
+  if (!init_display())
+    exit(1);
+  
+  multicore_fifo_clear_irq ();
+  irq_set_exclusive_handler (SIO_IRQ_PROC1, core_one_interrupt_handler);
+  irq_set_enabled (SIO_IRQ_PROC1, true);
+
+  while(1){
+
+    while (!interrupt)
+    {
       switch (state)
         {
         case SELECT:
@@ -335,24 +349,13 @@ void core_one_interrupt_handler (void){
         default:
           break;
         }
-      //displayPacket(status_fifo ,value, score, index, action, (uint8_t)state);
-      LCD_2IN_Display ((uint8_t *)s_buffer);
     }
-  
-}
-
-void core_one_entry (void){
-
-  multicore_fifo_clear_irq ();
-  irq_set_exclusive_handler (SIO_IRQ_PROC1, core_one_interrupt_handler);
-  irq_set_enabled (SIO_IRQ_PROC1, true);
-
-  //irq_set_exclusive_handler (TIMER_IRQ_0, core_one_interrupt_handler);
-
-  // pico specific efficent sleep function to call in a "tight_loop"
-  while (1){
-      tight_loop_contents ();
-    }
+  }
+  if(interrupt){
+    index = 0;
+    displayPacket(value, score, index, action, state);
+  }
+  interrupt = 0;
 }
 
 void display_exit (){

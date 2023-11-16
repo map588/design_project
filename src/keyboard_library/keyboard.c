@@ -33,15 +33,15 @@ char scan_codes[] = //with an offset of 0x69, these can be directy index for sca
 
 char special_codes[] = //These follow 0xE0 with offset 0x69
 {
-	' ', // end
+	'e', // end
 	' ', // -
 	'<', // left arrow
-	' ', // home
+	'h', // home
 	' ', // -
 	' ', // -
 	' ', // -
-	' ', // insert
-	' ', // delete
+	'i', // insert
+	'd', // delete
 	'v', // down arrow
 	' ', // -
 	'>', // right arrow
@@ -50,10 +50,10 @@ char special_codes[] = //These follow 0xE0 with offset 0x69
 	' ', // -
 	' ', // -
 	' ', // -
-	' ', // page down
+	'p', // page down
 	' ', // -
 	' ', // -
-	' ', // page up
+	'u', // page up
 };
 char outliers [] = //These follow 0xE0, shift 4 minus 4 gives index 0
 { 
@@ -68,28 +68,25 @@ uint32_t key_packet;
 
 void get_code()
 {
-	pio_interrupt_clear(pio, sm);
-
-	static char bytes[4];
-
 	uint32_t input = pio_sm_get_blocking(pio, sm);
 
-	bytes[0] = (input & 0xFF000000) >> 24;
-	bytes[1] = (input & 0x00FF0000) >> 16;
-	bytes[2] = (input & 0x0000FF00) >> 8;
-	bytes[3] = (input & 0x000000FF);
+	uint8_t bytes[2];
+	bytes[0] = (input >> 22) & 0xFF;
+	bytes[1] = (input >> 12) & 0xFF;
+
 
 	bool numlock   = 0;
 	bool pressed   = 0;
 	
-	char in;
+	uint8_t in;
 
 	char output;
-	for(int i = 1; i < 4; i++){
-		uint8_t prev_data = bytes[i-1];
-		uint8_t data = bytes[i];
+	// for(int i = 1; i < 4; i++){
+	// 	uint8_t data = bytes[i-1];
+	// 	uint8_t data_next = bytes[i];
 
-		switch (prev_data)
+
+		switch (bytes[0])
 			{
 			case 0xF0:  // break code
 				pressed  = 0;
@@ -98,20 +95,20 @@ void get_code()
 				numlock  = !numlock;
 				break;
 			default:
-				switch(prev_data)
+				switch(bytes[0])
 				{
 					case 0xE0:
-						char in = (data >> 4) - 4;
+						in = (bytes[1] >> 4) - 4;
 						if(in < 2)
 						output = outliers[in];
 						break;
 					default:
-						in = prev_data - 0x69;
+					    in = bytes[0] - 0x69;
 
 					if (numlock && in < 21)
-						output = special_codes[prev_data - 0x69];
+						output = special_codes[bytes[0] - 0x69];
 					else if(in  < 20)
-						output = scan_codes[prev_data - 0x69];
+						output = scan_codes[bytes[0] - 0x69];
 
 					if(output == '<' || output == '>' || output == '^' || output == 'v'){
 						key_packet = assemble_packet(KEYPRESS, 1, 0, (uint8_t)output, 0);
@@ -126,28 +123,32 @@ void get_code()
 				pressed = 1;
 				break;
 			}
-		}
+	//	}
 	}
 
 
 void keyboard_init()
 {
-	gpio_init(DATA_PIN);
-	gpio_init(CLOCK_PIN);
+	float freq_khz = 25.8f;
+	pio_gpio_init(pio,DATA_PIN);
+	pio_gpio_init(pio, CLOCK_PIN);
 	gpio_pull_up(DATA_PIN);
 	gpio_pull_up(CLOCK_PIN);
 
 	sm = pio_claim_unused_sm(pio, true);
-	
+
 	// Set up the state machine we're going to use to receive them.
     uint offset = pio_add_program(pio, &keyboard_pio_program);
 
-    pio_sm_config c = pio_get_default_sm_config();
+    pio_sm_config c = keyboard_pio_program_get_default_config(offset);
     sm_config_set_in_pins(&c, DATA_PIN);
-    sm_config_set_in_shift(&c, true, true, 32);
+    sm_config_set_in_shift(&c, true, true, 22);
 
     pio_sm_set_consecutive_pindirs(pio, sm, DATA_PIN, 2, false);
     pio_set_irq0_source_enabled(pio, pis_sm0_rx_fifo_not_empty, true);
+
+	float div = (float)SYS_CLK_KHZ / freq_khz;
+	sm_config_set_clkdiv(&c, div);
 
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);

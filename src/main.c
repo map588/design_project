@@ -12,10 +12,8 @@
 //  V = value, A = action (enum), P = Points, I = index, S = state (enum)
 //  packet =>  0xVVVAPPIS
 
-#define EDGE_LOW_MASK  0x4444
-#define EDGE_HIGH_MASK 0x8888
 
-    // TODO: Decide if we want to store more values as globals and assemble them in the irq handler
+// TODO: Decide if we want to store more values as globals and assemble them in the irq handler
 
 void main_disp(uint16_t countdown, uint8_t score, actions prompt);
 void loading_disp(uint16_t countdown, uint8_t iterations);
@@ -33,47 +31,51 @@ states state;
 void action_isr(void)
 {
   irq_clear(IO_IRQ_BANK0);
-  volatile uint32_t regValue;
-  int8_t irq_pin;
-  // Inline assembly to read the value of R0 into regValue
-  asm("mov %0, r5" : "=r"(regValue));
+
+  irq_clear(SIO_IRQ_PROC1);
+  irq_set_enabled(SIO_IRQ_PROC1, false);
+  
+
+  volatile uint32_t irq_pin;
+  // Inline assembly to read the value of R0 into irq_pin
+  asm("mov %0, r5" : "=r"(irq_pin));
 
   
   actions prompt;
 
-  switch (regValue)
+  switch (irq_pin)
   {
     case key0:
       packet = assemble_packet(LOADING, 0, 0, 0, 500);
       break; 
     case key1:
-      prompt = (actions)(((get_rand_32() % 3)  + 1) * ACTION);
+      prompt = (actions)(((get_rand_32() % 3)  + 1) * ACTION);  //This will be used elsewhere when we impliment the game logic
       packet = assemble_packet(GAME, 0, prompt, score, 1000);
       score++;
-      multicore_fifo_push_blocking(packet);
       break;
     case key2:
-      irq_pin = 1;
       packet = assemble_packet(SELECT,0,0,0,0);
       break;
     case key3: 
-      irq_pin = 1;
       packet = assemble_packet(SELECT,1,0,0,0);
       break;
     default:
     packet = assemble_packet(LOADING, 1, 0, 0, 200);
-    multicore_fifo_push_blocking(packet);
     break;
   }
-  if(irq_pin != 0){
+    irq_set_enabled(SIO_IRQ_PROC1, true);
     multicore_fifo_push_blocking(packet);
-  }
-  irq_pin = 0;
 }
 
 
 int init(void)
 {
+
+  if(!set_sys_clock_khz(SYS_CLK_KHZ, true))
+  {
+    exit(1);
+  }
+
 
   stdio_init_all();
 
@@ -95,10 +97,6 @@ int init(void)
   keyboard_init();
   multicore_launch_core1(core_one_entry);
 
-  if (!init_display())
-  {
-    exit(1);
-  }
 }
 
 

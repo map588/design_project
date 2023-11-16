@@ -1,21 +1,36 @@
 .program keyboard_pio
-
 ;pins  0 data
 ;      1 clock
+    set  y,    3  ;4 bytes
+ nextbyte:
+    set  x,    7  ;8 bits
+    wait 0 pin 1  ;wait for clock to go low
+    wait 0 pin 0  ;wait for data to go low
+ bitloop:
 
- set pindirs, 0
-.wrap_target
-set  y,    3  ;4 bytes
-nextbyte: 
-set  x,    7  ;8 bits
-wait 1 pin 0  ;trap until data pin goes low
-bitloop:
-    wait 0 pin 1 ;on rising edge of clock
+    wait 0 pin 1 ;on falling edge of clock
     in pins,   1 ;read data into shift register
-    wait 1 pin 1 ;on falling edge of clock
+    wait 1 pin 1 ;on rising edge of clock
     jmp x-- bitloop
-    jmp y-- nextbyte[1] ;skip parity bit
-    
+
+    wait 0 pin 1 ;on falling edge of clock
+    wait 1 pin 1 ;on rising edge of clock
+
+    wait 1 pin 0 ;wait for data to go high
+    wait 1 pin 1 ;wait for clock to go high
+    jmp y-- nextbyte
+
 .wrap
 
 
+    set y, 1
+nextbyte:
+    wait 0 pin 0
+    set x 10
+    
+bitloop:
+    wait 0 pin 1
+    in pins, 1
+    wait 1 pin 1
+    jmp x-- bitloop
+    jmp y-- nextbyte

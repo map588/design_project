@@ -1,7 +1,7 @@
 # add source files
 add_executable(main
-            main.c
-            display_manager.c
+                main.c
+                display_manager.c
             )
 
 
