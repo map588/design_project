@@ -3,18 +3,19 @@
 ;pins  0 data
 ;      1 clock
 
-
-start:
-wait 0 pin 0     ;trap until data pin goes high
-
-get_data:
-    set x 10     ;10 bits
+ set pindirs, 0
+.wrap_target
+set  y,    3  ;4 bytes
+nextbyte: 
+set  x,    7  ;8 bits
+wait 1 pin 0  ;trap until data pin goes low
 bitloop:
     wait 0 pin 1 ;on rising edge of clock
-    in pins, 1   ;read data into shift register
+    in pins,   1 ;read data into shift register
     wait 1 pin 1 ;on falling edge of clock
     jmp x-- bitloop
-    jmp start
-
+    jmp y-- nextbyte[1] ;skip parity bit
+    
+.wrap
 
 

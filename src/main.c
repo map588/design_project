@@ -5,6 +5,7 @@
 #include "hardware/timer.h"
 #include "hardware/irq.h"
 #include "display_manager.h"
+#include "keyboard_library/keyboard.h"
 
 
 //multipliers for adding to the FIFO packet

@@ -182,12 +182,12 @@ int write_prompt(uint8_t action){
 
 
 void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
-  if(!game_state || !load_state){
+  if(!game_state && load_state){
+    clearflags();
+    game_state = true;
+  }else if(!game_state){
     clearflags();
     Paint_Clear(BLACK);
-    game_state = true;
-  }else if(load_state){
-    clearflags();
     game_state = true;
   }
 
@@ -240,7 +240,7 @@ void display_key(uint8_t character){
   }
 
   static int  str_idx = 0;
-  static char str_buffer[128];
+  static char str_buffer[256];
 
   Paint_SelectImage((uint8_t *) s_buffer);
   if(character == 0x66){ //backspace
@@ -253,10 +253,10 @@ void display_key(uint8_t character){
   str_idx++;
   }
 
-  //Paint_ClearWindows(0, 0, 320, 18, BLACK);
-  //Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
+  Paint_ClearWindows(0, 0, 320, 18, BLACK);
+  Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
 
-  LCD_2IN_Display((uint8_t *)s_buffer);
+  //LCD_2IN_Display((uint8_t *)s_buffer);
 
 }
 
@@ -335,7 +335,7 @@ void core_one_interrupt_handler (void){
         default:
           break;
         }
-      displayPacket(status_fifo ,value, score, index, action, (uint8_t)state);
+      //displayPacket(status_fifo ,value, score, index, action, (uint8_t)state);
       LCD_2IN_Display ((uint8_t *)s_buffer);
     }
   
