@@ -1,5 +1,6 @@
 
 #include "display_manager.h"
+#include "display_functions.h"
 #include "pico/stdlib.h"
 #include "text_properties.h"
 
@@ -23,18 +24,30 @@ bool load_state   = false;
 bool key_state    = false;
 bool interrupt    = false;
 
-static uint16_t value;
-static uint8_t action;
-static uint8_t score;
-static uint8_t index;
-static states state;
+static uint16_t value = 1000;
+static uint8_t action = 0;
+static uint8_t score = 0;
 
-void clearflags(){
+static states state = LOADING;
+
+static repeating_timer_t idx_timer;
+static uint8_t index = 0;
+static uint8_t last_index = 0;
+
+static bool idx_timer_callback(repeating_timer_t *rt){
+  last_index = index++;
+  if(index > 9){
+    index = 0;
+    return false;
+  } 
+  return true;
+}
+
+inline void clearflags(){
   select_state = false;
   game_state = false;
   load_state = false;
 }
-
 
 uint16_t *const alloc_const_buffer (UDOUBLE size){
 uint16_t *const buffer = (UWORD *)malloc (size);
@@ -42,7 +55,7 @@ return buffer;
 }
 
 
-bool init_display (void){
+bool init_display (){
   DEV_Delay_ms (100);
   if (DEV_Module_Init () != 0){
       return false;
@@ -70,8 +83,7 @@ bool init_display (void){
 }
 
 
-
-void select_display (uint8_t key){
+ void select_display (uint8_t key){
   // The positions of the arrow when in select state
   const int arr_pos[3] = {64, 152, 240};
   static uint8_t last_key;
@@ -79,9 +91,10 @@ void select_display (uint8_t key){
   Paint_SelectImage ((UBYTE *)s_buffer);
 
   
-  if(last_key > 0      && key == 0)
+  if(last_key > 0 && key == 0)
     last_key--;
-  else if(last_key < 2 && key == 1)
+  else 
+  if(last_key < 2 && key == 1)
     last_key++;
 
   
@@ -108,8 +121,7 @@ void select_display (uint8_t key){
 }
 
 
-
-void countdown_bar(uint8_t index){
+ void countdown_bar(uint8_t index){
   uint16_t x1;
   uint16_t x2;
   uint16_t y1;
@@ -117,11 +129,11 @@ void countdown_bar(uint8_t index){
   y1 = load_properties.y1;
   y2 = load_properties.y2;
  if (index == 0)
- {
-   Paint_SelectImage((UBYTE *)s_buffer);
-   Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
-   x1 = load_properties.x1;
-   x2 = load_properties.x1 + load_properties.width - 5;
+  {
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
+  x1 = load_properties.x1;
+  x2 = load_properties.x1 + load_properties.width - 5;
   } else {
   x1 = load_properties.x1 + load_properties.width * index;
   x2 = load_properties.x1 + load_properties.width * (index + 1) - 5;
@@ -137,42 +149,41 @@ void countdown_bar(uint8_t index){
 }
 
 
-void populate_UI_elements(uint16_t countdown, uint8_t score){
-  Paint_SelectImage((UBYTE *)s_buffer);
-  Paint_ClearWindows(0, 0, 319, 29, BLACK);   // top bar
-  Paint_ClearWindows(0, 220, 80, 239, BLACK); // approximately time window
-  uint8_t round = score / 20;
-  uint8_t n_round = 20 - (score % 20);
+  void populate_UI_elements(uint16_t countdown, uint8_t score){
+    Paint_SelectImage((UBYTE *)s_buffer);
+    Paint_ClearWindows(0, 0, 319, 29, BLACK);   // top bar
+    Paint_ClearWindows(0, 220, 80, 239, BLACK); // approximately time window
+    uint8_t round = score / 20;
+    uint8_t n_round = 20 - (score % 20);
 
-  // All have an extra 2 bytes for a null and a mistake
-  char score_str[14]; // 8 + 1 + 2 + 1 + 2 = 14
-  char round_str[14]; // 8 + 1 + 2 + 1 + 2 = 14
-  char nextR_str[14]; // 8 + 1 + 2 + 1 + 2 = 14
-  char time_str[18];  // 8 + 1 + 4 + 1 + 2 + 2 = 18
+    // All have an extra 2 bytes for a null and a mistake
+    char score_str[14]; // 8 + 1 + 2 + 1 + 2 = 14
+    char round_str[14]; // 8 + 1 + 2 + 1 + 2 = 14
+    char nextR_str[14]; // 8 + 1 + 2 + 1 + 2 = 14
+    char time_str[18];  // 8 + 1 + 4 + 1 + 2 + 2 = 18
 
-  sprintf(score_str, "%s %u", UI_Text[SCORE].text, score);
-  sprintf(round_str, "%s %u", UI_Text[ROUND].text, round);
-  sprintf(nextR_str, "%s %u", UI_Text[NEXT].text, n_round);
-  sprintf(time_str, "%s %u ms", UI_Text[TIME].text, countdown);
+    sprintf(score_str, "%s %u", UI_Text[SCORE].text, score);
+    sprintf(round_str, "%s %u", UI_Text[ROUND].text, round);
+    sprintf(nextR_str, "%s %u", UI_Text[NEXT].text, n_round);
+    sprintf(time_str, "%s %u ms", UI_Text[TIME].text, countdown);
 
-  Paint_DrawString_EN(UI_Text[SCORE].x, UI_Text[SCORE].y, score_str,
-                      UI_Text[SCORE].font_size, UI_Text[SCORE].color, UI_Text[SCORE].background);
+    Paint_DrawString_EN(UI_Text[SCORE].x, UI_Text[SCORE].y, score_str,
+                        UI_Text[SCORE].font_size, UI_Text[SCORE].color, UI_Text[SCORE].background);
 
-  Paint_DrawString_EN(UI_Text[ROUND].x, UI_Text[ROUND].y, round_str,
-                      UI_Text[ROUND].font_size, UI_Text[ROUND].color, UI_Text[ROUND].background);
+    Paint_DrawString_EN(UI_Text[ROUND].x, UI_Text[ROUND].y, round_str,
+                        UI_Text[ROUND].font_size, UI_Text[ROUND].color, UI_Text[ROUND].background);
 
-  Paint_DrawString_EN(UI_Text[NEXT].x, UI_Text[NEXT].y, nextR_str,
-                      UI_Text[NEXT].font_size, UI_Text[NEXT].color, UI_Text[NEXT].background);
+    Paint_DrawString_EN(UI_Text[NEXT].x, UI_Text[NEXT].y, nextR_str,
+                        UI_Text[NEXT].font_size, UI_Text[NEXT].color, UI_Text[NEXT].background);
 
-  Paint_DrawString_EN(UI_Text[TIME].x, UI_Text[TIME].y, time_str,
-                      UI_Text[TIME].font_size, UI_Text[TIME].color, UI_Text[TIME].background);
+    Paint_DrawString_EN(UI_Text[TIME].x, UI_Text[TIME].y, time_str,
+                        UI_Text[TIME].font_size, UI_Text[TIME].color, UI_Text[TIME].background);
 
-  LCD_2IN_Display((UBYTE *)s_buffer);
-
+    LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
 
-int write_prompt(uint8_t action){
+  int write_prompt(uint8_t action){
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(0, 90, 319, 150, BLACK); //rough prompt window
 
@@ -187,8 +198,7 @@ int write_prompt(uint8_t action){
 }
 
 
-
-void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
+ void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
   if(!game_state && load_state){
     clearflags();
     game_state = true;
@@ -208,7 +218,7 @@ void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
 
 
 
-void displayPacket( uint16_t value, uint8_t score, uint8_t index, uint8_t action, uint8_t state){
+inline void displayPacket( uint16_t value, uint8_t score, uint8_t index, uint8_t action, uint8_t state){
 
   char packet_s[23];
   char action_s[5];
@@ -229,7 +239,7 @@ void displayPacket( uint16_t value, uint8_t score, uint8_t index, uint8_t action
 }
 
 
-void display_key(uint8_t character){
+ void display_key(uint8_t character){
 
   static int  str_idx = 0;
   static char str_buffer[256];
@@ -262,57 +272,31 @@ void display_key(uint8_t character){
 }
 
 
-inline void loading_disp(uint16_t countdown){
-  Paint_SelectImage ((uint8_t *)s_buffer);
-  if (!load_state){
-  clearflags();
-  Paint_Clear(BLACK);
-  load_state = true;
-  }
-  uint32_t interval = countdown / 10;
-    for (int i = 0; i < 10; i++)
-    {
-      countdown_bar(i);
-      busy_wait_ms(interval);    
-    }
-}
-
-void main_disp(uint16_t countdown, uint8_t score, uint8_t prompt)
-{
-  uint32_t interval = countdown / 10;
-    for (int i = 0; i < 10; i++)
-    {
-      game_UI(countdown, score, i, prompt);
-      busy_wait_ms(interval);
-    }
-}
-
-
-
 void core_one_interrupt_handler (void){
 
-  if(multicore_fifo_rvalid ()){
+  while(multicore_fifo_rvalid ()){
       uint32_t data = multicore_fifo_pop_blocking ();
 
     
-      value      =  (data   & 0xFFF00000) >> 20;
-      action     =  (data   & 0x000F0000) >> 16;
-      score      =  (data   & 0x0000FF00) >> 8;
-      index      =  (data   & 0x000000F0) >> 4;
+      value      =  (data   & 0xFFFF0000) >> 16;
+      score      =  (data   & 0x0000FF00) >>  8;
+      action     =  (data   & 0x000000F0) >>  4;
       state      =   data   & 0x0000000F;
 
-      if(action!= 0)
-          action--;
-
-
-      multicore_fifo_clear_irq();
-      interrupt = 1;
+    if(action!= 0)
+        action--;
     }
+
+    index = 0;
+    interrupt = 1; //timer interrupt, returns true
+    multicore_fifo_clear_irq();
+    cancel_repeating_timer(&idx_timer);
+    add_repeating_timer_ms(value / 10, idx_timer_callback, NULL, &idx_timer);
     return;
 }
 
-void core_one_entry (void){
-  uint8_t index = 0;
+void core_one_main (){
+  
   if (!init_display())
     exit(1);
   
@@ -322,7 +306,7 @@ void core_one_entry (void){
 
   while(1){
 
-    while (!interrupt)
+    if (interrupt || last_index != index)
     {
       switch (state)
         {
@@ -330,13 +314,14 @@ void core_one_entry (void){
           select_display(index);
           break;
         case LOADING:
-          loading_disp(value);
+          countdown_bar(index);
+          
           break;
         case GAME:
-            main_disp(value, score, action);
-            break;
+          game_UI(value, score, index, action);
+          break;
         case KEYPRESS:
-            display_key(score);
+          display_key(score);
         // case CORRECT:
         //     correct_disp();
         //     break;
@@ -349,13 +334,14 @@ void core_one_entry (void){
         default:
           break;
         }
+        last_index = index;
+        LCD_2IN_Display((uint8_t *)s_buffer);
     }
   }
   if(interrupt){
-    index = 0;
+    interrupt = 0;
     displayPacket(value, score, index, action, state);
   }
-  interrupt = 0;
 }
 
 void display_exit (){

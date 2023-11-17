@@ -10,10 +10,10 @@
 
 
 
-void core_one_interrupt_handler(void);
-void core_one_entry(void);
+void core_one_interrupt_handler();
 
-bool init_display(void);
+void core_one_main();
+
 
 void display_exit();
 

@@ -55,11 +55,13 @@ char special_codes[] = //These follow 0xE0 with offset 0x69
 	' ', // -
 	'u', // page up
 };
+
 char outliers [] = //These follow 0xE0, shift 4 minus 4 gives index 0
 { 
 	'/',
    '\n',
 };
+
 
 static PIO pio = pio0;
 static uint sm = 0;
@@ -111,11 +113,11 @@ void get_code()
 						output = scan_codes[bytes[0] - 0x69];
 
 					if(output == '<' || output == '>' || output == '^' || output == 'v'){
-						key_packet = assemble_packet(KEYPRESS, 1, 0, (uint8_t)output, 0);
+						key_packet = assemble_packet(KEYPRESS, 0, (uint8_t)output, 1);
 						multicore_fifo_push_blocking(key_packet);
 					}
 					else if(pressed == 0 && output != ' '){
-						key_packet = assemble_packet(KEYPRESS, 0, 0, (uint8_t)output, 0);
+						key_packet = assemble_packet(KEYPRESS, 0, (uint8_t)output, 0);
 						multicore_fifo_push_blocking(key_packet);
 					}
 					break;

@@ -9,14 +9,10 @@
 
 
 //multipliers for adding to the FIFO packet
-//  V = value, A = action (enum), P = Points, I = index, S = state (enum)
-//  packet =>  0xVVVAPPIS
-
+//  V = value, A = action, P = Points (score), S = state
+//  packet =>  0xVVVVPPAS
 
 // TODO: Decide if we want to store more values as globals and assemble them in the irq handler
-
-void main_disp(uint16_t countdown, uint8_t score, actions prompt);
-void loading_disp(uint16_t countdown, uint8_t iterations);
 
     uint32_t packet;
 
@@ -46,25 +42,25 @@ void action_isr(void)
   switch (irq_pin)
   {
     case key0:
-      packet = assemble_packet(LOADING, 0, 0, 0, 500);
+      packet = assemble_packet(LOADING, 0, 0, 500);
       break; 
     case key1:
       prompt = (actions)(((get_rand_32() % 3)  + 1) * ACTION);  //This will be used elsewhere when we impliment the game logic
-      packet = assemble_packet(GAME, 0, prompt, score, 1000);
+      packet = assemble_packet(GAME, prompt, score, 1000);
       score++;
       break;
     case key2:
-      packet = assemble_packet(SELECT,0,0,0,0);
+      packet = assemble_packet(SELECT, 0, 0, 0);
       break;
     case key3: 
-      packet = assemble_packet(SELECT,1,0,0,0);
+      packet = assemble_packet(SELECT, 1, 0, 0);
       break;
     default:
-    packet = assemble_packet(LOADING, 1, 0, 0, 200);
+    packet = assemble_packet(LOADING, 0, 0, 200);
     break;
   }
-    irq_set_enabled(SIO_IRQ_PROC1, true);
     multicore_fifo_push_blocking(packet);
+    irq_set_enabled(SIO_IRQ_PROC1, true);
 }
 
 
@@ -76,8 +72,9 @@ int init(void)
     exit(1);
   }
 
-
   stdio_init_all();
+
+  alarm_pool_init_default();
 
   gpio_set_input_enabled(key0, 1);
   gpio_set_input_enabled(key1, 1);
@@ -94,13 +91,14 @@ int init(void)
   gpio_set_irq_enabled_with_callback(key2, GPIO_IRQ_EDGE_RISE, true, (void *) &action_isr);
   gpio_set_irq_enabled_with_callback(key3, GPIO_IRQ_EDGE_RISE, true, (void *) &action_isr);
 
+
   keyboard_init();
-  multicore_launch_core1(core_one_entry);
+  multicore_launch_core1(core_one_main);
 
 }
 
 
-int main(void)
+int main()
 {
   init();
 
@@ -110,30 +108,8 @@ int main(void)
 
   state = LOADING;
   
-  packet = assemble_packet(state, 0, action, score, time);
+  packet = assemble_packet(state, action, score, time);
   multicore_fifo_push_blocking(packet);
-
-  // do{
-  //   //Wait for select
-
-
-  // }while(1);
-  
-  //500ms load
-
-  //Game Logic
-
-  //Press Enter to start
-
-  // do{
-
-
-  // }while(1);
-
-  //generate random number and pass to core 1
-  //wait for response
-  //if correct, increment score and time rate
-  //if incorrect, decrement score and time rate
 
 
   
