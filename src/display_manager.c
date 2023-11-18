@@ -31,15 +31,22 @@ static uint8_t score = 0;
 static states state = LOADING;
 
 static repeating_timer_t idx_timer;
+static alarm_pool_t idx_alarm_pool;
+
+
 static uint8_t index = 0;
 static uint8_t last_index = 0;
 
-static bool idx_timer_callback(repeating_timer_t *rt){
-  last_index = index++;
+ bool idx_timer_callback(repeating_timer_t *rt){
+  last_index = index;
+  index++;
   if(index > 9){
     index = 0;
     return false;
-  } 
+  }
+
+  gpio_put(25, 1);
+  
   return true;
 }
 
@@ -61,7 +68,6 @@ bool init_display (){
       return false;
     }
   DEV_SET_PWM (50);
-
   LCD_2IN_Init (HORIZONTAL);
   LCD_2IN_Clear (BLACK);
 
@@ -79,8 +85,24 @@ bool init_display (){
   Paint_Clear (BLACK);
   Paint_SetRotate (ROTATE_270);
 
+  gpio_set_dir (hex_0, GPIO_OUT);
+  gpio_set_dir (hex_1, GPIO_OUT);
+  gpio_set_dir (hex_2, GPIO_OUT);
+  gpio_set_dir (hex_3, GPIO_OUT);
+  gpio_set_dir (25, GPIO_OUT);
+
+  gpio_pull_down (hex_0);
+  gpio_pull_down (hex_1);
+  gpio_pull_down (hex_2);
+  gpio_pull_down (hex_3);
+
+  hardware_alarm_claim(1);
+
   return true;
 }
+
+
+
 
 
  void select_display (uint8_t key){
@@ -116,6 +138,7 @@ bool init_display (){
    int arrow_pos = arr_pos[last_key];
 
    Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
+
 
    LCD_2IN_Display((UBYTE *)s_buffer);
 }
@@ -197,6 +220,26 @@ bool init_display (){
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
+  void correct_disp(){
+  Paint_SelectImage ((UBYTE *)s_buffer);
+  Paint_ClearWindows(0, 0, 319, 239, BLACK);
+  Paint_DrawString_EN (110, 100, "CORRECT", &Font20, GREEN, BLACK);
+  LCD_2IN_Display((UBYTE *)s_buffer);
+  }
+
+  void incorrect_disp(){
+  Paint_SelectImage ((UBYTE *)s_buffer);
+  Paint_ClearWindows(0, 0, 319, 239, BLACK);
+  Paint_DrawString_EN (110, 100, "INCORRECT", &Font20, RED, BLACK);
+  LCD_2IN_Display((UBYTE *)s_buffer);
+  }
+
+  void drive_hex(uint8_t hex){
+    gpio_put(hex_0,  hex & 0x01);
+    gpio_put(hex_1, (hex & 0x02) >> 1);
+    gpio_put(hex_2, (hex & 0x04) >> 2);
+    gpio_put(hex_3, (hex & 0x08) >> 3);
+  }
 
  void game_UI(uint16_t countdown, uint8_t score, uint8_t index, uint8_t action){
   if(!game_state && load_state){
@@ -207,6 +250,8 @@ bool init_display (){
     Paint_Clear(BLACK);
     game_state = true;
   }
+
+  drive_hex(index);
 
   if(index == 0){
   Paint_SelectImage ((UBYTE *)s_buffer);
@@ -277,7 +322,7 @@ void core_one_interrupt_handler (void){
   while(multicore_fifo_rvalid ()){
       uint32_t data = multicore_fifo_pop_blocking ();
 
-    
+      
       value      =  (data   & 0xFFFF0000) >> 16;
       score      =  (data   & 0x0000FF00) >>  8;
       action     =  (data   & 0x000000F0) >>  4;
@@ -287,11 +332,15 @@ void core_one_interrupt_handler (void){
         action--;
     }
 
+     cancel_repeating_timer(&idx_timer);
+
+    int32_t interval = (int32_t) value / 10;
+
+    add_repeating_timer_ms(interval, idx_timer_callback, NULL, &idx_timer);
+
     index = 0;
-    interrupt = 1; //timer interrupt, returns true
+    interrupt = 1;
     multicore_fifo_clear_irq();
-    cancel_repeating_timer(&idx_timer);
-    add_repeating_timer_ms(value / 10, idx_timer_callback, NULL, &idx_timer);
     return;
 }
 
@@ -302,11 +351,12 @@ void core_one_main (){
   
   multicore_fifo_clear_irq ();
   irq_set_exclusive_handler (SIO_IRQ_PROC1, core_one_interrupt_handler);
-  irq_set_enabled (SIO_IRQ_PROC1, true);
+
+  irq_set_enabled(SIO_IRQ_PROC1, true);
 
   while(1){
 
-    if (interrupt || last_index != index)
+    if (last_index != index)
     {
       switch (state)
         {
@@ -338,10 +388,17 @@ void core_one_main (){
         LCD_2IN_Display((uint8_t *)s_buffer);
     }
   }
+  if(last_index == index){
+    gpio_put(25, 0);
+  }
+ 
   if(interrupt){
     interrupt = 0;
     displayPacket(value, score, index, action, state);
   }
+
+  while (last_index == index)
+    tight_loop_contents();
 }
 
 void display_exit (){

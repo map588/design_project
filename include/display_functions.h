@@ -2,7 +2,7 @@
 #define DISPLAY_FUNCTIONS
 #include <stdint.h>
 
-void countdown_bar(uint8_t index);
+inline void countdown_bar(uint8_t index);
 bool init_display();
 void select_display(uint8_t key);
 void countdown_bar(uint8_t index);

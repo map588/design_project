@@ -28,9 +28,7 @@ void action_isr(void)
 {
   irq_clear(IO_IRQ_BANK0);
 
-  irq_clear(SIO_IRQ_PROC1);
-  irq_set_enabled(SIO_IRQ_PROC1, false);
-  
+ 
 
   volatile uint32_t irq_pin;
   // Inline assembly to read the value of R0 into irq_pin
@@ -60,7 +58,6 @@ void action_isr(void)
     break;
   }
     multicore_fifo_push_blocking(packet);
-    irq_set_enabled(SIO_IRQ_PROC1, true);
 }
 
 
@@ -74,7 +71,6 @@ int init(void)
 
   stdio_init_all();
 
-  alarm_pool_init_default();
 
   gpio_set_input_enabled(key0, 1);
   gpio_set_input_enabled(key1, 1);
@@ -85,21 +81,19 @@ int init(void)
   gpio_pull_down(key1);
   gpio_pull_down(key2);
   gpio_pull_down(key3);
-  
-  gpio_set_irq_enabled_with_callback(key0, GPIO_IRQ_EDGE_RISE, true, (void *) &action_isr);
-  gpio_set_irq_enabled_with_callback(key1, GPIO_IRQ_EDGE_RISE, true, (void *) &action_isr);
-  gpio_set_irq_enabled_with_callback(key2, GPIO_IRQ_EDGE_RISE, true, (void *) &action_isr);
-  gpio_set_irq_enabled_with_callback(key3, GPIO_IRQ_EDGE_RISE, true, (void *) &action_isr);
 
+    
+    multicore_launch_core1(core_one_main);
+    keyboard_init();
 
-  keyboard_init();
-  multicore_launch_core1(core_one_main);
-
+    gpio_set_irq_enabled_with_callback(key0, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+    gpio_set_irq_enabled_with_callback(key1, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+    gpio_set_irq_enabled_with_callback(key2, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+    gpio_set_irq_enabled_with_callback(key3, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
 }
 
 
-int main()
-{
+int main(){
   init();
 
   int16_t time_rate = 20;

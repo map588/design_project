@@ -1,6 +1,11 @@
 #ifndef DISPLAY_MANAGER_H
 #define DISPLAY_MANAGER_H
 
+#define hex_0  5
+#define hex_1  2
+#define hex_2  3
+#define hex_3  4
+
 #include "definitions.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
@@ -13,7 +18,6 @@
 void core_one_interrupt_handler();
 
 void core_one_main();
-
 
 void display_exit();
 
