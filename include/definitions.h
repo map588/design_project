@@ -11,7 +11,11 @@
 #include <stdint.h>
 
 
+
 void keyboard_init();
+void core_one_main();
+void display_exit();
+
 inline uint32_t assemble_packet(states state, actions action, uint8_t score, uint16_t data)
  {
     uint32_t packet = 0;

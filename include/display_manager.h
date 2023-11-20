@@ -14,12 +14,16 @@
 //#include "../lib/GUI/GUI_Paint.h"
 
 
+bool select_state = false;
+bool game_state   = false;
+bool load_state   = false;
+bool key_state    = false;
+bool interrupt    = false;
 
 void core_one_interrupt_handler();
 
-void core_one_main();
 
-void display_exit();
+
 
 // inline void selection_display(select key);
 
