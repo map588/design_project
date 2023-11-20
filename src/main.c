@@ -76,7 +76,7 @@ int init(void)
 
   stdio_init_all();
 
-  alarm_pool_create(0, 8);
+  alarm_pool_create(0, 4);
   gpio_set_input_enabled(key0, 1);
   gpio_set_input_enabled(key1, 1);
   gpio_set_input_enabled(key2, 1);

@@ -132,7 +132,7 @@ void get_code()
 void keyboard_init()
 {
 	float freq_khz = 25.8f;
-	pio_gpio_init(pio,DATA_PIN);
+	pio_gpio_init(pio, DATA_PIN);
 	pio_gpio_init(pio, CLOCK_PIN);
 	gpio_pull_up(DATA_PIN);
 	gpio_pull_up(CLOCK_PIN);
