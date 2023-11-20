@@ -2,6 +2,7 @@
 //#include "display_functions.h"
 #include "display_manager.h"
 
+
 function_holder display_functions[7] = {
     {countdown_bar, true},
     {select_display, false},
@@ -26,16 +27,17 @@ function_holder display_functions[7] = {
 
 //This is the core 1 stuff
 
-
+static bool fired;
 
 
 bool idx_timer_callback(repeating_timer_t *rt){
   //last_index = index;
   
   displayPacket(value, score, index, action, state);
-  if(display_functions[state].repeating || index == 0)
+  if(display_functions[state].repeating || !fired){
      display_functions[state].func();
-
+      fired = true;
+  }
   ++index;
 
   if(index > 9){
@@ -70,7 +72,6 @@ bool init_display()
   if(!alarm_pool_add_repeating_timer_ms(core1_pool, 0, null_callback, NULL, &idx_timer)){
     return false;
   }
-
   uint32_t Imagesize = LCD_2IN_HEIGHT * LCD_2IN_WIDTH * 2;
 
   //This massive memory allocation needs to be on the heap, but it needs to be stored globally
@@ -106,6 +107,13 @@ bool init_display()
   return true;
 }
 
+//Don't look in display_manager.h, it is a mess
+//This is the interrupt handler for core 1
+//The inline functions in display_manager.h are used to set the display
+//The display_functions array has points to static inline functions, which are indexed using state
+//This ISR sets global variables that are in display_manager.h, and starts the timer
+//The index timer callback uses the state to index which function it should call, and the struct has a boolean
+//To determine if it needs repeating in the index timer, like the countdown bar, etc.
 
 void core_one_interrupt_handler (void){
 
@@ -133,8 +141,8 @@ void core_one_interrupt_handler (void){
     //Add the new timer
     alarm_pool_add_repeating_timer_ms(core1_pool, interval, idx_timer_callback, NULL, &idx_timer);
 
-    //Reset the index, and the debug "interrupt" flag
     index = 0;
+    fired = false;
 
     //clear that mofo
     multicore_fifo_clear_irq();
@@ -154,14 +162,18 @@ void core_one_main (){
 
   //sets the interrupt handler for core 1 and enables it
   irq_set_exclusive_handler (SIO_IRQ_PROC1, core_one_interrupt_handler);
+
+
+  //default priority is 0x80, so this will take priority over the timer
+  irq_set_priority(SIO_IRQ_PROC1, 0x00);
   irq_set_enabled(SIO_IRQ_PROC1, true);
 
 
   //This is where the magic happens
-  while (true){ tight_loop_contents();}
-
+  while (true) tight_loop_contents(); // special NOP function
 
  }
+
 
 void display_exit (){
 
