@@ -131,14 +131,14 @@ inline void clearflags(){
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
-inline void correct_disp(){
+ void correct_disp(){
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(0, 0, 319, 239, BLACK);
   Paint_DrawString_EN (110, 100, "CORRECT", &Font20, GREEN, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
   }
 
-inline void incorrect_disp(){
+ void incorrect_disp(){
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(0, 0, 319, 239, BLACK);
   Paint_DrawString_EN (110, 100, "INCORRECT", &Font20, RED, BLACK);

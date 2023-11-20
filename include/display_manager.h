@@ -18,7 +18,6 @@ bool select_state = false;
 bool game_state   = false;
 bool load_state   = false;
 bool key_state    = false;
-bool interrupt    = false;
 
 void core_one_interrupt_handler();
 

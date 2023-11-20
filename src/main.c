@@ -51,10 +51,10 @@ void action_isr(void)
       score++;
       break;
     case key2:
-      packet = assemble_packet(SELECT, 0, 0, 0);
+      packet = assemble_packet(SELECT, TURN_IT, 0, 0);
       break;
     case key3: 
-      packet = assemble_packet(SELECT, 1, 0, 0);
+      packet = assemble_packet(SELECT, YANK_IT, 0, 0);
       break;
     default:
     packet = assemble_packet(LOADING, 0, 0, 200);
