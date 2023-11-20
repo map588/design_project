@@ -30,32 +30,8 @@ function_holder display_functions[7] = {
 static bool fired;
 
 
-bool idx_timer_callback(repeating_timer_t *rt){
-  //last_index = index;
-  
-  displayPacket(value, score, index, action, state);
-  if(display_functions[state].repeating || !fired){
-     display_functions[state].func();
-      fired = true;
-  }
-  ++index;
-
-  if(index > 9){
-    return false;
-  }
-  gpio_put(hex_0,  index & 0x01);
-  gpio_put(hex_1, (index & 0x02) >> 1);
-  gpio_put(hex_2, (index & 0x04) >> 2);
-  gpio_put(hex_3, (index & 0x08) >> 3);
-
-  gpio_put(PICO_DEFAULT_LED_PIN, 1);
-  return true;
-}
-
-
 
 bool null_callback(repeating_timer_t *rt){return false;}
-
 
 bool init_display()
 {
@@ -107,6 +83,32 @@ bool init_display()
   return true;
 }
 
+//Returning true in a repeating timer callback means to continue the timer
+bool idx_timer_callback(repeating_timer_t *rt)
+{
+  
+  displayPacket(value, score, index, action, state);
+  if(display_functions[state].repeating || !fired){
+     display_functions[state].func();
+      fired = true;
+  }
+  ++index;
+
+  if(index > 9){
+    uint64_t t_delta = absolute_time_diff_us(get_absolute_time(), *(absolute_time_t *)rt->user_data);
+    display_time_delta(t_delta);
+    return false;
+  }
+  //set the hex display
+  gpio_put(hex_0, (bool) index & 0x01);
+  gpio_put(hex_1, (bool)(index & 0x02) >> 1);
+  gpio_put(hex_2, (bool)(index & 0x04) >> 2);
+  gpio_put(hex_3, (bool)(index & 0x08) >> 3);
+
+  gpio_put(PICO_DEFAULT_LED_PIN, 1);
+  return true;
+}
+
 //Don't look in display_manager.h, it is a mess
 //This is the interrupt handler for core 1
 //The inline functions in display_manager.h are used to set the display
@@ -132,14 +134,17 @@ void core_one_interrupt_handler (void){
     if(action!= 0)
         action--;
     }
+    
     //Cancel the previous timer
-     cancel_repeating_timer(&idx_timer);
+    cancel_repeating_timer(&idx_timer);
 
-    //Calculate the new interval
+    //Calculate the new interval, negative because we want to count from the beginning of callback execution, not the end
     int32_t interval = ((int32_t) value) / -10;
+    absolute_time_t *time_delta;
 
     //Add the new timer
-    alarm_pool_add_repeating_timer_ms(core1_pool, interval, idx_timer_callback, NULL, &idx_timer);
+    alarm_pool_add_repeating_timer_ms(core1_pool, interval, idx_timer_callback, (void *)time_delta, &idx_timer);
+    *time_delta = get_absolute_time(); //log the time for comparison
 
     index = 0;
     fired = false;

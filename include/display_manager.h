@@ -11,6 +11,7 @@
 #include "pico/time.h"
 #include "hardware/irq.h"
 #include "pico/multicore.h"
+#include "text_properties.h"
 //#include "../lib/GUI/GUI_Paint.h"
 
 
@@ -19,9 +20,6 @@ bool game_state   = false;
 bool load_state   = false;
 bool key_state    = false;
 
-
-#include "text_properties.h"
-#include <stdint.h>
 
 static uint16_t value = 1000;
 static uint8_t action = 0;
@@ -45,7 +43,7 @@ typedef struct{
   select_state = false;
   game_state = false;
   load_state = false;
-}
+  key_state = false;}
 
  inline static void select_display (){
 
@@ -189,27 +187,26 @@ inline static void drive_hex(uint8_t hex){
   drive_hex(index);
 
   //This is just a copy of countdown bar
-  uint8_t bar_idx = index;
   uint16_t x1;
   uint16_t x2;
   uint16_t y1;
   uint16_t y2;
   y1 = load_properties.y1;
   y2 = load_properties.y2;
-  if (bar_idx == 0){
+  if (index == 0){
     Paint_SelectImage((UBYTE *)s_buffer);
     Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
     x1 = load_properties.x1;
     x2 = load_properties.x1 + load_properties.width - 5;
     } 
     else {
-    x1 = load_properties.x1 + load_properties.width * bar_idx;
-    x2 = load_properties.x1 + load_properties.width * (bar_idx + 1) - 5;
+    x1 = load_properties.x1 + load_properties.width * index;
+    x2 = load_properties.x1 + load_properties.width * (index + 1) - 5;
     } 
     
     Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
 
-    if(bar_idx == 9){
+    if(index == 9){
     LCD_2IN_Display((UBYTE *)s_buffer);
     Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
     }
@@ -254,6 +251,16 @@ inline static void correct_disp()
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
+inline static void display_time_delta(uint64_t delta){
+  char delta_s[23];
+  uint32_t t_delta = delta / 1000;
+  Paint_SelectImage ((UBYTE *)s_buffer);
+  Paint_ClearWindows(30, 55, 240, 78, BLACK);
+  sprintf(delta_s, "Delta: %u ms", t_delta);
+  Paint_DrawString_EN (30, 56, delta_s, &Font12, WHITE, BLACK);
+  delta_s[0] = '\0';
+  LCD_2IN_Display((UBYTE *)s_buffer);
+}
 
  inline static void display_key(){
 
