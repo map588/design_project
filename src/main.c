@@ -2,18 +2,16 @@
 #include "pico/multicore.h"
 #include "pico/rand.h"
 #include "pico/stdlib.h"
-#include "hardware/timer.h"
-#include "hardware/irq.h"
+#include "pico/time.h"
+
 #include "keyboard_library/keyboard.h"
 #include "definitions.h"
 
-
-//multipliers for adding to the FIFO packet
+//Assemble packet does this, but heres how it works
 //  V = value, A = action, P = Points (score), S = state
 //  packet =>  0xVVVVPPAS
 //  Value    Score   Action   State
 //[31 - 16] [15 - 8] [7 - 4] [3 - 0]
-//The assemble packet function deals with this, but heres how it works
 
 //Packet is global
 uint32_t packet;
@@ -30,9 +28,6 @@ states state;
 
 void action_isr(void)
 {
-  irq_clear(IO_IRQ_BANK0);
-
- 
   //Volatile because the value changes based on the hardware, compiler can't trust it
   volatile uint32_t irq_pin;
 
@@ -41,7 +36,10 @@ void action_isr(void)
 
   actions prompt;
 
-  //
+  //depending on the key pressed, we will send a different packet to core 1
+
+  //Right now this is being determined GPIO alone, just to test the display manager, but later the game logic will determine the state,
+  //and this interrupt will check which pin is pressed, and what state the game is in, to determine what to send
   switch (irq_pin)
   {
     case key0:
@@ -62,7 +60,9 @@ void action_isr(void)
     packet = assemble_packet(LOADING, 0, 0, 200);
     break;
   }
+  //sends the packet to the display manager using the FIFO
     multicore_fifo_push_blocking(packet);
+     irq_clear(IO_IRQ_BANK0);
 }
 
 
