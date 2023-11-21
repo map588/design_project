@@ -92,10 +92,13 @@ bool idx_timer_callback(repeating_timer_t *rt)
      display_functions[state].func();
       fired = true;
   }
+  if(!display_functions[state].repeating && fired)
+    return false;
+
   ++index;
 
   if(index > 9){
-    uint64_t t_delta = absolute_time_diff_us(get_absolute_time(), *(absolute_time_t *)rt->user_data);
+    uint64_t t_delta = absolute_time_diff_us(*(absolute_time_t *)rt->user_data, get_absolute_time()) / 1000;
     display_time_delta(t_delta);
     return false;
   }
@@ -120,7 +123,7 @@ bool idx_timer_callback(repeating_timer_t *rt)
 void core_one_interrupt_handler (void){
 
   //While there is valid data in the interrupt FIFO
-  while(multicore_fifo_rvalid ()){
+  if(multicore_fifo_rvalid ()){
       //Get value in FIFO
       uint32_t data = multicore_fifo_pop_blocking ();
 
