@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "pico/stdlib.h"
 #include "pico/mem_ops.h"
+#include "pico/malloc.h"
 #include <string.h> //memset()
 #include <stdlib.h> //malloc()
 #include "pico/printf.h"
@@ -78,31 +79,31 @@ void Paint_SetRotate(UWORD Rotate)
 
 void Paint_SetScale(UBYTE scale)
 {
-    if (scale == 2)
-    {
-        Paint.Scale = scale;
-        Paint.WidthByte = (Paint.WidthMemory % 8 == 0) ? (Paint.WidthMemory / 8) : (Paint.WidthMemory / 8 + 1);
-    }
-    else if (scale == 4)
-    {
-        Paint.Scale = scale;
-        Paint.WidthByte = (Paint.WidthMemory % 4 == 0) ? (Paint.WidthMemory / 4) : (Paint.WidthMemory / 4 + 1);
-    }
-    else if (scale == 16)
-    {
-        Paint.Scale = scale;
-        Paint.WidthByte = (Paint.WidthMemory % 2 == 0) ? (Paint.WidthMemory / 2) : (Paint.WidthMemory / 2 + 1);
-    }
-    else if (scale == 65)
+    // if (scale == 2)
+    // {
+    //     Paint.Scale = scale;
+    //     Paint.WidthByte = (Paint.WidthMemory % 8 == 0) ? (Paint.WidthMemory / 8) : (Paint.WidthMemory / 8 + 1);
+    // }
+    // else if (scale == 4)
+    // {
+    //     Paint.Scale = scale;
+    //     Paint.WidthByte = (Paint.WidthMemory % 4 == 0) ? (Paint.WidthMemory / 4) : (Paint.WidthMemory / 4 + 1);
+    // }
+    // else if (scale == 16)
+    // {
+    //     Paint.Scale = scale;
+    //     Paint.WidthByte = (Paint.WidthMemory % 2 == 0) ? (Paint.WidthMemory / 2) : (Paint.WidthMemory / 2 + 1);
+    // }
+    // else if (scale == 65)
     {
         Paint.Scale = scale;
         Paint.WidthByte = Paint.WidthMemory * 2;
     }
-    else
-    {
-        Debug("Set Scale Input parameter error\r\n");
-        Debug("Scale Only support: 2 4 16 65\r\n");
-    }
+//     else
+//     {
+//         Debug("Set Scale Input parameter error\r\n");
+//         Debug("Scale Only support: 2 4 16 65\r\n");
+//     }
 }
 /******************************************************************************
 function:	Select Image mirror
@@ -186,38 +187,38 @@ void Paint_SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
         return;
     }
 
-    if (Paint.Scale == 2)
-    {
-        UDOUBLE Addr = X / 8 + Y * Paint.WidthByte;
-        UBYTE Rdata = Paint.Image[Addr];
-        if (Color & 0xff == BLACK)
-            Paint.Image[Addr] = Rdata & ~(0x80 >> (X % 8));
-        else
-            Paint.Image[Addr] = Rdata | (0x80 >> (X % 8));
-    }
-    else if (Paint.Scale == 4)
-    {
-        UDOUBLE Addr = X / 4 + Y * Paint.WidthByte;
-        Color = Color % 4; // Guaranteed color scale is 4  --- 0~3
-        UBYTE Rdata = Paint.Image[Addr];
+    // if (Paint.Scale == 2)
+    // {
+    //     UDOUBLE Addr = X / 8 + Y * Paint.WidthByte;
+    //     UBYTE Rdata = Paint.Image[Addr];
+    //     if (Color & 0xff == BLACK)
+    //         Paint.Image[Addr] = Rdata & ~(0x80 >> (X % 8));
+    //     else
+    //         Paint.Image[Addr] = Rdata | (0x80 >> (X % 8));
+    // }
+    // else if (Paint.Scale == 4)
+    // {
+    //     UDOUBLE Addr = X / 4 + Y * Paint.WidthByte;
+    //     Color = Color % 4; // Guaranteed color scale is 4  --- 0~3
+    //     UBYTE Rdata = Paint.Image[Addr];
 
-        Rdata = Rdata & (~(0xC0 >> ((X % 4) * 2)));
-        Paint.Image[Addr] = Rdata | ((Color << 6) >> ((X % 4) * 2));
-    }
-    else if (Paint.Scale == 16)
-    {
-        UDOUBLE Addr = X / 2 + Y * Paint.WidthByte;
-        UBYTE Rdata = Paint.Image[Addr];
-        Color = Color % 16;
-        Rdata = Rdata & (~(0xf0 >> ((X % 2) * 4)));
-        Paint.Image[Addr] = Rdata | ((Color << 4) >> ((X % 2) * 4));
-    }
-    else if (Paint.Scale == 65)
-    {
+    //     Rdata = Rdata & (~(0xC0 >> ((X % 4) * 2)));
+    //     Paint.Image[Addr] = Rdata | ((Color << 6) >> ((X % 4) * 2));
+    // }
+    // else if (Paint.Scale == 16)
+    // {
+    //     UDOUBLE Addr = X / 2 + Y * Paint.WidthByte;
+    //     UBYTE Rdata = Paint.Image[Addr];
+    //     Color = Color % 16;
+    //     Rdata = Rdata & (~(0xf0 >> ((X % 2) * 4)));
+    //     Paint.Image[Addr] = Rdata | ((Color << 4) >> ((X % 2) * 4));
+    // }
+    // else if (Paint.Scale == 65)
+    // {
         UDOUBLE Addr = X * 2 + Y * Paint.WidthByte;
         Paint.Image[Addr] = 0xff & (Color >> 8);
         Paint.Image[Addr + 1] = 0xff & Color;
-    }
+    // }
 }
 
 /******************************************************************************
