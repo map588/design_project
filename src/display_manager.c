@@ -10,6 +10,7 @@ function_holder display_functions[7] = {
     {correct_disp, false},
     {incorrect_disp, false},
     {display_key, false},
+    {testing, false}
     // {restart_disp}, unimplemented
 };
 
@@ -27,11 +28,12 @@ function_holder display_functions[7] = {
 
 //This is the core 1 stuff
 
-static bool fired;
 static bool interrupt;
 
 bool null_callback(repeating_timer_t *rt){return false;}
 
+
+//This is the initialization function for the display
 bool init_display()
 {
   DEV_Delay_ms (100);
@@ -65,7 +67,8 @@ bool init_display()
   Paint_SetScale (65);
   Paint_Clear (BLACK);
   Paint_SetRotate (ROTATE_270);
-
+  Paint_SelectImage ((UBYTE *)s_buffer);
+  LCD_2IN_Display ((UBYTE *)s_buffer);
 
   //sets up the pins to deal with hex display
   gpio_init (hex_0);
@@ -73,6 +76,7 @@ bool init_display()
   gpio_init (hex_2);
   gpio_init (hex_3);
   gpio_init (PICO_DEFAULT_LED_PIN);
+  
   gpio_set_dir (hex_0, GPIO_OUT);
   gpio_set_dir (hex_1, GPIO_OUT);
   gpio_set_dir (hex_2, GPIO_OUT);
@@ -92,9 +96,10 @@ bool idx_timer_callback(repeating_timer_t *rt){
   if(interrupt)
     return false;
 
-  //displayPacket(value, score, index, action, state);
-  if(fired)
+ 
+  if(!fired){
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
+  }
   else 
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
  
@@ -102,15 +107,14 @@ bool idx_timer_callback(repeating_timer_t *rt){
   display_functions[state].func();
   fired = true;
 
-  drive_hex(index);
+  drive_hex(9 - index);
 
-  ++index;
-
-
+    ++index;
   if (index > 9 || !display_functions[state].repeating)
     {
       // uint64_t t_delta = absolute_time_diff_us(get_absolute_time(), *(absolute_time_t *)rt->user_data) / 1000;
       // display_time_delta(t_delta);
+      displayPacket(value, score_d, index, action, state);
       return false;
     }
 
@@ -135,23 +139,30 @@ void core_one_interrupt_handler (void){
 
       //Unpack the data
       value      =  (data   & 0xFFFF0000) >> 16;
-      score      =  (data   & 0x0000FF00) >>  8;
+      score_d    =  (data   & 0x0000FF00) >>  8;
       action     =  (data   & 0x000000F0) >>  4;
       state      =   data   & 0x0000000F;
 
+     
     //actions are indexed by 1 on the other side, but they are indexed by 0 here
-    if(action!= 0)
-        action--;
-    }
-    
+    if(action == 0)
+      action = NOP;
+    else
+      action--;
+
+    index = 0;
+    fired = false;
+
     //Calculate the new interval, negative because we want to count from the beginning of callback execution, not the end
     int32_t interval = ((int32_t) value) / -10;
     absolute_time_t *time_delta;
-    index = 0;
-    fired = false;
-    *time_delta = get_absolute_time(); // log the time for comparison
+   
+
     cancel_repeating_timer(&idx_timer);
-    //Add the new timer
+    *time_delta = get_absolute_time();
+
+    //Interrupt is set to true, so the timer callback will not execute
+    //After we start this timer we set it to false so the timer callback can execute
     interrupt = false;
     alarm_pool_add_repeating_timer_ms(core1_pool, interval, idx_timer_callback, time_delta, &idx_timer);
 
@@ -159,6 +170,7 @@ void core_one_interrupt_handler (void){
     //clear that mofo
     multicore_fifo_clear_irq();
     return;
+  }
 }
 
 

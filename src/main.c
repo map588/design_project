@@ -43,15 +43,15 @@ void action_isr(void)
   switch (irq_pin)
   {
     case key0:
-      packet = assemble_packet(LOADING, 0, 0, 500);
+      packet = assemble_packet(LOADING, 0, 0, 2000);
       break;
     case key1:
       prompt = (actions)(((get_rand_32() % 3)  + 1) * ACTION);  //This will be used elsewhere when we impliment the game logic
-      packet = assemble_packet(GAME, prompt, score, 1000);
+      packet = assemble_packet(GAME, prompt, score, 3000);
       score++;
       break;
     case key2:
-      packet = assemble_packet(SELECT, TURN_IT, 0, 0);
+      packet = assemble_packet(TESTING, NOP, 0, 0);
       break;
     case key3: 
       packet = assemble_packet(SELECT, YANK_IT, 0, 0);
@@ -115,7 +115,7 @@ int init(void)
   //dummy values that currently mean nothing, probably will be used by the game to keep track of score and time updates
   //Will probably need an array of time_rates that are for easy, medium, and hard difficulties
   int16_t time_rate = 20;
-  int16_t time = 100;
+  int16_t time = 5000;
   //random action selected, we will keep this part somewhere
   actions action = (actions)(((rand() % 3)  + 1) * ACTION);
   //first state is a fake loading bar
@@ -124,6 +124,15 @@ int init(void)
   //assembles the packet to be sent to the display manager
   packet = assemble_packet(state, action, score, time);
   multicore_fifo_push_blocking(packet);
+
+  //TODO STAGE 1: Loading, then display select screen
+  //TODO STAGE 2: Display the start screen, wait for input
+  //TODO STAGE 3: Display the game screen, start game loop
+  //TODO STAGE 4: Main game loop: chose random action, start timer interrupt, wait for input -> Timer interrupt triggers fail callback when reached
+  //TODO STAGE 5: Continue this loop until a new round is reached
+  //TODO STAGE 6: Go back to main game loop
+  //TODO STAGE 7: After 100 successful moves, display win screen, if the player fails at some point, display lose screen
+  //TODO STAGE 8: Wait for input, if the player presses the start button, go back to stage 1, otherwise, do nothing
 
 
   //Does nothing forever, and interrupts will handle the rest

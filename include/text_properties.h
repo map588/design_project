@@ -34,8 +34,8 @@ enum text {SCORE, NEXT, ROUND, TIME};
 const text_properties UI_Text[4] = {
   {  2,    2, GREEN , BLACK, &Font12, "SCORE :", 56},  //top left row 1
   {  2,   16, YELLOW, BLACK, &Font12, "NEXT_R:", 56},  //top left row 2
-  {260,    2, RED   , BLACK, &Font12, "ROUND :", 56},  //top right
-  {  2,  226, CYAN  , BLACK, &Font12, "TIME  :", 56},  //bottom left
+  {260,    2, RED   , BLACK, &Font12, "ROUND: ", 56},  //top right
+  {  2,  226, CYAN  , BLACK, &Font12, "TIME: ", 48},  //bottom left
 };
 
 enum prompt {ARM, REWIRE, YANK};
