@@ -28,8 +28,7 @@ function_holder display_functions[7] = {
 //This is the core 1 stuff
 
 static bool fired;
-
-
+static bool interrupt;
 
 bool null_callback(repeating_timer_t *rt){return false;}
 
@@ -69,6 +68,11 @@ bool init_display()
 
 
   //sets up the pins to deal with hex display
+  gpio_init (hex_0);
+  gpio_init (hex_1);
+  gpio_init (hex_2);
+  gpio_init (hex_3);
+  gpio_init (PICO_DEFAULT_LED_PIN);
   gpio_set_dir (hex_0, GPIO_OUT);
   gpio_set_dir (hex_1, GPIO_OUT);
   gpio_set_dir (hex_2, GPIO_OUT);
@@ -84,31 +88,32 @@ bool init_display()
 }
 
 //Returning true in a repeating timer callback means to continue the timer
-bool idx_timer_callback(repeating_timer_t *rt)
-{
-  
-  displayPacket(value, score, index, action, state);
-  if(display_functions[state].repeating || !fired){
-     display_functions[state].func();
-      fired = true;
-  }
-  if(!display_functions[state].repeating && fired)
+bool idx_timer_callback(repeating_timer_t *rt){
+  if(interrupt)
     return false;
+
+  //displayPacket(value, score, index, action, state);
+  if(fired)
+    gpio_put(PICO_DEFAULT_LED_PIN, 1);
+  else 
+    gpio_put(PICO_DEFAULT_LED_PIN, 0);
+ 
+
+  display_functions[state].func();
+  fired = true;
+
+  drive_hex(index);
 
   ++index;
 
-  if(index > 9){
-    uint64_t t_delta = absolute_time_diff_us(*(absolute_time_t *)rt->user_data, get_absolute_time()) / 1000;
-    display_time_delta(t_delta);
-    return false;
-  }
-  //set the hex display
-  gpio_put(hex_0, (bool) index & 0x01);
-  gpio_put(hex_1, (bool)(index & 0x02) >> 1);
-  gpio_put(hex_2, (bool)(index & 0x04) >> 2);
-  gpio_put(hex_3, (bool)(index & 0x08) >> 3);
 
-  gpio_put(PICO_DEFAULT_LED_PIN, 1);
+  if (index > 9 || !display_functions[state].repeating)
+    {
+      // uint64_t t_delta = absolute_time_diff_us(get_absolute_time(), *(absolute_time_t *)rt->user_data) / 1000;
+      // display_time_delta(t_delta);
+      return false;
+    }
+
   return true;
 }
 
@@ -123,9 +128,10 @@ bool idx_timer_callback(repeating_timer_t *rt)
 void core_one_interrupt_handler (void){
 
   //While there is valid data in the interrupt FIFO
-  if(multicore_fifo_rvalid ()){
+  while(multicore_fifo_rvalid ()){
       //Get value in FIFO
       uint32_t data = multicore_fifo_pop_blocking ();
+      interrupt = true;
 
       //Unpack the data
       value      =  (data   & 0xFFFF0000) >> 16;
@@ -138,20 +144,18 @@ void core_one_interrupt_handler (void){
         action--;
     }
     
-    //Cancel the previous timer
-    cancel_repeating_timer(&idx_timer);
-
     //Calculate the new interval, negative because we want to count from the beginning of callback execution, not the end
     int32_t interval = ((int32_t) value) / -10;
     absolute_time_t *time_delta;
-
-    //Add the new timer
-    alarm_pool_add_repeating_timer_ms(core1_pool, interval, idx_timer_callback, (void *)time_delta, &idx_timer);
-    *time_delta = get_absolute_time(); //log the time for comparison
-
     index = 0;
     fired = false;
+    *time_delta = get_absolute_time(); // log the time for comparison
+    cancel_repeating_timer(&idx_timer);
+    //Add the new timer
+    interrupt = false;
+    alarm_pool_add_repeating_timer_ms(core1_pool, interval, idx_timer_callback, time_delta, &idx_timer);
 
+    
     //clear that mofo
     multicore_fifo_clear_irq();
     return;

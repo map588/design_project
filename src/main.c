@@ -44,7 +44,7 @@ void action_isr(void)
   {
     case key0:
       packet = assemble_packet(LOADING, 0, 0, 500);
-      break; 
+      break;
     case key1:
       prompt = (actions)(((get_rand_32() % 3)  + 1) * ACTION);  //This will be used elsewhere when we impliment the game logic
       packet = assemble_packet(GAME, prompt, score, 1000);
@@ -77,10 +77,15 @@ int init(void)
   stdio_init_all();
 
   alarm_pool_create(0, 4);
-  gpio_set_input_enabled(key0, 1);
-  gpio_set_input_enabled(key1, 1);
-  gpio_set_input_enabled(key2, 1);
-  gpio_set_input_enabled(key3, 1);
+  gpio_init(key0);
+  gpio_init(key1);
+  gpio_init(key2);
+  gpio_init(key3);
+
+  gpio_set_dir(key0, 0);
+  gpio_set_dir(key1, 0);
+  gpio_set_dir(key2, 0);
+  gpio_set_dir(key3, 0);
 
   gpio_pull_down(key0);
   gpio_pull_down(key1);
@@ -103,7 +108,7 @@ int init(void)
 }
 
 //entry
-int main(){
+ int main(){
   //calls the above function to initialize the clock, I/O, calls core 1's entry, and sets up the GPIO interrupts
   init();
 

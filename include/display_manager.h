@@ -70,17 +70,21 @@ typedef struct{
     Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
     Paint_DrawLine(158, 80, 158, 200, BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
     Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+    LCD_2IN_Display((UBYTE *)s_buffer);
    }
    Paint_ClearWindows(0, 200, 319, 239, BLACK); // bottom bar
    int arrow_pos = arr_pos[last_key];
 
-   Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
-
-
-   LCD_2IN_Display((UBYTE *)s_buffer);
+  Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
+  LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
 }
 
 inline static void countdown_bar(){
+    if(!load_state){
+     clearflags();
+     Paint_Clear(BLACK);
+     load_state = true;
+    }
     uint8_t bar_idx = index;
     uint16_t x1;
     uint16_t x2;
@@ -106,7 +110,8 @@ inline static void countdown_bar(){
     Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
     }
 
-    LCD_2IN_Display((UBYTE *)s_buffer);
+    LCD_2IN_DisplayWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, s_buffer);
+        // LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
 
@@ -119,11 +124,11 @@ static void populate_UI_elements(){
     Paint_ClearWindows(0, 220, 80, 239, BLACK); // approximately time window
     uint8_t round = score / 20;
     uint8_t n_round = 20 - (score % 20);
-
+               
     char score_str[14]; 
     char round_str[14]; 
     char nextR_str[14]; 
-    char time_str[18];  
+    char  time_str[18];  
 
     sprintf(score_str, "%s %u", UI_Text[SCORE].text, score);
     sprintf(round_str, "%s %u", UI_Text[ROUND].text, round);
@@ -142,7 +147,8 @@ static void populate_UI_elements(){
     Paint_DrawString_EN(UI_Text[TIME].x, UI_Text[TIME].y, time_str,
                         UI_Text[TIME].font_size, UI_Text[TIME].color, UI_Text[TIME].background);
 
-    LCD_2IN_Display((UBYTE *)s_buffer);
+    LCD_2IN_DisplayWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, s_buffer);
+    LCD_2IN_DisplayWindows(0, 220, 80, 239,s_buffer);
 }
 
 
@@ -158,7 +164,7 @@ static void write_prompt(){
                         UI_Prompt[action].x + UI_Prompt[action].text_length + 5, UI_Prompt[action].y + 19,
                         UI_Prompt[action].color, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
 
-    LCD_2IN_Display((UBYTE *)s_buffer);
+    LCD_2IN_DisplayWindows(0, 90, 319, 150, s_buffer);
 }
 
 
@@ -184,7 +190,6 @@ inline static void drive_hex(uint8_t hex){
   write_prompt(action);
   populate_UI_elements(countdown, score); 
   }
-  drive_hex(index);
 
   //This is just a copy of countdown bar
   uint16_t x1;
@@ -207,11 +212,12 @@ inline static void drive_hex(uint8_t hex){
     Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
 
     if(index == 9){
-    LCD_2IN_Display((UBYTE *)s_buffer);
-    Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
+      LCD_2IN_DisplayWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, s_buffer);
+      Paint_ClearWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, BLACK);
     }
 
-    LCD_2IN_Display((UBYTE *)s_buffer);
+    LCD_2IN_DisplayWindows(load_properties.x1 - 15, load_properties.y1 - 2, 319, 239, s_buffer);
+        // LCD_2IN_Display((UBYTE *)s_buffer);
     //It complains if I both inline countdown_bar and call it here, so I just copied it, I'll make you inline it, C compiler
 }
 
@@ -248,18 +254,17 @@ inline static void correct_disp()
   sprintf(packet_s, "%u_%u #%u %s %s", value, score, index, action_s, state_s);
   Paint_DrawString_EN (30, 32, packet_s, &Font12, WHITE, BLACK);
   packet_s[0] = '\0';
-  LCD_2IN_Display((UBYTE *)s_buffer);
+  LCD_2IN_DisplayWindows(30, 31, 54, 240, s_buffer);
 }
 
 inline static void display_time_delta(uint64_t delta){
   char delta_s[23];
-  uint32_t t_delta = delta / 1000;
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(30, 55, 240, 78, BLACK);
-  sprintf(delta_s, "Delta: %u ms", t_delta);
+  sprintf(delta_s, "Delta: %u ms", delta);
   Paint_DrawString_EN (30, 56, delta_s, &Font12, WHITE, BLACK);
   delta_s[0] = '\0';
-  LCD_2IN_Display((UBYTE *)s_buffer);
+  LCD_2IN_DisplayWindows(55, 30, 78, 240, s_buffer);
 }
 
  inline static void display_key(){
