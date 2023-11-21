@@ -32,9 +32,7 @@ target_link_libraries(main LINK_PUBLIC
     )
 
     target_compile_definitions(main PUBLIC
-        PICO_STACK_SIZE=4096
         PICO_CORE1_STACK_SIZE=4096
-        PICO_HEAP_SIZE=8192
         )
 
 # disable usb output, enable uart output
@@ -59,6 +57,7 @@ endfunction()
 pico_add_extra_outputs(main)
 pico_add_dis_output2(main)
   
+
 # linker options
 target_link_options(main 
     PRIVATE "LINKER:--print-memory-usage"
