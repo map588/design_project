@@ -34,32 +34,33 @@ bool null_callback(repeating_timer_t *rt){return false;}
 
 
 //This is the initialization function for the display
-bool init_display()
-{
+bool init_display(){
   DEV_Delay_ms (100);
-  if (DEV_Module_Init () != 0){
+
+  if (DEV_Module_Init () != 0)
       return false;
-    }
+  
   DEV_SET_PWM (50);
   LCD_2IN_Init (HORIZONTAL);
   LCD_2IN_Clear (BLACK);
 
   //Noteably we create an alarm pool before we allocate essentially the rest of the memory to the display buffer
-  core1_pool = alarm_pool_create(2,4);
-  if(!alarm_pool_add_repeating_timer_ms(core1_pool, 0, null_callback, NULL, &idx_timer)){
-    return false;
-  }
-  uint32_t Imagesize = LCD_2IN_HEIGHT * LCD_2IN_WIDTH * 2;
+ core1_pool = alarm_pool_create(2,4);
 
+ if(!alarm_pool_add_repeating_timer_ms(core1_pool, 0, null_callback, NULL, &idx_timer))
+    return false;
+  
+ 
   //This massive memory allocation needs to be on the heap, but it needs to be stored globally
   //We cannot directly store it globally because it will end up in the .data section of the binary
   //So we allocate it on the heap as a constant pointer and store the pointer globally into s_buffer
+  uint32_t Imagesize = LCD_2IN_HEIGHT * LCD_2IN_WIDTH * 2;
   void *const buffer = malloc(Imagesize);
 
   if (buffer == NULL){
-      printf ("Failed to allocate memory...\r\n");
-      return false;
-    }
+    printf ("Failed to allocate memory...\r\n");
+    return false;
+  }
 
   s_buffer = (uint16_t*) buffer;
 
@@ -97,9 +98,8 @@ bool idx_timer_callback(repeating_timer_t *rt){
     return false;
 
  
-  if(!fired){
+  if(!fired)
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
-  }
   else 
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
  
@@ -108,12 +108,10 @@ bool idx_timer_callback(repeating_timer_t *rt){
   fired = true;
 
   drive_hex(9 - index);
+  ++index;
 
-    ++index;
-  if (index > 9 || !display_functions[state].repeating)
-    {
-      // uint64_t t_delta = absolute_time_diff_us(get_absolute_time(), *(absolute_time_t *)rt->user_data) / 1000;
-      // display_time_delta(t_delta);
+
+  if (index > 9 || !display_functions[state].repeating){
       displayPacket(value, score_d, index, action, state);
       return false;
     }
@@ -134,8 +132,8 @@ void core_one_interrupt_handler (void){
   //While there is valid data in the interrupt FIFO
   while(multicore_fifo_rvalid ()){
       //Get value in FIFO
-      uint32_t data = multicore_fifo_pop_blocking ();
-      interrupt = true;
+    uint32_t data = multicore_fifo_pop_blocking ();
+    interrupt = true;
 
       //Unpack the data
       value      =  (data   & 0xFFFF0000) >> 16;
@@ -146,9 +144,9 @@ void core_one_interrupt_handler (void){
      
     //actions are indexed by 1 on the other side, but they are indexed by 0 here
     if(action == 0)
-      action = NOP;
+        action = NOP;
     else
-      action--;
+        action--;
 
     index = 0;
     fired = false;
@@ -180,7 +178,7 @@ void core_one_main (){
   
   //calls the above nasty function
   if (!init_display())
-    exit(1);
+      exit(1);
   
   multicore_fifo_clear_irq ();
 
@@ -194,7 +192,8 @@ void core_one_main (){
 
 
   //This is where the magic happens
-  while (true) tight_loop_contents(); // special NOP function
+  while (true)
+     tight_loop_contents(); // special NOP function
 
  }
 

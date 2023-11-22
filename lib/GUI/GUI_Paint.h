@@ -3,6 +3,8 @@
 
 #include "../Config/DEV_Config.h"
 #include "../Fonts/fonts.h"
+#include "pico/stdlib.h"
+#include "hardware/spi.h"
 
 /**
  * Image attributes

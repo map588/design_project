@@ -26,4 +26,5 @@ inline uint32_t assemble_packet(states state, actions action, uint8_t score, uin
     return packet;
  }
 
+
 #endif

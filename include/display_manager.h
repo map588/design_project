@@ -40,44 +40,46 @@ typedef struct{
 }function_holder;
 
 
- inline static void clearflags(){
-  select_state = false;
-  game_state = false;
-  load_state = false;
-  key_state = false;}
+inline static void clearflags(){
+      select_state = false;
+      game_state = false;
+      load_state = false;
+      key_state = false;
+}
 
- inline static void select_display (){
+inline static void select_display (){
 
-  const int arr_pos[3] = {64, 152, 240};
-  static uint8_t last_key = 0;
- 
-  uint8_t key = action;
-  if(last_key > 0 && key == 0)
-    last_key--;
-  else 
-  if(last_key < 2 && key == 1)
-    last_key++;
+    const int arr_pos[3] = {64, 152, 240};
+    static uint8_t last_key = 0;
+    uint8_t key = action;
 
-  Paint_SelectImage((UBYTE *)s_buffer);
-  if (!fired || !select_state){
-    clearflags();
-    select_state = true;
-    Paint_Clear(BLACK);
-    Paint_DrawString_EN(110, 14, "Which Wire?", &Font16, WHITE, BLACK);
-    Paint_DrawString_EN(44, 55, "(easy)", &Font12, WHITE, BLACK);
-    Paint_DrawString_EN(124, 55, "(medium)", &Font12, WHITE, BLACK);
-    Paint_DrawString_EN(224, 55, "(hard)", &Font12, WHITE, BLACK);
+    if(last_key > 0 && key == 0)
+        last_key--;
+    else  if(last_key < 2 && key == 1)
+        last_key++;
 
-    Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-    Paint_DrawLine(158, 80, 158, 200, BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-    Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-    LCD_2IN_Display((UBYTE *)s_buffer);
-   }
-   Paint_ClearWindows(0, 205, 319, 239, BLACK); // bottom bar
-   int arrow_pos = arr_pos[last_key];
+    Paint_SelectImage((UBYTE *)s_buffer);
 
-  Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
-  LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+    if (!fired || !select_state){
+        clearflags();
+        select_state = true;
+        Paint_Clear(BLACK);
+        Paint_DrawString_EN(110, 14, "Which Wire?", &Font16, WHITE, BLACK);
+        Paint_DrawString_EN(44, 55, "(easy)", &Font12, WHITE, BLACK);
+        Paint_DrawString_EN(124, 55, "(medium)", &Font12, WHITE, BLACK);
+        Paint_DrawString_EN(224, 55, "(hard)", &Font12, WHITE, BLACK);
+
+        Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+        Paint_DrawLine(158, 80, 158, 200, BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+        Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+        LCD_2IN_Display((UBYTE *)s_buffer);
+    }
+    Paint_ClearWindows(0, 205, 319, 239, BLACK); // bottom bar
+    int arrow_pos = arr_pos[last_key];
+
+
+    Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
+    LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
 }
 
 inline static void countdown_bar(){
@@ -91,120 +93,110 @@ inline static void countdown_bar(){
   Paint_SelectImage((UBYTE *)s_buffer);
 
   if (!fired && !load_state){
-    clearflags();
-    load_state = true;
-    Paint_Clear(BLACK);
-    LCD_2IN_Display((UBYTE *)s_buffer);
+        clearflags();
+        load_state = true;
+        Paint_Clear(BLACK);
+        LCD_2IN_Display((UBYTE *)s_buffer);
   } 
 
   if (index == 0){
-    Paint_ClearWindows(205, y1 - 2, 319, y2 + 2, BLACK);
-    x1 = 220;
-    x2 = 225;
+        Paint_ClearWindows(205, y1 - 2, 319, y2 + 2, BLACK);
+        x1 = 220;
+        x2 = 225;
 
-    for(int i = 0; i < 9; i++){
-      x1 = 220 + 10 * (i);
-      x2 = 220 + 10 * (i + 1) - 5;
-      Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
-    }
-    LCD_2IN_Display((uint8_t *)s_buffer); 
-  }
-   else {
-    Paint_ClearWindows(205, 223, 205 + 10 * (index + 1) + 3 , y2 + 2, BLACK);
+      for(int i = 0; i < 9; i++){
+            x1 = 220 + 10 * (i);
+            x2 = 220 + 10 * (i + 1) - 5;
+            Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+      }
+      //LCD_2IN_Display((uint8_t *)s_buffer);
+      LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
     }
 
-    
+    else {
+       Paint_ClearWindows(205, 223, 205 + 10 * (index + 1) + 3 , y2 + 2, BLACK);
+    }
+
+      
     if(index == 9){
-      LCD_2IN_DisplayWindows(205, y1 - 2, 319, y2 + 2, s_buffer);
-      Paint_ClearWindows(205, 223, 319, 239, BLACK);
+        LCD_2IN_DisplayWindows(205, y1 - 2, 319, y2 + 2, s_buffer);
+        Paint_ClearWindows(205, 223, 319, 239, BLACK);
     }
 
-    //LCD_2IN_DisplayWindows(223, 205, 239, 319, s_buffer);
-    //Paint_ClearWindows(205, 223, 319, 239, WHITE);
-    LCD_2IN_Display((UBYTE *)s_buffer);
+      //TODO Figure out partial screen updates
+      //LCD_2IN_Display((UBYTE *)s_buffer);
+      LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
 }
 
 inline static void populate_UI_elements(){
  
-    Paint_SelectImage((UBYTE *)s_buffer);
-    Paint_ClearWindows(0, 0, 319, 29, BLACK);   // top bar
-    Paint_ClearWindows(0, 220, 120, 239, BLACK); // approximately time window
-    uint8_t round = score_d / 20;
-    uint8_t n_round = 20 - (score_d % 20);
-               
-    char score_str[20]; 
-    char round_str[20]; 
-    char nextR_str[20]; 
-    char  time_str[20];  
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_ClearWindows(0, 0, 319, 29, BLACK);   // top bar
+  Paint_ClearWindows(0, 220, 120, 239, BLACK); // approximately time window
+  uint8_t round = score_d / 20;
+  uint8_t n_round = 20 - (score_d % 20);
+              
+  char score_str[20]; 
+  char round_str[20]; 
+  char nextR_str[20]; 
+  char  time_str[20];  
 
-    sprintf(score_str, "SCORE: %u", score_d);
-    sprintf(round_str, "ROUND: %u",  round);
-    sprintf(nextR_str, "NEXT ROUND: %u", n_round);
-    sprintf(time_str, "TIME: %u ms", value);
+  sprintf(score_str, "SCORE: %u", score_d);
+  sprintf(round_str, "ROUND: %u",  round);
+  sprintf(nextR_str, "NEXT ROUND: %u", n_round);
+  sprintf(time_str, "TIME: %u ms", value);
 
-    // const text_properties UI_Text[4] = {
-    //     {2, 2, GREEN, BLACK, &Font12, "SCORE :", 56},   // top left row 1
-    //     {2, 16, YELLOW, BLACK, &Font12, "NEXT_R:", 56}, // top left row 2
-    //     {260, 2, RED, BLACK, &Font12, "ROUND: ", 56},   // top right
-    //     {2, 226, CYAN, BLACK, &Font12, "TIME: ", 48},   // bottom left
-    // };
+  
+  Paint_DrawString_EN(2, 2, score_str, &Font12, GREEN, BLACK);
+  Paint_DrawString_EN(2, 16, nextR_str, &Font12, YELLOW, BLACK);
+  Paint_DrawString_EN(2, 226, time_str, &Font12, CYAN, BLACK);
+  Paint_DrawString_EN(260, 2, round_str, &Font12, RED, BLACK);
 
-    Paint_DrawString_EN(2, 2, score_str, &Font12, GREEN, BLACK);
-
-    Paint_DrawString_EN(2, 16, nextR_str, &Font12, YELLOW, BLACK);
-
-    Paint_DrawString_EN(2, 226, time_str, &Font12, CYAN, BLACK);
-
-    Paint_DrawString_EN(260, 2, round_str, &Font12, RED, BLACK);
-
-    
-    LCD_2IN_DisplayWindows(0, 0, 30, 319, s_buffer);
-    LCD_2IN_DisplayWindows(224, 0, 239, 100, s_buffer);
+  
+  LCD_2IN_DisplayWindows(0, 0, 30, 319, s_buffer);
+  LCD_2IN_DisplayWindows(224, 0, 239, 100, s_buffer);
 }
 
 
 inline static void write_prompt(){
+  const char *prompt_str[3] = {"   TURN IT   ", "   YANK IT   ", "   WIRE IT   "};
 
-        Paint_SelectImage((UBYTE *)s_buffer);
-    Paint_ClearWindows(52, 100, 265, 140, BLACK); // rough prompt window
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_ClearWindows(52, 100, 265, 140, BLACK); // rough prompt window
 
-    const char* prompt_str[3] = {"   TURN IT   ", "   YANK IT   ", "   WIRE IT   "}; 
-    Paint_DrawString_EN(62, 110, prompt_str[action], &Font20, GRED, BLACK);
+  Paint_DrawString_EN(62, 110, prompt_str[action], &Font20, GRED, BLACK);
+  Paint_DrawRectangle(57, 105, 263, 135, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
 
-    Paint_DrawRectangle(57, 105, 263, 135, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
-
-    LCD_2IN_DisplayWindows(100, 52, 140, 268, s_buffer);
+  LCD_2IN_DisplayWindows(100, 52, 140, 268, s_buffer);
 }
 
- inline static void game_UI(){
+inline static void game_UI(){
    Paint_SelectImage((UBYTE *)s_buffer);
-   if (!fired || !game_state)
-   {
+
+   if (!fired || !game_state){
       clearflags();
       game_state = true;
-     Paint_Clear(BLACK);
-     LCD_2IN_Clear(BLACK);
-     write_prompt(action);
-     populate_UI_elements(value, score_d);
-     fired = true;
-  }
-  countdown_bar();
+      Paint_Clear(BLACK);
+      write_prompt(action);
+      populate_UI_elements(value, score_d);
+      fired = true;
+    }
+
+    countdown_bar();
 }
 
-inline static void drive_hex(uint8_t hex)
-{
+inline static void drive_hex(uint8_t hex){
   gpio_put(hex_0, hex & 0x01);
   gpio_put(hex_1, (hex & 0x02) >> 1);
   gpio_put(hex_2, (hex & 0x04) >> 2);
   gpio_put(hex_3, (hex & 0x08) >> 3);
 }
 
-inline static void correct_disp()
-{
-    Paint_SelectImage((UBYTE *)s_buffer);
-    Paint_ClearWindows(0, 0, 319, 239, WHITE);
-    Paint_DrawString_EN(110, 100, "CORRECT", &Font20, GREEN, BLACK);
-    LCD_2IN_Display((UBYTE *)s_buffer);
+inline static void correct_disp(){
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_ClearWindows(0, 0, 319, 239, WHITE);
+  Paint_DrawString_EN(110, 100, "CORRECT", &Font20, GREEN, BLACK);
+  LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
  inline static void incorrect_disp(){
@@ -212,17 +204,16 @@ inline static void correct_disp()
   Paint_ClearWindows(0, 0, 319, 239, WHITE);
   Paint_DrawString_EN (110, 100, "INCORRECT", &Font20, RED, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
-  }
+}
 
 
  inline static void displayPacket( uint16_t value, uint8_t score, uint8_t index, uint8_t action, uint8_t state){
+  const char *state_str[7] = {"LOAD", "SEL ", "GAME", "PASS", "FAIL", "RST ", "KEY "};
+  const char *action_str[4] = {"TURN", "YANK", "WIRE", "NOP "};
 
   char packet_s[23];
   char action_s[5];
   char  state_s[5];
-
-  const char *state_str[7] = {"LOAD", "SEL ", "GAME", "PASS", "FAIL", "RST ", "KEY "};
-  const char *action_str[4] = {"TURN", "YANK", "WIRE", "NOP "};
 
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(0, 40, 150, 56, BLACK);
@@ -230,49 +221,50 @@ inline static void correct_disp()
   sprintf(action_s, "%s", action_str[action]);
   sprintf(state_s, "%s", state_str[state]);
   sprintf(packet_s, "%u_%u #%u %s %s", value, score, index, action_s, state_s);
+
   Paint_DrawString_EN (0, 42, packet_s, &Font12, WHITE, BLACK);
-  packet_s[0] = '\0';
   LCD_2IN_DisplayWindows(40, 0, 56, 150, s_buffer);
+  
+  packet_s[0] = '\0';
 }
 
 inline static void display_time_delta(uint64_t delta){
   char delta_s[23];
+
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_ClearWindows(30, 55, 240, 78, BLACK);
+
   sprintf(delta_s, "Delta: %u ms", delta);
   Paint_DrawString_EN (30, 56, delta_s, &Font12, WHITE, BLACK);
-  delta_s[0] = '\0';
   LCD_2IN_DisplayWindows(55, 30, 78, 240, s_buffer);
+  delta_s[0] = '\0';
 }
 
  inline static void display_key(){
-
   uint8_t character = score_d;
-
   static int  str_idx = 0;
   static char str_buffer[256];
 
   if(!fired){
     Paint_Clear(BLACK);
   }
-  
 
   Paint_SelectImage((uint8_t *) s_buffer);
+
   if(character == 0x66){ //backspace
-    str_buffer[str_idx] = '\0';
-    if(str_idx > 0){str_idx--;}
+      str_buffer[str_idx] = '\0';
+      if(str_idx > 0)
+          str_idx--;
   }
   else{
-  str_buffer[str_idx] = (char)character;
-  str_buffer[str_idx + 1] = '\0';
-  str_idx++;
+    str_buffer[str_idx] = (char)character;
+    str_buffer[str_idx + 1] = '\0';
+    str_idx++;
   }
 
   Paint_ClearWindows(0, 0, 320, 18, BLACK);
   Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
-
   LCD_2IN_Display((uint8_t *)s_buffer);
-
 }
 
 inline static void testing(){

@@ -2,7 +2,6 @@
 #include "DEV_Config.h"
 #include "Debug.h"
 #include <stdint.h>
-#include "pico/stdlib.h"
 #include "pico/mem_ops.h"
 #include "pico/malloc.h"
 #include <string.h> //memset()
@@ -228,31 +227,31 @@ parameter:
 ******************************************************************************/
 void Paint_Clear(UWORD Color)
 {
-    if (Paint.Scale == 2 || Paint.Scale == 4)
-    {
-        for (UWORD Y = 0; Y < Paint.HeightByte; Y++)
-        {
-            for (UWORD X = 0; X < Paint.WidthByte; X++)
-            { // 8 pixel =  1 byte
-                UDOUBLE Addr = X + Y * Paint.WidthByte;
-                Paint.Image[Addr] = Color;
-            }
-        }
-    }
-    else if (Paint.Scale == 16)
-    {
-        for (UWORD Y = 0; Y < Paint.HeightByte; Y++)
-        {
-            for (UWORD X = 0; X < Paint.WidthByte; X++)
-            { // 8 pixel =  1 byte
-                UDOUBLE Addr = X + Y * Paint.WidthByte;
-                Color = Color & 0x0f;
-                Paint.Image[Addr] = (Color << 4) | Color;
-            }
-        }
-    }
-    else if (Paint.Scale == 65)
-    {
+    // if (Paint.Scale == 2 || Paint.Scale == 4)
+    // {
+    //     for (UWORD Y = 0; Y < Paint.HeightByte; Y++)
+    //     {
+    //         for (UWORD X = 0; X < Paint.WidthByte; X++)
+    //         { // 8 pixel =  1 byte
+    //             UDOUBLE Addr = X + Y * Paint.WidthByte;
+    //             Paint.Image[Addr] = Color;
+    //         }
+    //     }
+    // }
+    // else if (Paint.Scale == 16)
+    // {
+    //     for (UWORD Y = 0; Y < Paint.HeightByte; Y++)
+    //     {
+    //         for (UWORD X = 0; X < Paint.WidthByte; X++)
+    //         { // 8 pixel =  1 byte
+    //             UDOUBLE Addr = X + Y * Paint.WidthByte;
+    //             Color = Color & 0x0f;
+    //             Paint.Image[Addr] = (Color << 4) | Color;
+    //         }
+    //     }
+    // }
+    // else if (Paint.Scale == 65)
+    // {
         for (UWORD Y = 0; Y < Paint.HeightByte; Y++)
         {
             for (UWORD X = 0; X < Paint.WidthByte; X++)
@@ -262,7 +261,7 @@ void Paint_Clear(UWORD Color)
                 Paint.Image[Addr + 1] = 0xff & Color;
             }
         }
-    }
+    // }
 }
 
 /******************************************************************************
