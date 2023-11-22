@@ -1,18 +1,18 @@
 
 //#include "display_functions.h"
 #include "display_manager.h"
-
+#include "buzzer_tones.h"
+#include "hardware/pwm.h"
 
 function_holder display_functions[7] = {
     {countdown_bar, true},
     {select_display, false},
     {game_UI, true},
+    {display_key, false},
     {correct_disp, false},
     {incorrect_disp, false},
-    {display_key, false},
-    {testing, false}
-    // {restart_disp}, unimplemented
-};
+    //{game_over_disp, false},unimplemented
+    };
 
 //    0,0             320              X
 //       _______________________________
@@ -64,7 +64,7 @@ bool init_display(){
 
   s_buffer = (uint16_t*) buffer;
 
-  Paint_NewImage ((UBYTE *)s_buffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, 90, BLACK);
+  Paint_NewImage ((UBYTE *)s_buffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, ROTATE_90, BLACK);
   Paint_SetScale (65);
   Paint_Clear (BLACK);
   Paint_SetRotate (ROTATE_270);
@@ -76,18 +76,29 @@ bool init_display(){
   gpio_init (hex_1);
   gpio_init (hex_2);
   gpio_init (hex_3);
+  gpio_init (buzzer);
+
   gpio_init (PICO_DEFAULT_LED_PIN);
   
   gpio_set_dir (hex_0, GPIO_OUT);
   gpio_set_dir (hex_1, GPIO_OUT);
   gpio_set_dir (hex_2, GPIO_OUT);
   gpio_set_dir (hex_3, GPIO_OUT);
+
   gpio_set_dir (PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
   gpio_pull_down (hex_0);
   gpio_pull_down (hex_1);
   gpio_pull_down (hex_2);
   gpio_pull_down (hex_3);
+
+  gpio_set_dir (buzzer, GPIO_OUT);
+  gpio_set_function(buzzer, GPIO_FUNC_PWM);
+
+  pwm_config config = pwm_get_default_config();
+  pwm_set_phase_correct(&config, true);
+  
+
 
   return true;
 }
@@ -105,16 +116,17 @@ bool idx_timer_callback(repeating_timer_t *rt){
  
 
   display_functions[state].func();
-  fired = true;
+  
 
   drive_hex(9 - index);
   ++index;
 
+  fired = true;
 
   if (index > 9 || !display_functions[state].repeating){
       displayPacket(value, score_d, index, action, state);
       return false;
-    }
+  }
 
   return true;
 }
@@ -136,12 +148,12 @@ void core_one_interrupt_handler (void){
     interrupt = true;
 
       //Unpack the data
-      value      =  (data   & 0xFFFF0000) >> 16;
-      score_d    =  (data   & 0x0000FF00) >>  8;
-      action     =  (data   & 0x000000F0) >>  4;
-      state      =   data   & 0x0000000F;
+      value      =  (data  & 0xFFFF0000) >> 16;
+      score_d    =  (data  & 0x0000FF00) >>  8;
+      action     =  (data  & 0x000000F0) >>  4;
+      state      =   data  & 0x0000000F;
 
-     
+
     //actions are indexed by 1 on the other side, but they are indexed by 0 here
     if(action == 0)
         action = NOP;

@@ -3,21 +3,13 @@
     ;pins  0 data
     ;      1 clock
 
-    set y,     3  ;4 bytes
 
- nextbyte:
-
-    set x,     7  ;8 bits
-    wait 0 pin 0  ;wait for data to go low
-    wait 1 pin 1  ;wait for clock to go high
+   wait 0 pin 0  ;wait for data to go low
 
  bitloop:
-
-    wait 0 pin 1  ;on falling edge of clock
-    in pins,   1  ;read data into shift register
-    wait 1 pin 1  ;on rising edge of clock
-    jmp x-- bitloop
-
-    jmp y-- nextbyte [5]
-
+   wait 1 pin 1  ;on rising edge clock
+   in pins,   1  ;read data into shift register
+   wait 0 pin 1  ;on falling edge
+   jmp x-- bitloop
+   push
 .wrap

@@ -6,6 +6,7 @@
 #define hex_1  2
 #define hex_2  3
 #define hex_3  4
+#define buzzer 26
 
 #include "definitions.h"
 #include "pico/stdlib.h"
@@ -13,13 +14,14 @@
 #include "hardware/irq.h"
 #include "pico/multicore.h"
 #include "text_properties.h"
+#include <ctype.h>
 
 
 static bool fired;
-static bool select_state;
-static bool game_state;
-static bool load_state;
-static bool key_state;
+static bool select_state = 0;
+static bool game_state   = 0;
+static bool load_state   = 0;
+static bool key_state    = 0;
 
 
 static uint16_t value = 1000;
@@ -116,7 +118,6 @@ inline static void countdown_bar(){
     else {
        Paint_ClearWindows(205, 223, 205 + 10 * (index + 1) + 3 , y2 + 2, BLACK);
     }
-
       
     if(index == 9){
         LCD_2IN_DisplayWindows(205, y1 - 2, 319, y2 + 2, s_buffer);
@@ -173,15 +174,15 @@ inline static void write_prompt(){
 inline static void game_UI(){
    Paint_SelectImage((UBYTE *)s_buffer);
 
-   if (!fired || !game_state){
+   if (!game_state && !fired){
       clearflags();
       game_state = true;
       Paint_Clear(BLACK);
       write_prompt(action);
       populate_UI_elements(value, score_d);
-      fired = true;
+      LCD_2IN_Display((UBYTE *)s_buffer);
     }
-
+    fired = true;
     countdown_bar();
 }
 
@@ -241,59 +242,141 @@ inline static void display_time_delta(uint64_t delta){
 }
 
  inline static void display_key(){
-  uint8_t character = score_d;
+  static bool calculator_mode = false;
   static int  str_idx = 0;
-  static char str_buffer[256];
+ 
+  static char str_buffer [512];
 
-  if(!fired){
-    Paint_Clear(BLACK);
+  char calc_buffer[256];
+  char operand;
+  static int calc_idx = 0;
+  static int base = 10;
+
+  long long op1;
+  long long op2;
+  long long result;
+  
+
+  if(!fired && !key_state){
+   // Paint_Clear(BLACK);
+    key_state = true;
   }
 
-  Paint_SelectImage((uint8_t *) s_buffer);
+  //Paint_SelectImage((uint8_t *) s_buffer);
 
-  if(character == 0x66){ //backspace
-      str_buffer[str_idx] = '\0';
-      if(str_idx > 0)
-          str_idx--;
+  char character = (char)score_d;
+
+  if(!calculator_mode){
+    if(character == '\b'){
+        str_buffer[str_idx] = '\0';
+        if(str_idx > 0)
+            str_idx--;
+    }
+    else{
+      str_buffer[str_idx] = (char)character;
+      str_buffer[str_idx + 1] = '\0';
+      str_idx++;
+    }
+
+    printf("%s", str_buffer);
+
+    if(str_idx >= 4){
+      if(str_buffer[str_idx - 4] = '8' && str_buffer[str_idx - 3] == '0' && str_buffer[str_idx - 2] == '0' && str_buffer[str_idx - 1] == '8' && str_buffer[str_idx] == '5'){
+        printf("Calculator mode engaged\n");
+        calculator_mode = true;
+      }
+    }
   }
   else{
-    str_buffer[str_idx] = (char)character;
-    str_buffer[str_idx + 1] = '\0';
-    str_idx++;
+    
+    if(character == '\b'){
+        str_buffer[str_idx] = '\0';
+        if(str_idx > 0)
+            str_idx--;
+    }
+    else if(character == '\n'){
+      for(int i = 1; i < str_idx; i++){
+        if(str_buffer[str_idx - i] == '\n' || i == str_idx - 1){
+            calc_idx = str_idx - i;
+            break;
+        }
+      }
+      for(int i = 0; i < calc_idx; i++){
+        calc_buffer[i] = str_buffer[calc_idx + i];
+      }
+      for(int i = 0; i < str_idx; i++){
+        if (calc_buffer[i] == '+' || calc_buffer[i] == '-' || calc_buffer[i] == '*' || calc_buffer[i] == '/' ||
+            calc_buffer[i] == '%' || calc_buffer[i] == '!' || calc_buffer[i] == '&' || calc_buffer[i] == '|' )
+        {
+          operand = calc_buffer[i];
+
+          op1 = strtoll((calc_buffer + calc_idx), (calc_buffer + calc_idx + i - 1), base);
+          int j;
+          for(j = i + 1; j < str_idx; j++){
+              if(isdigit(calc_buffer[j]) == 0)
+                  break;
+          }   
+          
+          op2 = strtoll((calc_buffer + i), (calc_buffer + j - 1), base);
+        }
+      }
+      switch(operand){
+        case '+':
+          result = op1 + op2;
+          break;
+        case '-':
+          result = op1 - op2;
+          break;
+        case '*':
+          result = op1 * op2;
+          break;
+        case '/':
+          result = (op2 == 0) ? 0 : op1 / op2;
+          break;
+        case '%':
+          result = (op2 == 0)? 0 : op1 % op2;
+          break;
+        case '!':
+          result = !op2;
+          break;
+        case '&':
+          result = op1 & op2;
+          break;
+        case '|':
+          result = op1 | op2;
+          break;
+        default:
+          break;
+      }
+      str_buffer[str_idx] = ' ';
+      str_buffer[str_idx + 1] = '=';
+      str_buffer[str_idx + 2] = ' ';
+      sprintf(str_buffer + str_idx + 4, "%lld\n", result);
+      str_idx += 4;
+      calc_buffer[0] = '\0';
+    }
+    else{
+      str_buffer[str_idx] = (char)character;
+      str_buffer[str_idx + 1] = '\0';
+      str_idx++;
+    }
+
+    printf("%s", str_buffer);
+
+    if(str_idx >= 4){
+      if(str_buffer[str_idx - 4] = '8' && str_buffer[str_idx - 3] == '-' && str_buffer[str_idx - 2] == '-' && str_buffer[str_idx - 1] == '-' && str_buffer[str_idx] == 'D'){
+        printf("Calculator mode disengaged\n");
+        calculator_mode = false;
+      }
+    }
+
   }
 
-  Paint_ClearWindows(0, 0, 320, 18, BLACK);
-  Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
-  LCD_2IN_Display((uint8_t *)s_buffer);
+  // Paint_ClearWindows(0, 0, 320, 18, BLACK);
+  // Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
+  // LCD_2IN_Display((uint8_t *)s_buffer);
 }
 
-inline static void testing(){
-  uint16_t x1_1 = 30;
-  uint16_t x2_1 = 50;
-  uint16_t y1_1 = 30;
-  uint16_t y2_1 = 50;
-  uint16_t x1_2 = 260;
-  uint16_t x2_2 = 290;
-  uint16_t y1_2 = 30;
-  uint16_t y2_2 = 50;
-  uint16_t x1_3 = 30;
-  uint16_t x2_3 = 50;
-  uint16_t y1_3 = 150;
-  uint16_t y2_3 = 170;
-  uint16_t x1_4 = 260;
-  uint16_t x2_4 = 290;
-  uint16_t y1_4 = 150;
-  uint16_t y2_4 = 170;
-
-  LCD_2IN_Clear(WHITE);
-  Paint_SelectImage((UBYTE *)s_buffer);
-  Paint_Clear(WHITE);
-  Paint_DrawRectangle(x1_1, y1_1, x2_1, y2_1, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawRectangle(x1_2, y1_2, x2_2, y2_2, 0x8800, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawRectangle(x1_3, y1_3, x2_3, y2_3, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawRectangle(x1_4, y1_4, x2_4, y2_4, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  LCD_2IN_Display((UBYTE *)s_buffer); 
-}
 
 // inline void selection_display(select key);
 

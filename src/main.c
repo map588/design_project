@@ -29,7 +29,7 @@ static actions   action = NOP;
 static uint16_t  value  = 0;
 //All of these enums are defined in enum.h, in the include folder
 
-inline void update_time(uint16_t time){
+inline static void update_time(uint16_t time){
   uint32_t packet_t = 0;
 
   packet_t |= time * VALUE;
@@ -39,11 +39,12 @@ inline void update_time(uint16_t time){
 
   multicore_fifo_push_blocking(packet_t);
 }
-inline void change_state(states new_state){
-  state = new_state;
+
+inline static void change_state(states new_state){
+  state =  new_state;
   uint32_t packet_t = 0;
   packet_t |= value * VALUE;
-  packet_t |= state;
+  packet_t |= (uint8_t) state;
   packet_t |= score * SCORES;
   packet_t |= action * ACTION;
 
@@ -75,7 +76,7 @@ void action_isr(void){
         break;
 
     case key2:
-        packet = assemble_packet(TESTING, NOP, 0, 0);
+        packet = assemble_packet(SELECT, TURN_IT, 0, 0);
         break;
 
     case key3: 
@@ -116,6 +117,11 @@ int init(void)
   gpio_pull_down(key1);
   gpio_pull_down(key2);
   gpio_pull_down(key3);
+
+  gpio_is_input_hysteresis_enabled(key0);
+  gpio_is_input_hysteresis_enabled(key1);
+  gpio_is_input_hysteresis_enabled(key2);
+  gpio_is_input_hysteresis_enabled(key3);
 
     
     //calls the entry function for core 1
