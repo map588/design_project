@@ -248,11 +248,12 @@ inline static void display_time_delta(uint64_t delta){
   static char str_buffer [512];
 
   char calc_buffer[256];
-  char operand;
   static int calc_idx = 0;
   static int base = 10;
 
   long long op1;
+  char *endptr = str_buffer;
+  char operand;
   long long op2;
   long long result;
   
@@ -282,8 +283,10 @@ inline static void display_time_delta(uint64_t delta){
 
     if(str_idx >= 4){
       if(str_buffer[str_idx - 4] = '8' && str_buffer[str_idx - 3] == '0' && str_buffer[str_idx - 2] == '0' && str_buffer[str_idx - 1] == '8' && str_buffer[str_idx] == '5'){
-        printf("Calculator mode engaged\n");
         calculator_mode = true;
+        str_idx = 0;
+        str_buffer[str_idx] = '\0';
+        printf("Calculator mode engaged.\n");
       }
     }
   }
@@ -301,58 +304,60 @@ inline static void display_time_delta(uint64_t delta){
             break;
         }
       }
-      for(int i = 0; i < calc_idx; i++){
+      for(int i = 0; i < str_idx; i++){
         calc_buffer[i] = str_buffer[calc_idx + i];
       }
-      for(int i = 0; i < str_idx; i++){
-        if (calc_buffer[i] == '+' || calc_buffer[i] == '-' || calc_buffer[i] == '*' || calc_buffer[i] == '/' ||
-            calc_buffer[i] == '%' || calc_buffer[i] == '!' || calc_buffer[i] == '&' || calc_buffer[i] == '|' )
-        {
-          operand = calc_buffer[i];
+      op1 = strtoll(calc_buffer, &endptr, base);
+      if(*endptr == '\0' && calc_buffer[0] != '\0' && op1 > 0 && op1 <= 16){
+        base = op1;
+        printf("Base changed to %d\n", base);
+      }
+      else if(*endptr == '\0'){
+        printf("Invalid base\n");
+      }
 
-          op1 = strtoll((calc_buffer + calc_idx), (calc_buffer + calc_idx + i - 1), base);
-          int j;
-          for(j = i + 1; j < str_idx; j++){
-              if(isdigit(calc_buffer[j]) == 0)
-                  break;
-          }   
-          
-          op2 = strtoll((calc_buffer + i), (calc_buffer + j - 1), base);
+      operand = *endptr;
+      while(operand != '\0'){
+        op2 = strtoll(endptr + 1 , &endptr, base);
+        switch (operand){
+          case '+':
+            op1 = op1 + op2;
+            break;
+          case '-':
+            op1 = op1 - op2;
+            break;
+          case '*':
+            op1 = op1 * op2;
+            break;
+          case '/':
+            op1 = (op2 == 0) ? 0 : op1 / op2;
+            break;
+          case '%':
+            op1 = (op2 == 0) ? 0 : op1 % op2;
+            break;
+          case '!':
+            op1 = !op2;
+            break;
+          case '&':
+            op1 = op1 & op2;
+            break;
+          case '|':
+            op1 = op1 | op2;
+            break;
+          default:
+            break;
         }
+      operand = *endptr;
       }
-      switch(operand){
-        case '+':
-          result = op1 + op2;
-          break;
-        case '-':
-          result = op1 - op2;
-          break;
-        case '*':
-          result = op1 * op2;
-          break;
-        case '/':
-          result = (op2 == 0) ? 0 : op1 / op2;
-          break;
-        case '%':
-          result = (op2 == 0)? 0 : op1 % op2;
-          break;
-        case '!':
-          result = !op2;
-          break;
-        case '&':
-          result = op1 & op2;
-          break;
-        case '|':
-          result = op1 | op2;
-          break;
-        default:
-          break;
-      }
+      result = op1;
       str_buffer[str_idx] = ' ';
       str_buffer[str_idx + 1] = '=';
       str_buffer[str_idx + 2] = ' ';
-      sprintf(str_buffer + str_idx + 4, "%lld\n", result);
-      str_idx += 4;
+
+      sprintf(str_buffer + str_idx + 3, "%lld\n", result);
+      while(str_buffer[str_idx] != '\0')
+        str_idx++;
+      endptr = str_idx;
       calc_buffer[0] = '\0';
     }
     else{
@@ -365,8 +370,10 @@ inline static void display_time_delta(uint64_t delta){
 
     if(str_idx >= 4){
       if(str_buffer[str_idx - 4] = '8' && str_buffer[str_idx - 3] == '-' && str_buffer[str_idx - 2] == '-' && str_buffer[str_idx - 1] == '-' && str_buffer[str_idx] == 'D'){
-        printf("Calculator mode disengaged\n");
         calculator_mode = false;
+        str_idx = 0;
+        str_buffer[str_idx] = '\0';
+        printf("Calculator mode disengaged.\n");
       }
     }
 
