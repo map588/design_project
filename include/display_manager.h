@@ -57,8 +57,10 @@ inline static void select_display (){
 
     if(last_key > 0 && key == 0)
         last_key--;
-    else  if(last_key < 2 && key == 1)
+    else if(last_key < 2 && key == 1)
         last_key++;
+    else if(key == 3)
+        last_key = 0;
 
     Paint_SelectImage((UBYTE *)s_buffer);
 
@@ -102,22 +104,21 @@ inline static void countdown_bar(){
   } 
 
   if (index == 0){
-        Paint_ClearWindows(205, y1 - 2, 319, y2 + 2, BLACK);
-        x1 = 220;
-        x2 = 225;
+      Paint_ClearWindows(205, y1 - 2, 319, y2 + 2, BLACK);
+      x1 = 220;
+      x2 = 225;
 
-      for(int i = 0; i < 9; i++){
-            x1 = 220 + 10 * (i);
-            x2 = 220 + 10 * (i + 1) - 5;
-            Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
-      }
-      //LCD_2IN_Display((uint8_t *)s_buffer);
-      LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+    for(int i = 1; i <= 9; i++){
+          x1 = 220 + 10 * (i);
+          x2 = 220 + 10 * (i + 1) - 5;
+          Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
     }
-
-    else {
-       Paint_ClearWindows(205, 223, 205 + 10 * (index + 1) + 3 , y2 + 2, BLACK);
-    }
+    //LCD_2IN_Display((uint8_t *)s_buffer);
+    LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+  }
+  else {
+      Paint_ClearWindows(205, 223, 215 + 10 * (index + 1) + 3 , y2 + 2, BLACK);
+  }
       
     if(index == 9){
         LCD_2IN_DisplayWindows(205, y1 - 2, 319, y2 + 2, s_buffer);
@@ -174,15 +175,16 @@ inline static void write_prompt(){
 inline static void game_UI(){
    Paint_SelectImage((UBYTE *)s_buffer);
 
-   if (!game_state && !fired){
+   if (!fired){
       clearflags();
       game_state = true;
       Paint_Clear(BLACK);
       write_prompt(action);
       populate_UI_elements(value, score_d);
       LCD_2IN_Display((UBYTE *)s_buffer);
+      fired = true;
     }
-    fired = true;
+    
     countdown_bar();
 }
 
@@ -282,7 +284,8 @@ inline static void display_time_delta(uint64_t delta){
     printf("%s", str_buffer);
 
     if(str_idx >= 4){
-      if(str_buffer[str_idx - 4] = '8' && str_buffer[str_idx - 3] == '0' && str_buffer[str_idx - 2] == '0' && str_buffer[str_idx - 1] == '8' && str_buffer[str_idx] == '5'){
+      if(str_buffer[str_idx - 4] == '8' && str_buffer[str_idx - 3] == '0' && 
+         str_buffer[str_idx - 2] == '0' && str_buffer[str_idx - 1] == '8' && str_buffer[str_idx] == '5'){
         calculator_mode = true;
         str_idx = 0;
         str_buffer[str_idx] = '\0';
@@ -357,7 +360,7 @@ inline static void display_time_delta(uint64_t delta){
       sprintf(str_buffer + str_idx + 3, "%lld\n", result);
       while(str_buffer[str_idx] != '\0')
         str_idx++;
-      endptr = str_idx;
+      endptr = str_buffer + str_idx;
       calc_buffer[0] = '\0';
     }
     else{

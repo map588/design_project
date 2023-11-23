@@ -15,28 +15,27 @@ char scan_codes[] = {
 
 static PIO pio = pio0;
 static uint sm = 0;
-
+static char *k_key;
 uint32_t key_packet;
 
-void get_code()
-{
+void get_code(){
 	uint32_t input = pio_sm_get_blocking(pio, sm);
 
-	uint8_t key = input & 0x1F;
+	char key = input & 0x1F;
 
 
 	bool numlock   = 0;
 	bool pressed   = 0;
 	
-	char output = scan_codes[key];
+	*k_key = scan_codes[key];
 	
-	uint32_t key_packet = assemble_packet(KEYPRESS, 0, (uint8_t)output, 0);
+	uint32_t key_packet = assemble_packet(KEYPRESS, 0, (uint8_t)*k_key, 0);
 	multicore_fifo_push_blocking(key_packet);
-	}
+}
 
 
-void keyboard_init()
-{
+static void keyboard_init(char *key){	
+	k_key = key;
 	float freq_khz = 32.0f;
 	pio_gpio_init(pio, DATA_PIN);
 	pio_gpio_init(pio, CLOCK_PIN);
@@ -50,7 +49,7 @@ void keyboard_init()
 
     pio_sm_config c = keyboard_pio_program_get_default_config(offset);
     sm_config_set_in_pins(&c, DATA_PIN);
-    sm_config_set_in_shift(&c, true, true, 8);
+    sm_config_set_in_shift(&c, false, true, 5);
 
     pio_sm_set_consecutive_pindirs(pio, sm, DATA_PIN, 2, false);
     pio_set_irq0_source_enabled(pio, pis_sm0_rx_fifo_not_empty, true);
@@ -62,6 +61,7 @@ void keyboard_init()
     pio_sm_set_enabled(pio, sm, true);
 
     irq_set_exclusive_handler(PIO0_IRQ_0, &get_code);
+	irq_set_priority(PIO0_IRQ_0, 0xc0);
     irq_set_enabled(PIO0_IRQ_0, true);
 
     printf("\nstarting keypad\n");

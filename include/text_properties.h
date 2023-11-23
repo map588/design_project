@@ -27,9 +27,6 @@ typedef struct
   uint8_t text_length;
 } text_properties;
 
-enum text {SCORE, NEXT, ROUND, TIME};
-
-
 
 const text_properties UI_Text[4] = {
   {  2,    2, GREEN , BLACK, &Font12, "SCORE :", 56},  //top left row 1
@@ -38,7 +35,6 @@ const text_properties UI_Text[4] = {
   {  2,  226, CYAN  , BLACK, &Font12, "TIME: ", 48},  //bottom left
 };
 
-enum prompt {ARM, REWIRE, YANK};
 
 const text_properties UI_Prompt[3] = {
   {  62,  110, GRED  , BLACK, &Font20, "   TURN IT   ", 196},  //bottom left

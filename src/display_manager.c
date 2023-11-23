@@ -3,16 +3,16 @@
 #include "display_manager.h"
 #include "buzzer_tones.h"
 #include "hardware/pwm.h"
-
+//{LOADING, SELECT, GAME, CORRECT, INCORRECT, KEYPRESS, TESTING, RESTART} states;
 function_holder display_functions[7] = {
     {countdown_bar, true},
     {select_display, false},
     {game_UI, true},
-    {display_key, false},
     {correct_disp, false},
     {incorrect_disp, false},
+    {display_key, false}
     //{game_over_disp, false},unimplemented
-    };
+};
 
 //    0,0             320              X
 //       _______________________________
@@ -29,6 +29,7 @@ function_holder display_functions[7] = {
 //This is the core 1 stuff
 
 static bool interrupt;
+static char *g_key;
 
 bool null_callback(repeating_timer_t *rt){return false;}
 
@@ -76,7 +77,7 @@ bool init_display(){
   gpio_init (hex_1);
   gpio_init (hex_2);
   gpio_init (hex_3);
-  gpio_init (buzzer);
+  //gpio_init (buzzer);
 
   gpio_init (PICO_DEFAULT_LED_PIN);
   
@@ -92,11 +93,11 @@ bool init_display(){
   gpio_pull_down (hex_2);
   gpio_pull_down (hex_3);
 
-  gpio_set_dir (buzzer, GPIO_OUT);
-  gpio_set_function(buzzer, GPIO_FUNC_PWM);
+  //gpio_set_dir (buzzer, GPIO_OUT);
+  //gpio_set_function(buzzer, GPIO_FUNC_PWM);
 
-  pwm_config config = pwm_get_default_config();
-  pwm_set_phase_correct(&config, true);
+  //pwm_config config = pwm_get_default_config();
+  //pwm_set_phase_correct(&config, true);
   
 
 

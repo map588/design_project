@@ -9,7 +9,7 @@
 #include "pico/multicore.h"
 
 // PIO program for scanning the keyboard matrix
-void keyboard_init();
+static void keyboard_init(char *key);
 void get_code();
 
 #endif

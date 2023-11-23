@@ -1,7 +1,7 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
-#define VALUE   0x00010000
+#define TIME    0x00010000
 #define SCORES  0x00000100
 #define ACTION  0x00000010
 
@@ -11,8 +11,6 @@
 #include <stdint.h>
 
 
-
-void keyboard_init();
 void core_one_main();
 void display_exit();
 

@@ -13,26 +13,26 @@ const int key2 = 18;
 const int key3 = 19;
 
 //Assemble packet does this, but heres how it works
-//  V = value, A = action, P = Points (score), S = state
+//  V = time, A = action, P = Points (score), S = state
 //  packet =>  0xVVVVPPAS
-//  Value    Score   Action   State
+//  time    Score   Action   State
 //[31 - 16] [15 - 8] [7 - 4] [3 - 0]
 
 
 //Packet is global
 uint32_t packet;
 
-
+static char    * g_key;
 static uint8_t   score  = 0;
 static states    state  = LOADING;
 static actions   action = NOP;
-static uint16_t  value  = 0;
+static uint16_t  time  = 0;
 //All of these enums are defined in enum.h, in the include folder
 
 inline static void update_time(uint16_t time){
   uint32_t packet_t = 0;
 
-  packet_t |= time * VALUE;
+  packet_t |= time * time;
   packet_t |= state;
   packet_t |= score * SCORES;
   packet_t |= action;
@@ -43,7 +43,7 @@ inline static void update_time(uint16_t time){
 inline static void change_state(states new_state){
   state =  new_state;
   uint32_t packet_t = 0;
-  packet_t |= value * VALUE;
+  packet_t |= time * time;
   packet_t |= (uint8_t) state;
   packet_t |= score * SCORES;
   packet_t |= action * ACTION;
@@ -51,10 +51,10 @@ inline static void change_state(states new_state){
   multicore_fifo_push_blocking(packet_t);
 }
 void action_isr(void){
-  //Volatile because the value changes based on the hardware, compiler can't trust it
+  //Volatile because the time changes based on the hardware, compiler can't trust it
   volatile uint32_t irq_pin;
 
-  // Inline assembly to read the value of R5 into irq_pin
+  // Inline assembly to read the time of R5 into irq_pin
   asm("mov %0, r5" : "=r"(irq_pin));
 
   actions prompt;
@@ -129,7 +129,8 @@ int init(void)
 
     //This currently goes to call a function in keyboard.c that sets up the PIO and the interrupt, but we will
     //change this depending on how we decode the keypad
-  keyboard_init();
+  char *g_key = (char *)malloc(sizeof(char));
+  keyboard_init(g_key);
 
     //set up the GPIO interrupts
   gpio_set_irq_enabled_with_callback(key0, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
@@ -143,23 +144,51 @@ int init(void)
   //calls the above function to initialize the clock, I/O, calls core 1's entry, and sets up the GPIO interrupts
   init();
 
-  //dummy values that currently mean nothing, probably will be used by the game to keep track of score and time updates
-  //Will probably need an array of time_rates that are for easy, medium, and hard difficulties
-  int16_t time_rate = 20;
-  int16_t time = 5000;
 
-  action = (actions)(((rand() % 3)  + 1) * ACTION);
-  state  = LOADING;
-  
-  //assembles the packet to be sent to the display manager
-  packet = assemble_packet(state, action, score, time);
+  uint8_t selection = 0;
+  uint8_t time_rate = 0;
+  uint8_t time = 3000;
+  state = LOADING;
+  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 2000));
 
-  multicore_fifo_push_blocking(packet);
+  //TODO impliment an INTRO state and screen
+  // state = INTRO;
+  // while (*g_key != '\n'){tight_loop_contents();}
+  // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
 
 
-  //TODO STAGE 1: Loading, then display select screen
-  //TODO STAGE 2: Display the start screen, wait for input
+  state = SELECT;
+  while (*g_key == NULL){tight_loop_contents();}
+  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
+  do{
+    if(*g_key == '<' || *g_key == '>'){
+      switch(*g_key){
+        case '<': action = (actions)0x10; if(selection <= 0) selection--; break;
+        case '>': action = (actions)0x20; if(selection >= 2) selection++; break;
+      }
+     multicore_fifo_push_blocking(assemble_packet(SELECT, action, 0, 0));
+    }
+
+  }while(*g_key != '\n');
+
+  switch(selection){
+    case 0: time_rate = 15; break;  //3000ms to 1500ms / 100 steps is 15
+    case 1: time_rate = 20; break;  //3000ms to 1000ms / 100 steps is 20
+    case 2: time_rate = 22; break;  //3000ms to  800ms / 100 steps is 22
+  }
+
+  // TODO impliment a START state, and screen
+  //state = START;
+  //while (*g_key != '\n'){tight_loop_contents();}
+  //multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
+
+
   //TODO STAGE 3: Display the game screen, start game loop
+
+
+
+  //action = (actions)(((rand() % 3)  + 1) * ACTION);
+
   //TODO STAGE 4: Main game loop: chose random action, start timer interrupt, wait for input -> Timer interrupt triggers fail callback when reached
   //TODO STAGE 5: Continue this loop until a new round is reached
   //TODO STAGE 6: Go back to main game loop
