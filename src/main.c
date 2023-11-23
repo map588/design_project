@@ -139,9 +139,9 @@ int init(void)
   gpio_set_irq_enabled_with_callback(key3, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
 }
 
-//entry
+
+//TODO : RTFM
  int main(){
-  //calls the above function to initialize the clock, I/O, calls core 1's entry, and sets up the GPIO interrupts
   init();
 
 
@@ -184,8 +184,10 @@ int init(void)
 
 
   //TODO STAGE 3: Display the game screen, start game loop
-
-
+  
+  //TODO buttons need debounced, and the random 3 digit number needs to be generated when score % 20 = 0
+  
+  //if(score % 20 == 0) { state = KEYENTRY; multicore_fifo_push_blocking(assemble_packet(state, NOP, (rand()%1000), 0)); }
 
   //action = (actions)(((rand() % 3)  + 1) * ACTION);
 
