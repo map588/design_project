@@ -2,10 +2,8 @@
 
     ;pins  0 data
     ;      1 clock
-
-
+   set x,     4
    wait 0 pin 0  ;wait for data to go low
-
  bitloop:
    wait 1 pin 1  ;on rising edge clock
    in pins,   1  ;read data into shift register
