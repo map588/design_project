@@ -3,32 +3,25 @@
 #include "display_manager.h"
 #include "buzzer_tones.h"
 #include "hardware/pwm.h"
-//{LOADING,
-// SELECT,
-// GAME, 
-// CORRECT,
-// INCORRECT,
-// KEYPRESS,
-// PRESTART,
-// START,
-// RESTART};
+
 
 typedef void (*function_ptr)(void);
 typedef struct{
   function_ptr func;
-  bool repeating;
+  uint8_t repetitions;
 }function_holder;
 
 function_holder display_functions[7] = {
-    {loading_bar, true},
-    {select_display, false},
-    {game_UI, true},
-    {correct_disp, false},
-    {incorrect_disp, false},
-    {display_key, false},
-    {countdown_to_start, true},
-    {prompt_start, false}
-    //{game_over_disp, false},unimplemented
+    {loading_bar, 9},
+    {selction, 1},
+    {prompt_start, 1},
+    {countdown_to_start, 3},
+    {game_UI, 9},
+    {display_key, 1},
+    {correct_disp, 1},
+    {incorrect_disp, 1},
+    //{random_key, false},unimplemented
+    //{game_over, false},unimplemented
 };
 
 //    0,0             320              X
@@ -43,7 +36,6 @@ function_holder display_functions[7] = {
 //
 //TODO: Timing is very off, need to fix pico/time.h might be necessary
 
-//This is the core 1 stuff
 
 static bool interrupt;
 static char *g_key;
@@ -51,7 +43,6 @@ static char *g_key;
 bool null_callback(repeating_timer_t *rt){return false;}
 
 
-//This is the initialization function for the display
 bool init_display(){
   DEV_Delay_ms (100);
 
@@ -136,26 +127,18 @@ bool idx_timer_callback(repeating_timer_t *rt){
   display_functions[state].func();
   
 
-  drive_hex(9 - index);
+  drive_hex(display_functions[state].repetitions - index);
   ++index;
 
   fired = true;
 
-  if (index > 9 || !display_functions[state].repeating){
+  if (index > display_functions[state].repetitions){
       displayPacket(value, score_d, index, action, state);
       return false;
   }
 
   return true;
 }
-
-//Don't look in display_manager.h, it is a mess
-//This is the interrupt handler for core 1
-//The inline functions in display_manager.h are used to set the display
-//The display_functions array has points to static inline functions, which are indexed using state
-//This ISR sets global variables that are in display_manager.h, and starts the timer
-//The index timer callback uses the state to index which function it should call, and the struct has a boolean
-//To determine if it needs repeating in the index timer, like the loading bar, etc.
 
 void core_one_interrupt_handler (void){
 
@@ -183,15 +166,7 @@ void core_one_interrupt_handler (void){
     
     int8_t intervals;
 
-    switch (state){
-      case COUNTDOWN:
-        intervals = -4;
-        index = 6;
-        break;
-      default:
-        intervals = -10;
-        break;
-    }
+    intervals = display_functions[state].repetitions  + 1;
 
     int32_t interval = ((int32_t) value) / intervals;
     cancel_repeating_timer(&idx_timer);

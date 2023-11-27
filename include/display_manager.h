@@ -44,7 +44,7 @@ inline static void clearflags(){
       key_state = false;
 }
 
-inline static void select_display (){
+inline static void selction (){
 
     const int arr_pos[3] = {64, 152, 240};
     static uint8_t last_key = 0;
@@ -197,6 +197,13 @@ inline static void write_prompt(){
 
   LCD_2IN_DisplayWindows(100, 52, 140, 268, s_buffer);
 }
+inline static void game_buzzer(uint8_t index)
+{
+  //pwm_set_gpio_level(buzzer, 1);
+  //sleep_ms(100);
+  //pwm_set_gpio_level(buzzer, 0);
+  //sleep_ms(100);
+}
 
 inline static void game_UI(){
    Paint_SelectImage((UBYTE *)s_buffer);
@@ -210,12 +217,16 @@ inline static void game_UI(){
       LCD_2IN_Display((UBYTE *)s_buffer);
       fired = true;
     }
+    game_buzzer(index);
     
-    loading_bar();
+    if(index % 2 == 0)
+      loading_bar();
 }
 
+
+
 inline static void drive_hex(uint8_t hex){
-  gpio_put(hex_0, hex & 0x01);
+  gpio_put(hex_0,  hex & 0x01);
   gpio_put(hex_1, (hex & 0x02) >> 1);
   gpio_put(hex_2, (hex & 0x04) >> 2);
   gpio_put(hex_3, (hex & 0x08) >> 3);

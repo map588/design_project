@@ -27,6 +27,7 @@ static uint8_t   score  = 0;
 static states    state  = LOADING;
 static actions   action = NOP;
 static uint16_t  time  = 0;
+static bool callback = false;
 
 static alarm_pool_t *core0_pool;
 static alarm_id_t timer;
@@ -56,40 +57,18 @@ inline static void change_state(states new_state){
   multicore_fifo_push_blocking(packet_t);
 }
 void action_isr(void){
-  volatile uint32_t irq_pin;
+  volatile uint32_t irq_action;
 
   // Inline assembly to read the time of R5 into irq_pin
-  asm("mov %0, r5" : "=r"(irq_pin));
+  asm("mov %0, r5" : "=r"(irq_action));
 
-  actions prompt;
-
-
-  //Right now this is being determined GPIO alone, just to test the display manager, but later the game logic will determine the state,
-  //and this interrupt will check which pin is pressed, and what state the game is in, to determine what to send
-  switch (irq_pin)
-  {
-    case key0:
-        packet = assemble_packet(LOADING, 0, 0, 2000);
-        break;
-
-    case key1:
-        prompt = (actions)(((get_rand_32() % 3)  + 1) * ACTION);
-        packet = assemble_packet(GAME, prompt, score, 3000);
-        score++;
-        break;
-
-    case key2:
-        packet = assemble_packet(SELECT, TURN_IT, 0, 0);
-        break;
-
-    case key3: 
-        packet = assemble_packet(SELECT, YANK_IT, 0, 0);
-        break;
-
-    default:
-        packet = assemble_packet(LOADING, 0, 0, 200);
-    break;
+  switch (irq_action){
+    case 0x10: action = TURN_IT; break;
+    case 0x20: action = YANK_IT; break;
+    case 0x30: action = WIRE_IT; break;
+    default:   action = NOP;     break;
   }
+
 
   multicore_fifo_push_blocking(packet);
   irq_clear(IO_IRQ_BANK0);
@@ -109,6 +88,11 @@ int init(void)
   alarm_pool_create(0, 4);
 
   timer = alarm_pool_add_alarm_in_ms(core0_pool, 50, null_callback, NULL, true);
+
+  if(timer == -1){
+    printf("Timer failed to initialize\n");
+    exit(1);
+  }
 
   gpio_init(key0);
   gpio_init(key1);
@@ -147,11 +131,14 @@ int init(void)
 
 
 
-  gpio_set_irq_enabled_with_callback(key0, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
-  gpio_set_irq_enabled_with_callback(key1, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
-  gpio_set_irq_enabled_with_callback(key2, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
-  gpio_set_irq_enabled_with_callback(key3, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+  // gpio_set_irq_enabled_with_callback(key0, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+  // gpio_set_irq_enabled_with_callback(key1, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+  // gpio_set_irq_enabled_with_callback(key2, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+  // gpio_set_irq_enabled_with_callback(key3, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
 }
+
+
+  int64_t timer_callback(alarm_id_t id, void * user_data){return 0;}
 
 
  int main(){
@@ -160,6 +147,7 @@ int init(void)
 
   uint8_t selection = 0;
   uint8_t time_rate = 0;
+  uint16_t start_time = 3000;
 
   state = LOADING;
   time = 2000;
@@ -168,7 +156,6 @@ int init(void)
   // state = INTRO;
   // while (*g_key != '\n'){tight_loop_contents();}
   // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-
 
   state = SELECT;
   while (*g_key == NULL){tight_loop_contents();}
@@ -191,8 +178,6 @@ int init(void)
   }
 
  
-
-  // TODO impliment a START state, and screen
   state = CONTINUE;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
   while (*g_key != '\n'){tight_loop_contents();}
@@ -202,14 +187,28 @@ int init(void)
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
   busy_wait_ms(time + 100);
 
-  //TODO STAGE 3: Display the game screen, start game loop
-  
-  //TODO buttons need debounced, and the random 3 digit number needs to be generated when score % 20 = 0
-  
-  //if(score % 20 == 0) { state = KEYENTRY; multicore_fifo_push_blocking(assemble_packet(state, NOP, (rand()%1000), 0)); }
+  state = GAME;
+  time = (uint16_t) start_time;
 
-  //action = (actions)(((rand() % 3)  + 1) * ACTION);
+  do{
+    if(score != 0 && score % 20 == 0) {
 
+      state = RANDOM_KEY; multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, (rand()%1000)));
+      timer = alarm_pool_add_alarm_in_ms(core0_pool, -3000, timer_callback, NULL, true);}
+
+    else{
+
+      action = (actions)(((rand() % 3)  + 1) * ACTION);
+      multicore_fifo_push_blocking(assemble_packet(state, action, score, time));
+      timer = alarm_pool_add_alarm_in_ms(core0_pool, -time, timer_callback, NULL, true);
+      while(!callback){tight_loop_contents();}
+      score++;
+      time -= time_rate;
+      
+    }
+  }while (score < 100);
+  
+ 
   //TODO STAGE 4: Main game loop: chose random action, start timer interrupt, wait for input -> Timer interrupt triggers fail callback when reached
   //TODO STAGE 5: Continue this loop until a new round is reached
   //TODO STAGE 6: Go back to main game loop
