@@ -8,18 +8,18 @@
 typedef void (*function_ptr)(void);
 typedef struct{
   function_ptr func;
-  uint8_t repetitions;
+  bool repeating;
 }function_holder;
-
-function_holder display_functions[7] = {
-    {loading_bar, 9},
-    {selction, 1},
-    {prompt_start, 1},
-    {countdown_to_start, 3},
-    {game_UI, 9},
-    {display_key, 1},
-    {correct_disp, 1},
-    {incorrect_disp, 1},
+//{LOADING, SELECT, CONTINUE, COUNTDOWN, GAME, KEYPRESS, CORRECT, INCORRECT, RANDOM_KEY, RESTART} states;
+function_holder display_functions[8] = {
+    {loading_bar, 1},
+    {selction, 0},
+    {prompt_start, 0},
+    {countdown_to_start, 1},
+    {game_UI, 1},
+    {display_key, 0},
+    {correct_disp, 0},
+    {incorrect_disp, 0}
     //{random_key, false},unimplemented
     //{game_over, false},unimplemented
 };
@@ -127,13 +127,13 @@ bool idx_timer_callback(repeating_timer_t *rt){
   display_functions[state].func();
   
 
-  drive_hex(display_functions[state].repetitions - index);
+  drive_hex (9 - index);
   ++index;
 
   fired = true;
 
-  if (index > display_functions[state].repetitions){
-      displayPacket(value, score_d, index, action, state);
+  if (index > 9){
+      //displayPacket(value, score_d, index, action, state);
       return false;
   }
 
@@ -141,21 +141,20 @@ bool idx_timer_callback(repeating_timer_t *rt){
 }
 
 void core_one_interrupt_handler (void){
-
+  interrupt = true;
   //While there is valid data in the interrupt FIFO
   while(multicore_fifo_rvalid ()){
       //Get value in FIFO
     uint32_t data = multicore_fifo_pop_blocking ();
-    interrupt = true;
+    
 
       //Unpack the data
       value      =  (data  & 0xFFFF0000) >> 16;
       score_d    =  (data  & 0x0000FF00) >>  8;
       action     =  (data  & 0x000000F0) >>  4;
       state      =   data  & 0x0000000F;
-
-
-    //actions are indexed by 1 on the other side, but they are indexed by 0 here
+  }
+    multicore_fifo_drain();
     if(action == 0)
         action = NOP;
     else
@@ -164,21 +163,18 @@ void core_one_interrupt_handler (void){
     index = 0;
     fired = false;
     
-    int8_t intervals;
+    int32_t interval = ((int32_t) value) / -10;
 
-    intervals = display_functions[state].repetitions  + 1;
-
-    int32_t interval = ((int32_t) value) / intervals;
     cancel_repeating_timer(&idx_timer);
 
     interrupt = false;
     alarm_pool_add_repeating_timer_ms(core1_pool, interval, idx_timer_callback, NULL, &idx_timer);
 
-    
     multicore_fifo_clear_irq();
     return;
-  }
 }
+
+
 
 
 

@@ -20,7 +20,7 @@ inline uint32_t assemble_packet(states state, actions action, uint8_t score, uin
     packet |= state;
     packet |= action;
     packet |= score * SCORES;
-    packet |= data * VALUE;
+    packet |= data * TIME;
     return packet;
  }
 

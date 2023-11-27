@@ -8,8 +8,8 @@
 
 
 char scan_codes[] = {
-	'/','*','-','7','8','9','+','4','5','6','1','2','3','\n','0','.',
-	'%','&','!','A','^','B','|','<','C','>','D','v','E','\n','F','\b'
+	'/','*','-','7','8','9','+','4','5','6','1','2','3','\n','0','.', ' ', ' ', ' ',
+	'%','&','!','A','^','B','|','<','C','>','D','v','E','\n','F','\b', ' ', ' ', ' ',
 };
 
 
@@ -21,9 +21,12 @@ uint32_t key_packet;
 void get_code(){
 	uint32_t input = pio_sm_get_blocking(pio, sm);
 
-	char key = input & 0x1F;
+	char key = input & 0x2F;
 
-
+	if(key > 37){
+		return;
+	}
+	
 	bool numlock   = 0;
 	bool pressed   = 0;
 	
@@ -34,7 +37,7 @@ void get_code(){
 }
 
 
-static void keyboard_init(char *key){	
+void keyboard_init(char *key){	
 	k_key = key;
 	float freq_khz = 32.0f;
 	pio_gpio_init(pio, DATA_PIN);

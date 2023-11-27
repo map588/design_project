@@ -84,15 +84,15 @@ inline static void selction (){
 inline static void prompt_start(){
   Paint_SelectImage((UBYTE *)s_buffer);
   Paint_Clear(BLACK);
-  Paint_DrawString_EN(40, 112, "PRESS ENTER TO CONTINUE", &Font16, GREEN, BLACK);
-  Paint_DrawRectangle(38, 110, 263, 135, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  Paint_DrawString_EN(35, 112, "PRESS ENTER TO CONTINUE", &Font16, GREEN, BLACK);
+  Paint_DrawRectangle(33, 110, 300, 130, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
 inline static void countdown_to_start(){
   Paint_SelectImage((UBYTE *)s_buffer);
   Paint_Clear(BLACK);
-  switch(index){
+  switch(index){ 
     case 0:
       Paint_DrawString_EN(110, 110, "3", &Font20, GREEN, BLACK);
       break;
@@ -104,6 +104,7 @@ inline static void countdown_to_start(){
       break;
     case 3:
       Paint_DrawString_EN(40, 110, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
+      index = 9;
       break;
     default:
       break;
@@ -151,7 +152,6 @@ inline static void loading_bar(){
         Paint_ClearWindows(205, 223, 319, 239, BLACK);
     }
 
-      //TODO Figure out partial screen updates
       //LCD_2IN_Display((UBYTE *)s_buffer);
       LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
 }
@@ -217,9 +217,8 @@ inline static void game_UI(){
       LCD_2IN_Display((UBYTE *)s_buffer);
       fired = true;
     }
-    game_buzzer(index);
+    //game_buzzer(index);
     
-    if(index % 2 == 0)
       loading_bar();
 }
 
@@ -234,15 +233,15 @@ inline static void drive_hex(uint8_t hex){
 
 inline static void correct_disp(){
   Paint_SelectImage((UBYTE *)s_buffer);
-  Paint_ClearWindows(0, 0, 319, 239, WHITE);
+  Paint_Clear(BLACK);
   Paint_DrawString_EN(110, 100, "CORRECT", &Font20, GREEN, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
  inline static void incorrect_disp(){
   Paint_SelectImage ((UBYTE *)s_buffer);
-  Paint_ClearWindows(0, 0, 319, 239, WHITE);
-  Paint_DrawString_EN (110, 100, "INCORRECT", &Font20, RED, BLACK);
+  Paint_Clear(BLACK);
+  Paint_DrawString_EN (110, 100, "BOOM", &Font20, RED, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 

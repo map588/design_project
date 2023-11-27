@@ -3,14 +3,15 @@
 #include "pico/rand.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
-
-#include "keyboard_library/keyboard.h"
+#include "keyboard.h"
 #include "definitions.h"
 
-const int key0 = 16;
-const int key1 = 17;
-const int key2 = 18;
-const int key3 = 19;
+#define resting_keystate 32
+
+const int pull_pin = 16;
+const int turn_pin = 17;
+const int wire1_pin = 18;
+const int wire2_pin = 19;
 
 //Assemble packet does this, but heres how it works
 //  V = time, A = action, P = Points (score), S = state
@@ -28,8 +29,11 @@ static states    state  = LOADING;
 static actions   action = NOP;
 static uint16_t  time  = 0;
 static bool callback = false;
+static bool key_turned;
+static bool wire_pulled;
+static bool wire_position; 
+static bool temp = false;
 
-static alarm_pool_t *core0_pool;
 static alarm_id_t timer;
 //All of these enums are defined in enum.h, in the include folder
 
@@ -59,22 +63,45 @@ inline static void change_state(states new_state){
 void action_isr(void){
   volatile uint32_t irq_action;
 
+  cancel_alarm(timer);
   // Inline assembly to read the time of R5 into irq_pin
   asm("mov %0, r5" : "=r"(irq_action));
 
-  switch (irq_action){
-    case 0x10: action = TURN_IT; break;
-    case 0x20: action = YANK_IT; break;
-    case 0x30: action = WIRE_IT; break;
-    default:   action = NOP;     break;
+  switch(irq_action){
+    case turn_pin:
+      if(state = CONTINUE)
+        temp = true;
+      else
+      if (action == TURN_IT)
+           change_state(CORRECT);
+      else change_state(INCORRECT);
+      break;
+    case pull_pin:
+      if(action == YANK_IT) 
+           change_state(CORRECT);
+      else change_state(INCORRECT);
+      break;
+  case wire1_pin:
+      if(action == WIRE_IT && wire_position == 0) 
+           change_state(CORRECT);
+      else change_state(INCORRECT);
+      break;
+  case wire2_pin:
+      if(action == WIRE_IT && wire_position == 1) 
+           change_state(CORRECT);
+      else change_state(INCORRECT);
+      break;
+  default:
+      change_state(INCORRECT);
+      break;
   }
 
-
   multicore_fifo_push_blocking(packet);
+  callback = true;
   irq_clear(IO_IRQ_BANK0);
 }
 
-int64_t null_callback(alarm_id_t id, void * user_data){return 0;}
+int64_t null_call(alarm_id_t id, void * user_data){return 0;}
 
 
 int init(void)
@@ -85,60 +112,68 @@ int init(void)
 
   stdio_init_all();
 
-  alarm_pool_create(0, 4);
 
-  timer = alarm_pool_add_alarm_in_ms(core0_pool, 50, null_callback, NULL, true);
+  timer = add_alarm_in_ms(50, null_call, NULL, true);
 
   if(timer == -1){
     printf("Timer failed to initialize\n");
     exit(1);
   }
 
-  gpio_init(key0);
-  gpio_init(key1);
-  gpio_init(key2);
-  gpio_init(key3);
+  gpio_init(pull_pin);
+  gpio_init(turn_pin);
+  gpio_init(wire1_pin);
+  gpio_init(wire2_pin);
 
-  gpio_set_dir(key0, 0);
-  gpio_set_dir(key1, 0);
-  gpio_set_dir(key2, 0);
-  gpio_set_dir(key3, 0);
+  gpio_set_dir(pull_pin, 0);
+  gpio_set_dir(turn_pin, 0);
+  gpio_set_dir(wire1_pin, 0);
+  gpio_set_dir(wire2_pin, 0);
 
-  gpio_pull_down(key0);
-  gpio_pull_down(key1);
-  gpio_pull_down(key2);
-  gpio_pull_down(key3);
+  gpio_pull_up(pull_pin);
+  gpio_pull_up(turn_pin);
+  gpio_pull_up(wire1_pin);
+  gpio_pull_up(wire2_pin);
 
-  gpio_is_input_hysteresis_enabled(key0);
-  gpio_is_input_hysteresis_enabled(key1);
-  gpio_is_input_hysteresis_enabled(key2);
-  gpio_is_input_hysteresis_enabled(key3);
-
+  // gpio_is_input_hysteresis_enabled(pull_pin);
+  // gpio_is_input_hysteresis_enabled(turn_pin);
+  // gpio_is_input_hysteresis_enabled(wire1_pin);
+  // gpio_is_input_hysteresis_enabled(wire2_pin);
     
     //calls the entry function for core 1
   multicore_launch_core1(core_one_main);
 
     //This currently goes to call a function in keyboard.c that sets up the PIO and the interrupt, but we will
     //change this depending on how we decode the keypad
-  char *g_key = (char *)malloc(sizeof(char));
+  g_key = (char *)malloc(sizeof(char));
   keyboard_init(g_key);
 
 
     //TODO: set up the timer interrupt
     //TODO: change the gpio interrupts to PIO interrupts that simplify our inputs
-    //Inputs are a the toggle cord, the rising or falling edge of the turn key, and the wire terminals
+
+  key_turned    = gpio_get(turn_pin);
+  wire_pulled   = gpio_get(pull_pin);
+  wire_position = gpio_get(wire1_pin);
 
 
 
+  gpio_set_irq_enabled_with_callback(pull_pin, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+  gpio_set_irq_enabled_with_callback(pull_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
 
-  // gpio_set_irq_enabled_with_callback(key0, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
-  // gpio_set_irq_enabled_with_callback(key1, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
-  // gpio_set_irq_enabled_with_callback(key2, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
-  // gpio_set_irq_enabled_with_callback(key3, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+  gpio_set_irq_enabled_with_callback(turn_pin, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
+  gpio_set_irq_enabled_with_callback(turn_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
+
+  gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
+  gpio_set_irq_enabled_with_callback(wire2_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
 }
 
 
-  int64_t timer_callback(alarm_id_t id, void * user_data){return 0;}
+  int64_t timer_callback(alarm_id_t id, void * user_data){
+    multicore_fifo_push_blocking(assemble_packet(state, INCORRECT, score, time));
+    callback = true;
+    return 0;
+    }
 
 
  int main(){
@@ -152,25 +187,27 @@ int init(void)
   state = LOADING;
   time = 2000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
+  busy_wait_ms(3000);
 
   // state = INTRO;
   // while (*g_key != '\n'){tight_loop_contents();}
   // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
 
-  state = SELECT;
-  while (*g_key == NULL){tight_loop_contents();}
-  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-  do{
-    if(*g_key == '<' || *g_key == '>'){
-      switch(*g_key){
-        case '<': action = (actions)0x10; if(selection <= 0) selection--; break;
-        case '>': action = (actions)0x20; if(selection >= 2) selection++; break;
-      }
-     multicore_fifo_push_blocking(assemble_packet(SELECT, action, 0, 0));
-    }
+  // state = SELECT;
+  // while (*g_key == resting_keystate){tight_loop_contents();}
+  // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
+  // do{
+  //   if(*g_key == '<' || *g_key == '>'){
+  //     switch(*g_key){
+  //       case '<': action = (actions)0x10; if(selection <= 0) selection--; break;
+  //       case '>': action = (actions)0x20; if(selection >= 2) selection++; break;
+  //     }
+  //    multicore_fifo_push_blocking(assemble_packet(SELECT, action, 0, 0));
+  //   }
 
-  }while(*g_key != '\n');
+  // }while(*g_key != '\n');
 
+  selection = 0;
   switch(selection){
     case 0: time_rate = 15; break;  //3000ms to 1500ms / 100 steps is 15
     case 1: time_rate = 20; break;  //3000ms to 1000ms / 100 steps is 20
@@ -180,7 +217,8 @@ int init(void)
  
   state = CONTINUE;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-  while (*g_key != '\n'){tight_loop_contents();}
+  // while (*g_key != '\n'){tight_loop_contents();}
+   while (!temp){tight_loop_contents();}
 
   state = COUNTDOWN;
   time = 4000;
@@ -192,36 +230,31 @@ int init(void)
 
   do{
     if(score != 0 && score % 20 == 0) {
-
-      state = RANDOM_KEY; multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, (rand()%1000)));
-      timer = alarm_pool_add_alarm_in_ms(core0_pool, -3000, timer_callback, NULL, true);}
-
+      state = RANDOM_KEY; 
+      multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, (rand()%1000)));
+      timer = add_alarm_in_ms(-3000, timer_callback, NULL, true);
+      while(!callback){tight_loop_contents();}
+  }
     else{
-
+      callback = false;
       action = (actions)(((rand() % 3)  + 1) * ACTION);
       multicore_fifo_push_blocking(assemble_packet(state, action, score, time));
-      timer = alarm_pool_add_alarm_in_ms(core0_pool, -time, timer_callback, NULL, true);
+      timer = add_alarm_in_ms(-1 * time, timer_callback, NULL, true);
       while(!callback){tight_loop_contents();}
       score++;
       time -= time_rate;
-      
     }
   }while (score < 100);
   
- 
-  //TODO STAGE 4: Main game loop: chose random action, start timer interrupt, wait for input -> Timer interrupt triggers fail callback when reached
-  //TODO STAGE 5: Continue this loop until a new round is reached
-  //TODO STAGE 6: Go back to main game loop
+  
   //TODO STAGE 7: After 100 successful moves, display win screen, if the player fails at some point, display lose screen
   //TODO STAGE 8: Wait for input, if the player presses the start button, go back to stage 1, otherwise, do nothing
 
 
 
 
-  //Does nothing forever, and interrupts will handle the rest
-  while(1){tight_loop_contents();}
+  //while(1){tight_loop_contents();}
 
-  //should never reach here, but we need to call this to deallocate somewhere else that will run
   display_exit();
 
   return 0;
