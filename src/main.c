@@ -27,12 +27,16 @@ static uint8_t   score  = 0;
 static states    state  = LOADING;
 static actions   action = NOP;
 static uint16_t  time  = 0;
+
+static alarm_pool_t *core0_pool;
+static alarm_id_t timer;
 //All of these enums are defined in enum.h, in the include folder
 
-inline static void update_time(uint16_t time){
-  uint32_t packet_t = 0;
+inline static void update_time(uint16_t new_time){
+  time = new_time;
 
-  packet_t |= time * time;
+  uint32_t packet_t = 0;
+  packet_t |= time * TIME;
   packet_t |= state;
   packet_t |= score * SCORES;
   packet_t |= action;
@@ -42,16 +46,16 @@ inline static void update_time(uint16_t time){
 
 inline static void change_state(states new_state){
   state =  new_state;
+
   uint32_t packet_t = 0;
-  packet_t |= time * time;
-  packet_t |= (uint8_t) state;
+  packet_t |= time * TIME;
+  packet_t |= state;
   packet_t |= score * SCORES;
-  packet_t |= action * ACTION;
+  packet_t |= action;
 
   multicore_fifo_push_blocking(packet_t);
 }
 void action_isr(void){
-  //Volatile because the time changes based on the hardware, compiler can't trust it
   volatile uint32_t irq_pin;
 
   // Inline assembly to read the time of R5 into irq_pin
@@ -59,7 +63,6 @@ void action_isr(void){
 
   actions prompt;
 
-  //depending on the key pressed, we will send a different packet to core 1
 
   //Right now this is being determined GPIO alone, just to test the display manager, but later the game logic will determine the state,
   //and this interrupt will check which pin is pressed, and what state the game is in, to determine what to send
@@ -70,7 +73,7 @@ void action_isr(void){
         break;
 
     case key1:
-        prompt = (actions)(((get_rand_32() % 3)  + 1) * ACTION);  //This will be used elsewhere when we impliment the game logic
+        prompt = (actions)(((get_rand_32() % 3)  + 1) * ACTION);
         packet = assemble_packet(GAME, prompt, score, 3000);
         score++;
         break;
@@ -88,10 +91,11 @@ void action_isr(void){
     break;
   }
 
-  //sends the packet to the display manager using the FIFO
   multicore_fifo_push_blocking(packet);
   irq_clear(IO_IRQ_BANK0);
 }
+
+int64_t null_callback(alarm_id_t id, void * user_data){return 0;}
 
 
 int init(void)
@@ -103,6 +107,9 @@ int init(void)
   stdio_init_all();
 
   alarm_pool_create(0, 4);
+
+  timer = alarm_pool_add_alarm_in_ms(core0_pool, 50, null_callback, NULL, true);
+
   gpio_init(key0);
   gpio_init(key1);
   gpio_init(key2);
@@ -132,7 +139,14 @@ int init(void)
   char *g_key = (char *)malloc(sizeof(char));
   keyboard_init(g_key);
 
-    //set up the GPIO interrupts
+
+    //TODO: set up the timer interrupt
+    //TODO: change the gpio interrupts to PIO interrupts that simplify our inputs
+    //Inputs are a the toggle cord, the rising or falling edge of the turn key, and the wire terminals
+
+
+
+
   gpio_set_irq_enabled_with_callback(key0, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
   gpio_set_irq_enabled_with_callback(key1, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
   gpio_set_irq_enabled_with_callback(key2, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
@@ -140,18 +154,17 @@ int init(void)
 }
 
 
-//TODO : RTFM
  int main(){
-  init();
 
+  init();
 
   uint8_t selection = 0;
   uint8_t time_rate = 0;
-  uint8_t time = 3000;
-  state = LOADING;
-  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 2000));
 
-  //TODO impliment an INTRO state and screen
+  state = LOADING;
+  time = 2000;
+  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
+
   // state = INTRO;
   // while (*g_key != '\n'){tight_loop_contents();}
   // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
@@ -177,11 +190,17 @@ int init(void)
     case 2: time_rate = 22; break;  //3000ms to  800ms / 100 steps is 22
   }
 
-  // TODO impliment a START state, and screen
-  //state = START;
-  //while (*g_key != '\n'){tight_loop_contents();}
-  //multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
+ 
 
+  // TODO impliment a START state, and screen
+  state = CONTINUE;
+  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
+  while (*g_key != '\n'){tight_loop_contents();}
+
+  state = COUNTDOWN;
+  time = 4000;
+  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
+  busy_wait_ms(time + 100);
 
   //TODO STAGE 3: Display the game screen, start game loop
   

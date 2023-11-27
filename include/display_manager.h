@@ -35,11 +35,6 @@ static uint8_t index = 0;
 
 static uint16_t *s_buffer;
 
-typedef void (*function_ptr)(void);
-typedef struct{
-  function_ptr func;
-  bool repeating;
-}function_holder;
 
 
 inline static void clearflags(){
@@ -86,7 +81,38 @@ inline static void select_display (){
     LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
 }
 
-inline static void countdown_bar(){
+inline static void prompt_start(){
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_Clear(BLACK);
+  Paint_DrawString_EN(40, 112, "PRESS ENTER TO CONTINUE", &Font16, GREEN, BLACK);
+  Paint_DrawRectangle(38, 110, 263, 135, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  LCD_2IN_Display((UBYTE *)s_buffer);
+}
+
+inline static void countdown_to_start(){
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_Clear(BLACK);
+  switch(index){
+    case 0:
+      Paint_DrawString_EN(110, 110, "3", &Font20, GREEN, BLACK);
+      break;
+    case 1:
+      Paint_DrawString_EN(110, 110, "2", &Font20, GREEN, BLACK);
+      break;
+    case 2:
+      Paint_DrawString_EN(110, 110, "1", &Font20, GREEN, BLACK);
+      break;
+    case 3:
+      Paint_DrawString_EN(40, 110, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
+      break;
+    default:
+      break;
+  }
+  LCD_2IN_Display((UBYTE *)s_buffer);
+  return;
+}
+
+inline static void loading_bar(){
   uint16_t x1;
   uint16_t x2;
   uint16_t y1;
@@ -185,7 +211,7 @@ inline static void game_UI(){
       fired = true;
     }
     
-    countdown_bar();
+    loading_bar();
 }
 
 inline static void drive_hex(uint8_t hex){
@@ -231,17 +257,6 @@ inline static void correct_disp(){
   packet_s[0] = '\0';
 }
 
-inline static void display_time_delta(uint64_t delta){
-  char delta_s[23];
-
-  Paint_SelectImage ((UBYTE *)s_buffer);
-  Paint_ClearWindows(30, 55, 240, 78, BLACK);
-
-  sprintf(delta_s, "Delta: %u ms", delta);
-  Paint_DrawString_EN (30, 56, delta_s, &Font12, WHITE, BLACK);
-  LCD_2IN_DisplayWindows(55, 30, 78, 240, s_buffer);
-  delta_s[0] = '\0';
-}
 
  inline static void display_key(){
   static bool calculator_mode = false;
@@ -283,9 +298,10 @@ inline static void display_time_delta(uint64_t delta){
 
     printf("%s", str_buffer);
 
+    //80085
     if(str_idx >= 4){
-      if(str_buffer[str_idx - 4] == '8' && str_buffer[str_idx - 3] == '0' && 
-         str_buffer[str_idx - 2] == '0' && str_buffer[str_idx - 1] == '8' && str_buffer[str_idx] == '5'){
+      if(str_buffer[str_idx - 4] == '.' && str_buffer[str_idx - 3] == '.' && 
+         str_buffer[str_idx - 2] == '.' && str_buffer[str_idx - 1] == '.' && str_buffer[str_idx] == '.'){
         calculator_mode = true;
         str_idx = 0;
         str_buffer[str_idx] = '\0';
@@ -311,6 +327,8 @@ inline static void display_time_delta(uint64_t delta){
         calc_buffer[i] = str_buffer[calc_idx + i];
       }
       op1 = strtoll(calc_buffer, &endptr, base);
+      
+      //Change of base
       if(*endptr == '\0' && calc_buffer[0] != '\0' && op1 > 0 && op1 <= 16){
         base = op1;
         printf("Base changed to %d\n", base);
@@ -372,7 +390,8 @@ inline static void display_time_delta(uint64_t delta){
     printf("%s", str_buffer);
 
     if(str_idx >= 4){
-      if(str_buffer[str_idx - 4] = '8' && str_buffer[str_idx - 3] == '-' && str_buffer[str_idx - 2] == '-' && str_buffer[str_idx - 1] == '-' && str_buffer[str_idx] == 'D'){
+      if(str_buffer[str_idx - 4] = '.' && str_buffer[str_idx - 3] == '.' && str_buffer[str_idx - 2] == '.' &&
+         str_buffer[str_idx - 1] == '.' && str_buffer[str_idx] == '.'){
         calculator_mode = false;
         str_idx = 0;
         str_buffer[str_idx] = '\0';
@@ -387,12 +406,6 @@ inline static void display_time_delta(uint64_t delta){
   // LCD_2IN_Display((uint8_t *)s_buffer);
 }
 
-
-// inline void selection_display(select key);
-
-// inline void init_game_disp(void);
-
-// inline void game_disp(int score, int stage, int time);
 
 // inline void correct_disp(void);
 

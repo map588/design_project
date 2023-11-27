@@ -11,7 +11,6 @@ set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 
 
-
 add_subdirectory(lib/Config)
 add_subdirectory(lib/LCD)
 add_subdirectory(lib/Fonts)

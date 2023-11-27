@@ -10,4 +10,5 @@
    wait 0 pin 1  ;on falling edge
    jmp x-- bitloop
    push
+   
 .wrap

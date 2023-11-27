@@ -3,14 +3,31 @@
 #include "display_manager.h"
 #include "buzzer_tones.h"
 #include "hardware/pwm.h"
-//{LOADING, SELECT, GAME, CORRECT, INCORRECT, KEYPRESS, TESTING, RESTART} states;
+//{LOADING,
+// SELECT,
+// GAME, 
+// CORRECT,
+// INCORRECT,
+// KEYPRESS,
+// PRESTART,
+// START,
+// RESTART};
+
+typedef void (*function_ptr)(void);
+typedef struct{
+  function_ptr func;
+  bool repeating;
+}function_holder;
+
 function_holder display_functions[7] = {
-    {countdown_bar, true},
+    {loading_bar, true},
     {select_display, false},
     {game_UI, true},
     {correct_disp, false},
     {incorrect_disp, false},
-    {display_key, false}
+    {display_key, false},
+    {countdown_to_start, true},
+    {prompt_start, false}
     //{game_over_disp, false},unimplemented
 };
 
@@ -138,7 +155,7 @@ bool idx_timer_callback(repeating_timer_t *rt){
 //The display_functions array has points to static inline functions, which are indexed using state
 //This ISR sets global variables that are in display_manager.h, and starts the timer
 //The index timer callback uses the state to index which function it should call, and the struct has a boolean
-//To determine if it needs repeating in the index timer, like the countdown bar, etc.
+//To determine if it needs repeating in the index timer, like the loading bar, etc.
 
 void core_one_interrupt_handler (void){
 
@@ -163,22 +180,26 @@ void core_one_interrupt_handler (void){
 
     index = 0;
     fired = false;
+    
+    int8_t intervals;
 
-    //Calculate the new interval, negative because we want to count from the beginning of callback execution, not the end
-    int32_t interval = ((int32_t) value) / -10;
-    absolute_time_t *time_delta;
-   
+    switch (state){
+      case COUNTDOWN:
+        intervals = -4;
+        index = 6;
+        break;
+      default:
+        intervals = -10;
+        break;
+    }
 
+    int32_t interval = ((int32_t) value) / intervals;
     cancel_repeating_timer(&idx_timer);
-    *time_delta = get_absolute_time();
 
-    //Interrupt is set to true, so the timer callback will not execute
-    //After we start this timer we set it to false so the timer callback can execute
     interrupt = false;
-    alarm_pool_add_repeating_timer_ms(core1_pool, interval, idx_timer_callback, time_delta, &idx_timer);
+    alarm_pool_add_repeating_timer_ms(core1_pool, interval, idx_timer_callback, NULL, &idx_timer);
 
     
-    //clear that mofo
     multicore_fifo_clear_irq();
     return;
   }
