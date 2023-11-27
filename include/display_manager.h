@@ -18,10 +18,11 @@
 
 
 static bool fired;
-static bool select_state = 0;
-static bool game_state   = 0;
-static bool load_state   = 0;
-static bool key_state    = 0;
+static bool select_state  = 0;
+static bool game_state    = 0;
+static bool load_state    = 0;
+static bool key_state     = 0;
+static bool restart_state = 0;
 
 
 static uint16_t value = 1000;
@@ -29,8 +30,6 @@ static uint8_t action = 0;
 static uint8_t score_d = 0;
 static states state = LOADING;
 
-static repeating_timer_t idx_timer;
-static alarm_pool_t *core1_pool;
 static uint8_t index = 0;
 
 static uint16_t *s_buffer;
@@ -42,6 +41,7 @@ inline static void clearflags(){
       game_state = false;
       load_state = false;
       key_state = false;
+      restart_state = false;
 }
 
 inline static void selction (){
@@ -147,7 +147,7 @@ inline static void loading_bar(){
       Paint_ClearWindows(205, 223, 215 + 10 * (index + 1) + 3 , y2 + 2, BLACK);
   }
       
-    if(index == 9){
+    if(index >= 9){
         LCD_2IN_DisplayWindows(205, y1 - 2, 319, y2 + 2, s_buffer);
         Paint_ClearWindows(205, 223, 319, 239, BLACK);
     }
@@ -223,7 +223,6 @@ inline static void game_UI(){
 }
 
 
-
 inline static void drive_hex(uint8_t hex){
   gpio_put(hex_0,  hex & 0x01);
   gpio_put(hex_1, (hex & 0x02) >> 1);
@@ -245,6 +244,19 @@ inline static void correct_disp(){
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
+inline static void play_again(){
+  if (!fired)
+  {
+    clearflags();
+    restart_state = true;
+    Paint_SelectImage((UBYTE *)s_buffer);
+    Paint_Clear(BLACK);
+    Paint_DrawString_EN(110, 100, "PLAY AGAIN?", &Font20, GREEN, BLACK);
+    LCD_2IN_Display((UBYTE *)s_buffer);
+    fired = true;
+  }
+    loading_bar();
+}
 
  inline static void displayPacket( uint16_t value, uint8_t score, uint8_t index, uint8_t action, uint8_t state){
   const char *state_str[7] = {"LOAD", "SEL ", "GAME", "PASS", "FAIL", "RST ", "KEY "};

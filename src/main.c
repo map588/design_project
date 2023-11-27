@@ -24,30 +24,22 @@ const int wire2_pin = 19;
 uint32_t packet;
 
 static char    * g_key;
-static uint8_t   score  = 0;
+static uint8_t   score;
 static states    state  = LOADING;
 static actions   action = NOP;
-static uint16_t  time  = 0;
-static bool callback = false;
+static uint16_t  time;
+static bool callback;
 static bool key_turned;
 static bool wire_pulled;
-static bool wire_position; 
-static bool temp = false;
+static bool wire_position;
+static bool game_over;
+static bool temp;
+
 
 static alarm_id_t timer;
+static alarm_id_t restart_timer;
 //All of these enums are defined in enum.h, in the include folder
 
-inline static void update_time(uint16_t new_time){
-  time = new_time;
-
-  uint32_t packet_t = 0;
-  packet_t |= time * TIME;
-  packet_t |= state;
-  packet_t |= score * SCORES;
-  packet_t |= action;
-
-  multicore_fifo_push_blocking(packet_t);
-}
 
 inline static void change_state(states new_state){
   state =  new_state;
@@ -66,13 +58,15 @@ void action_isr(void){
   cancel_alarm(timer);
   // Inline assembly to read the time of R5 into irq_pin
   asm("mov %0, r5" : "=r"(irq_action));
+  callback = true;
 
   switch(irq_action){
     case turn_pin:
-      if(state = CONTINUE)
+      if(state = CONTINUE || game_over == 1){
         temp = true;
-      else
-      if (action == TURN_IT)
+        cancel_alarm(restart_timer);
+      }
+      else if (action == TURN_IT)
            change_state(CORRECT);
       else change_state(INCORRECT);
       break;
@@ -96,8 +90,6 @@ void action_isr(void){
       break;
   }
 
-  multicore_fifo_push_blocking(packet);
-  callback = true;
   irq_clear(IO_IRQ_BANK0);
 }
 
@@ -113,12 +105,14 @@ int init(void)
   stdio_init_all();
 
 
-  timer = add_alarm_in_ms(50, null_call, NULL, true);
+  timer = add_alarm_in_ms(50, null_call, NULL, false);
 
   if(timer == -1){
-    printf("Timer failed to initialize\n");
+    printf("timer failed to initialize\n");
     exit(1);
   }
+
+  cancel_alarm(timer);
 
   gpio_init(pull_pin);
   gpio_init(turn_pin);
@@ -169,30 +163,41 @@ int init(void)
 }
 
 
-  int64_t timer_callback(alarm_id_t id, void * user_data){
-    multicore_fifo_push_blocking(assemble_packet(state, INCORRECT, score, time));
+  int64_t game_timer_callback(alarm_id_t id, void * user_data){
+    multicore_fifo_push_blocking(assemble_packet(INCORRECT, NOP, score, time));
+    busy_wait_ms(2000);
     callback = true;
+    game_over = true;
     return 0;
     }
 
+  int64_t restart_timer_callback(alarm_id_t id, void * user_data){
+    game_over = true;
+    callback = true;
+    return 0;
+  }
 
  int main(){
 
   init();
 
+benningging:
   uint8_t selection = 0;
   uint8_t time_rate = 0;
   uint16_t start_time = 3000;
+  score = 0;
+
+  callback = false;
+  game_over = false;
+  temp = false;
+
 
   state = LOADING;
-  time = 2000;
+  time = 1000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(3000);
+  busy_wait_ms(1500);
 
-  // state = INTRO;
-  // while (*g_key != '\n'){tight_loop_contents();}
-  // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-
+ 
   // state = SELECT;
   // while (*g_key == resting_keystate){tight_loop_contents();}
   // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
@@ -223,39 +228,40 @@ int init(void)
   state = COUNTDOWN;
   time = 4000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(time + 100);
+  busy_wait_ms(4150);
 
   state = GAME;
   time = (uint16_t) start_time;
 
   do{
     if(score != 0 && score % 20 == 0) {
-      state = RANDOM_KEY; 
+      state = RANDOM_KEY;
+      timer = add_alarm_in_ms(3010, game_timer_callback, NULL, false);
       multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, (rand()%1000)));
-      timer = add_alarm_in_ms(-3000, timer_callback, NULL, true);
       while(!callback){tight_loop_contents();}
   }
     else{
       callback = false;
       action = (actions)(((rand() % 3)  + 1) * ACTION);
+      timer = add_alarm_in_ms(time + 10, game_timer_callback, NULL, true);
       multicore_fifo_push_blocking(assemble_packet(state, action, score, time));
-      timer = add_alarm_in_ms(-1 * time, timer_callback, NULL, true);
       while(!callback){tight_loop_contents();}
       score++;
       time -= time_rate;
     }
-  }while (score < 100);
+  }while (score < 100 && !game_over);
   
-  
-  //TODO STAGE 7: After 100 successful moves, display win screen, if the player fails at some point, display lose screen
-  //TODO STAGE 8: Wait for input, if the player presses the start button, go back to stage 1, otherwise, do nothing
+  state = RESTART;
+  game_over = false;
+  restart_timer = add_alarm_in_ms(10010, restart_timer_callback, NULL, false);
+  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 10000));
+  busy_wait_ms(10020);
 
+  if(!game_over)
+    goto benningging;
+  else
+    display_exit();
 
-
-
-  //while(1){tight_loop_contents();}
-
-  display_exit();
 
   return 0;
 }
