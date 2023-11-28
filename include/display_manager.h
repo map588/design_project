@@ -14,23 +14,26 @@
 #include "hardware/irq.h"
 #include "pico/multicore.h"
 #include "text_properties.h"
+#include "pwm-tone.h"
 #include <ctype.h>
 
 
 static bool fired;
-static bool select_state  = 0;
-static bool game_state    = 0;
-static bool load_state    = 0;
-static bool key_state     = 0;
-static bool restart_state = 0;
-
-
-static uint16_t value = 1000;
-static uint8_t action = 0;
-static uint8_t score_d = 0;
+static uint16_t value;
+static uint8_t action;
+static uint8_t score_d;
 static states state = LOADING;
+static uint8_t index;
+static struct tonegenerator_t tone_gen;
 
-static uint8_t index = 0;
+bool select_state = 0;
+bool game_state = 0;
+bool load_state = 0;
+bool key_state = 0;
+bool restart_state = 0;
+
+
+
 
 static uint16_t *s_buffer;
 
@@ -94,16 +97,16 @@ inline static void countdown_to_start(){
   Paint_Clear(BLACK);
   switch(index){ 
     case 0:
-      Paint_DrawString_EN(110, 110, "3", &Font20, GREEN, BLACK);
+      Paint_DrawString_EN(154, 110, "3", &Font20, GREEN, BLACK);
       break;
     case 1:
-      Paint_DrawString_EN(110, 110, "2", &Font20, GREEN, BLACK);
+      Paint_DrawString_EN(154, 110, "2", &Font20, GREEN, BLACK);
       break;
     case 2:
-      Paint_DrawString_EN(110, 110, "1", &Font20, GREEN, BLACK);
+      Paint_DrawString_EN(154, 110, "1", &Font20, GREEN, BLACK);
       break;
     case 3:
-      Paint_DrawString_EN(40, 110, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
+      Paint_DrawString_EN(45, 110, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
       index = 9;
       break;
     default:
@@ -152,7 +155,6 @@ inline static void loading_bar(){
         Paint_ClearWindows(205, 223, 319, 239, BLACK);
     }
 
-      //LCD_2IN_Display((UBYTE *)s_buffer);
       LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
 }
 
@@ -256,27 +258,6 @@ inline static void play_again(){
     fired = true;
   }
     loading_bar();
-}
-
- inline static void displayPacket( uint16_t value, uint8_t score, uint8_t index, uint8_t action, uint8_t state){
-  const char *state_str[7] = {"LOAD", "SEL ", "GAME", "PASS", "FAIL", "RST ", "KEY "};
-  const char *action_str[4] = {"TURN", "YANK", "WIRE", "NOP "};
-
-  char packet_s[23];
-  char action_s[5];
-  char  state_s[5];
-
-  Paint_SelectImage ((UBYTE *)s_buffer);
-  Paint_ClearWindows(0, 40, 150, 56, BLACK);
-
-  sprintf(action_s, "%s", action_str[action]);
-  sprintf(state_s, "%s", state_str[state]);
-  sprintf(packet_s, "%u_%u #%u %s %s", value, score, index, action_s, state_s);
-
-  Paint_DrawString_EN (0, 42, packet_s, &Font12, WHITE, BLACK);
-  LCD_2IN_DisplayWindows(40, 0, 56, 150, s_buffer);
-  
-  packet_s[0] = '\0';
 }
 
 
@@ -420,7 +401,6 @@ inline static void play_again(){
         printf("Calculator mode disengaged.\n");
       }
     }
-
   }
 
   // Paint_ClearWindows(0, 0, 320, 18, BLACK);

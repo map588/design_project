@@ -226,9 +226,9 @@ benningging:
    while (!temp){tight_loop_contents();}
 
   state = COUNTDOWN;
-  time = 4000;
+  time = 3000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(4150);
+  busy_wait_ms(3150);
 
   state = GAME;
   time = (uint16_t) start_time;

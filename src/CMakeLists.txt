@@ -15,9 +15,11 @@ target_include_directories(main PUBLIC
 )
 
 add_subdirectory(keyboard_library)
+add_subdirectory(tone_generation)
 
 target_link_libraries(main LINK_PUBLIC
     keyboard_lib
+    pwm_tone
     pico_stdlib
     pico_stdio
     pico_printf

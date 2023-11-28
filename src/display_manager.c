@@ -1,11 +1,12 @@
 
 //#include "display_functions.h"
 #include "display_manager.h"
-#include "buzzer_tones.h"
 #include "hardware/pwm.h"
+#include "pwm-tone.h"
 
-static repeating_timer_t idx_timer;
 static alarm_pool_t *core1_pool;
+static repeating_timer_t idx_timer;
+
 
 typedef void (*function_ptr)(void);
 typedef struct{
@@ -61,7 +62,13 @@ bool init_display(){
  if(!alarm_pool_add_repeating_timer_ms(core1_pool, 0, null_callback, NULL, &idx_timer))
     return false;
   
- 
+  tone_gen.alarm_pool = alarm_pool_create_with_unused_hardware_alarm(4);
+  tone_init(&tone_gen, buzzer);
+  set_rest_duration(20);
+  set_tempo(160);
+
+
+
   //This massive memory allocation needs to be on the heap, but it needs to be stored globally
   //We cannot directly store it globally because it will end up in the .data section of the binary
   //So we allocate it on the heap as a constant pointer and store the pointer globally into s_buffer
@@ -103,13 +110,6 @@ bool init_display(){
   gpio_pull_down (hex_2);
   gpio_pull_down (hex_3);
 
-  //gpio_set_dir (buzzer, GPIO_OUT);
-  //gpio_set_function(buzzer, GPIO_FUNC_PWM);
-
-  //pwm_config config = pwm_get_default_config();
-  //pwm_set_phase_correct(&config, true);
-  
-
 
   return true;
 }
@@ -124,6 +124,7 @@ bool idx_timer_callback(repeating_timer_t *rt){
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
   else 
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
+ 
  
 
   display_functions[state].func();
