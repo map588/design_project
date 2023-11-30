@@ -135,6 +135,8 @@
 #define REST        0.0
 #define MELODY_END  -1.0
 
+
+
 // // Array matching midi notes to pitch values
 // static const int midi_to_pitch[128] = {
 //     NOTE_CM1, NOTE_CSM1, NOTE_DM1, NOTE_DSM1, NOTE_EM1, NOTE_FM1, NOTE_FSM1, NOTE_GM1, NOTE_GSM1, NOTE_AM1, NOTE_ASM1, NOTE_BM1,

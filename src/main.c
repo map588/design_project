@@ -180,8 +180,8 @@ int init(void)
  int main(){
 
   init();
-
-benningging:
+start:
+  actions action = NOP;
   uint8_t selection = 0;
   uint8_t time_rate = 0;
   uint16_t start_time = 3000;
@@ -193,7 +193,7 @@ benningging:
 
 
   state = LOADING;
-  time = 1000;
+  time = 20000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
   busy_wait_ms(1500);
 
@@ -225,10 +225,12 @@ benningging:
   // while (*g_key != '\n'){tight_loop_contents();}
    while (!temp){tight_loop_contents();}
 
+
   state = COUNTDOWN;
   time = 3000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
   busy_wait_ms(3150);
+
 
   state = GAME;
   time = (uint16_t) start_time;
@@ -251,14 +253,16 @@ benningging:
     }
   }while (score < 100 && !game_over);
   
+
   state = RESTART;
   game_over = false;
   restart_timer = add_alarm_in_ms(10010, restart_timer_callback, NULL, false);
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 10000));
   busy_wait_ms(10020);
 
+
   if(!game_over)
-    goto benningging;
+    goto start;
   else
     display_exit();
 

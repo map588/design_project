@@ -5,10 +5,9 @@
  * By Turi Scandurra – https://turiscandurra.com/circuits
  * v1.0.0 - 2023.09.25
 */
-
 #include "pwm-tone.h"
 #include "hardware/pwm.h"
-#include "pico/stdlib.h"
+#include <stdlib.h>
 
 static alarm_id_t tone_a;
 static alarm_id_t melody_a;

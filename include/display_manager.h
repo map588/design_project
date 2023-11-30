@@ -14,6 +14,7 @@
 #include "hardware/irq.h"
 #include "pico/multicore.h"
 #include "text_properties.h"
+#include "melodies.h"
 #include "pwm-tone.h"
 #include <ctype.h>
 
@@ -165,7 +166,7 @@ inline static void populate_UI_elements(){
   Paint_ClearWindows(0, 220, 120, 239, BLACK); // approximately time window
   uint8_t round = score_d / 20;
   uint8_t n_round = 20 - (score_d % 20);
-              
+
   char score_str[20]; 
   char round_str[20]; 
   char nextR_str[20]; 
@@ -177,10 +178,10 @@ inline static void populate_UI_elements(){
   sprintf(time_str, "TIME: %u ms", value);
 
   
-  Paint_DrawString_EN(2, 2, score_str, &Font12, GREEN, BLACK);
-  Paint_DrawString_EN(2, 16, nextR_str, &Font12, YELLOW, BLACK);
-  Paint_DrawString_EN(2, 226, time_str, &Font12, CYAN, BLACK);
-  Paint_DrawString_EN(260, 2, round_str, &Font12, RED, BLACK);
+  Paint_DrawString_EN(2,   2, score_str, &Font12,  GREEN, BLACK);
+  Paint_DrawString_EN(2,  16, nextR_str, &Font12, YELLOW, BLACK);
+  Paint_DrawString_EN(2, 226,  time_str, &Font12,   CYAN, BLACK);
+  Paint_DrawString_EN(260, 2, round_str, &Font12,    RED, BLACK);
 
   
   LCD_2IN_DisplayWindows(0, 0, 30, 319, s_buffer);
@@ -199,13 +200,7 @@ inline static void write_prompt(){
 
   LCD_2IN_DisplayWindows(100, 52, 140, 268, s_buffer);
 }
-inline static void game_buzzer(uint8_t index)
-{
-  //pwm_set_gpio_level(buzzer, 1);
-  //sleep_ms(100);
-  //pwm_set_gpio_level(buzzer, 0);
-  //sleep_ms(100);
-}
+
 
 inline static void game_UI(){
    Paint_SelectImage((UBYTE *)s_buffer);
@@ -219,9 +214,9 @@ inline static void game_UI(){
       LCD_2IN_Display((UBYTE *)s_buffer);
       fired = true;
     }
-    //game_buzzer(index);
-    
-      loading_bar();
+
+    tone(&tone_gen, NOTE_C3, value/20);
+    loading_bar();
 }
 
 
@@ -261,7 +256,7 @@ inline static void play_again(){
 }
 
 
- inline static void display_key(){
+inline static void display_key(){
   static bool calculator_mode = false;
   static int  str_idx = 0;
  
@@ -402,7 +397,7 @@ inline static void play_again(){
       }
     }
   }
-
+  tone(&tone_gen, NOTE_A3, 100);
   // Paint_ClearWindows(0, 0, 320, 18, BLACK);
   // Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
   // LCD_2IN_Display((uint8_t *)s_buffer);

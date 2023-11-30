@@ -10,21 +10,22 @@
 #define PWM_TONE_H
 
 #include <pico/stdlib.h>
-#include "pitches.h"
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct note_t {
-    float freq;
-    int8_t measure;
-};
+    struct note_t
+    {
+        float freq;
+        int measure;
+    };
 
 struct melody_t {                
     struct note_t * notes;
 };
+
 
 struct tonegenerator_t {
     uint8_t gpio;
@@ -52,10 +53,11 @@ static int64_t _tone_complete(alarm_id_t id, void *user_data);
 static int64_t _melody_note_complete(alarm_id_t id, void *user_data);
 static int64_t _rest_complete(alarm_id_t id, void *user_data);
 
+
+
 #ifdef __cplusplus
 }
 #endif
 
-#include "melodies.h"
 
 #endif // PWM_TONE_H

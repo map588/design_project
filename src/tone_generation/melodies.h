@@ -1,6 +1,8 @@
 #ifndef TONE_MELODIES_H
 #define TONE_MELODIES_H
 
+#include "pitches.h"
+
 
 struct note_t POSITIVE[] = {
     {NOTE_C4, 16},

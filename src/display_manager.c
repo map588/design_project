@@ -2,7 +2,6 @@
 //#include "display_functions.h"
 #include "display_manager.h"
 #include "hardware/pwm.h"
-#include "pwm-tone.h"
 
 static alarm_pool_t *core1_pool;
 static repeating_timer_t idx_timer;
@@ -87,14 +86,13 @@ bool init_display(){
   Paint_Clear (BLACK);
   Paint_SetRotate (ROTATE_270);
   Paint_SelectImage ((UBYTE *)s_buffer);
-  LCD_2IN_Display ((UBYTE *)s_buffer);
+  LCD_2IN_Display   ((UBYTE *)s_buffer);
 
   //sets up the pins to deal with hex display
   gpio_init (hex_0);
   gpio_init (hex_1);
   gpio_init (hex_2);
   gpio_init (hex_3);
-  //gpio_init (buzzer);
 
   gpio_init (PICO_DEFAULT_LED_PIN);
   
@@ -125,7 +123,7 @@ bool idx_timer_callback(repeating_timer_t *rt){
   else 
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
  
- 
+
 
   display_functions[state].func();
   
