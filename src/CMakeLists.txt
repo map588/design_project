@@ -34,9 +34,11 @@ target_link_libraries(main LINK_PUBLIC
     Fonts
     )
 
-    target_compile_definitions(main PUBLIC
-        PICO_CORE1_STACK_SIZE=4096
-        )
+target_compile_definitions(main PUBLIC
+    PICO_CORE1_STACK_SIZE=4096
+    )
+    
+add_compile_options(CMAKE_EXPORT_COMPILE_COMMANDS=1)
 
 # disable usb output, enable uart output
 pico_enable_stdio_usb(main 0)
