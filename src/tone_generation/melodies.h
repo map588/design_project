@@ -1,8 +1,6 @@
 #ifndef TONE_MELODIES_H
+#ifdef  PWM_TONE_H
 #define TONE_MELODIES_H
-
-#include "pitches.h"
-
 
 struct note_t POSITIVE[] = {
     {NOTE_C4, 16},
@@ -306,5 +304,6 @@ struct note_t HAPPY_BIRTHDAY[] = {
 
     {MELODY_END, 0},
     };
-
+    
+#endif
 #endif // TONE_MELODIES_H

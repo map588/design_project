@@ -1,6 +1,0 @@
-projectKey=design_project
-serverUrl=http://localhost:9000
-serverVersion=10.3.0.82913
-dashboardUrl=http://localhost:9000/dashboard?id=design_project
-ceTaskId=AYwfW6GHDBEZBDLt0YJ-
-ceTaskUrl=http://localhost:9000/api/ce/task?id=AYwfW6GHDBEZBDLt0YJ-

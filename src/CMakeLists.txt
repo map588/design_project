@@ -1,7 +1,7 @@
 # add source files
 add_executable(main
-                main.c
-                display_manager.c
+               main.c
+               display_manager.c
             )
 
 
@@ -38,7 +38,7 @@ target_compile_definitions(main PUBLIC
     PICO_CORE1_STACK_SIZE=4096
     )
     
-add_compile_options(CMAKE_EXPORT_COMPILE_COMMANDS=1)
+add_compile_options(CMAKE_EXPORT_COMPILE_COMMANDS=1 -M -Wall)
 
 # disable usb output, enable uart output
 pico_enable_stdio_usb(main 0)

@@ -10,7 +10,7 @@
 #define PWM_TONE_H
 
 #include <pico/stdlib.h>
-
+#include "pitches.h"
 
 #ifdef __cplusplus
 extern "C" {

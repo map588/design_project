@@ -5,9 +5,12 @@
  * By Turi Scandurra – https://turiscandurra.com/circuits
  * v1.0.0 - 2023.09.25
 */
-#include "pwm-tone.h"
+
+#include "pwm-tone.h"   // Include the library
+#include "melodies.h"
 #include "hardware/pwm.h"
-#include <stdlib.h>
+#include "hardware/clocks.h"
+#include "pico/stdlib.h"
 
 static alarm_id_t tone_a;
 static alarm_id_t melody_a;
@@ -18,6 +21,13 @@ uint16_t melody_repeat;
 uint16_t melody_index;
 uint16_t rest_duration = 10;
 uint16_t tempo = 120;
+
+
+int abs(int x){
+    if(x < 0)
+        return -x;
+    return x;
+}
 
 void tone_init(struct tonegenerator_t* gen, uint8_t gpio){
     gen->gpio = gpio;
