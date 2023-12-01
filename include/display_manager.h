@@ -93,21 +93,35 @@ inline static void prompt_start(){
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
-inline static void countdown_to_start(){
+inline static void countdown_to_start(){    
   Paint_SelectImage((UBYTE *)s_buffer);
   Paint_Clear(BLACK);
+
+  //draw the bomb here, then do the switch case
+  //move the countdown to the side, bomb on the right
+  
+  //call bomb function
+  enclosure(0);
+  //call turn function
+  turn_draw(0);
+  //call yank function
+  yank_draw(0);
+  //call wire function
+  wire_draw(0);
+
+
   switch(index){ 
     case 0:
-      Paint_DrawString_EN(154, 110, "3", &Font20, GREEN, BLACK);
+      Paint_DrawString_EN(75, 83, "3", &Font20, GREEN, BLACK);
       break;
     case 1:
-      Paint_DrawString_EN(154, 110, "2", &Font20, GREEN, BLACK);
+      Paint_DrawString_EN(75, 83, "2", &Font20, GREEN, BLACK);
       break;
     case 2:
-      Paint_DrawString_EN(154, 110, "1", &Font20, GREEN, BLACK);
+      Paint_DrawString_EN(75, 83, "1", &Font20, GREEN, BLACK);
       break;
     case 3:
-      Paint_DrawString_EN(45, 110, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
+      Paint_DrawString_EN(12, 83, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
       index = 9;
       break;
     default:
@@ -115,6 +129,139 @@ inline static void countdown_to_start(){
   }
   LCD_2IN_Display((UBYTE *)s_buffer);
   return;
+}
+
+inline static void enclosure(){
+  Paint_SelectImage((UBYTE *)s_buffer);
+
+  //clear area for enclosure
+  Paint_ClearWindows(143, 35, 283, 202, BLACK);
+  //draw the big rectangle for the enclosure
+  Paint_DrawRectangle(146, 38, 280, 198, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the rectangle for the "display"
+  Paint_DrawRectangle(160, 62, 266, 108, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the rectangle for the keypad
+  Paint_DrawRectangle(177, 117, 248, 187, BLUE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the rectangle for the hex display
+  Paint_DrawRectangle(151, 176, 163, 193, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  
+  //partially update the display for the enclosure
+  //TODO: partial update
+    LCD_2IN_DisplayWindows(35, 143, 202, 283, s_buffer);
+}
+
+//TODO: include ways to change color for these functions
+inline static void yank_draw(uint8_t base_color){
+
+  Paint_SelectImage((UBYTE *)s_buffer);
+
+  //clear the area for the yank
+  Paint_ClearWindows(105, 151, 145, 174, BLACK);
+
+  //draw the 3 wires for the yank
+  if(base_color == 1) //action is being prompted
+  {
+  Paint_DrawRectangle(108, 155, 145, 159, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(108, 160, 145, 164, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(108, 165, 145, 169, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  }
+  else if(base_color == 2) //action was performed correctly
+  {
+  Paint_DrawRectangle(108, 155, 145, 159, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(108, 160, 145, 164, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(108, 165, 145, 169, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  }
+  else //default colors
+  {
+  Paint_DrawRectangle(108, 155, 145, 159, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(108, 160, 145, 164, BLUE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(108, 165, 145, 169, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  }
+
+  //TODO: partial update for yank
+  LCD_2IN_DisplayWindows(151, 105, 174, 148, s_buffer);
+
+}
+
+inline static void turn_draw(uint8_t base_color){
+
+  Paint_SelectImage((UBYTE *)s_buffer);
+
+  //clear the area for the turn
+  Paint_ClearWindows(281, 45, 318, 82, BLACK);
+
+  if(base_color == 1)//action is prompted
+  {
+  //draw the base rectangle for the key
+  Paint_DrawRectangle(281, 58, 307, 69, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the first circle for the key
+  Paint_DrawCircle(307, 63, 10, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the inner circle for the key
+  Paint_DrawCircle(307, 63, 4, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  }
+  else if(base_color == 2)//action was input correctly
+  {
+  //draw the base rectangle for the key
+  Paint_DrawRectangle(281, 58, 307, 69, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the first circle for the key
+  Paint_DrawCircle(307, 63, 10, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the inner circle for the key
+  Paint_DrawCircle(307, 63, 4, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  }
+  else //base case, default colors
+  {
+  //draw the base rectangle for the key
+  Paint_DrawRectangle(281, 58, 307, 69, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the first circle for the key
+  Paint_DrawCircle(307, 63, 10, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the inner circle for the key
+  Paint_DrawCircle(307, 63, 4, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  }
+
+  //TODO: partial update for turn
+  LCD_2IN_DisplayWindows(45, 278, 82, 319, s_buffer);
+
+}
+
+inline static void wire_draw(uint8_t base_color){
+
+  Paint_SelectImage((UBYTE *)s_buffer);
+
+  //clear the area for the wire
+  Paint_ClearWindows(151, 24, 187, 56, BLACK);
+
+  if(base_color == 1) //action is prompted
+  {
+  //draw a circle for the wire protruding from the top of the enclosure
+  Paint_DrawCircle(168, 38, 8, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw a rectangle to cover the bottom half of the circle
+  Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw 2 circles for the terminals
+  Paint_DrawCircle(160, 47, 6, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(160, 47, 6, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw a line from where the circle meets the top to the middle of the left terminal
+  Paint_DrawLine(160, 38, 160, 47, RED, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  }
+  else if(base_color == 2) //action input successfully by player
+  {
+  Paint_DrawCircle(168, 38, 8, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawLine(160, 38, 160, 47, GREEN, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  }
+  else //default colors
+  {
+  Paint_DrawCircle(168, 38, 8, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(160, 47, 6, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(160, 47, 6, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawLine(160, 38, 160, 47, WHITE, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  }
+
+  //TODO: partial update for wire
+  LCD_2IN_DisplayWindows(24, 151, 56, 187, s_buffer);
+
 }
 
 inline static void loading_bar(){
@@ -189,16 +336,50 @@ inline static void populate_UI_elements(){
 }
 
 
-inline static void write_prompt(){
+inline static void write_prompt(){     //BEING CHANGED
   const char *prompt_str[3] = {"   TURN IT   ", "   YANK IT   ", "   WIRE IT   "};
 
   Paint_SelectImage((UBYTE *)s_buffer);
-  Paint_ClearWindows(52, 100, 265, 140, BLACK); // rough prompt window
+  Paint_ClearWindows(6, 59, 145, 111, BLACK); // rough prompt window
 
-  Paint_DrawString_EN(62, 110, prompt_str[action], &Font20, GRED, BLACK);
-  Paint_DrawRectangle(57, 105, 263, 135, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  //draw the bomb graphic on screen
+  enclosure();
 
-  LCD_2IN_DisplayWindows(100, 52, 140, 268, s_buffer);
+  //ensure correct portion of graphic is highlighted red
+  switch(action) {
+    case 0:
+      turn_draw(1);
+      yank_draw(0);
+      wire_draw(0);
+    break;
+    case 1:
+      turn_draw(0);
+      yank_draw(1);
+      wire_draw(0);
+    break;
+    case 2:
+      turn_draw(0);
+      yank_draw(0);
+      wire_draw(1);
+    break;
+    default:
+    break;
+  }
+
+  //writes in the action to be done and the rectangle encompassing the string
+  Paint_DrawString_EN(20, 76, prompt_str[action], &Font20, GRED, BLACK);
+  Paint_DrawRectangle(17, 73, 140, 101, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+
+  //dotted lines from corners of graphic display to corners of prompt window
+  Paint_DrawLine(160, 62, 17, 73, GRED, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(266, 62, 140, 73, GRED, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(160, 108, 17, 101, GRED, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(266, 108, 140, 101, GRED, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+
+  //partial update which updates the prompt specifically
+  //need to move this and the prompt itself off to the side
+  //TODO: changed the dimensions of this partial update
+  LCD_2IN_DisplayWindows(59, 6, 111, 145, s_buffer);
 }
 
 
@@ -230,13 +411,43 @@ inline static void drive_hex(uint8_t hex){
 inline static void correct_disp(){
   Paint_SelectImage((UBYTE *)s_buffer);
   Paint_Clear(BLACK);
-  Paint_DrawString_EN(110, 100, "CORRECT", &Font20, GREEN, BLACK);
+  //need to add in the bomb graphic
+  enclosure();
+
+  //switch case dependent on action
+  //determines which part of the graphic to highlight in green
+  //0=turn it, 1=yank it, 2=wire it
+  switch(action) {
+    case 0:
+      turn_draw(2);
+      yank_draw(0);
+      wire_draw(0);
+    break;
+    case 1:
+      turn_draw(0);
+      yank_draw(2);
+      wire_draw(0);
+    break;
+    case 2:
+      turn_draw(0);
+      yank_draw(0);
+      wire_draw(2);
+    break;
+    default:
+    break;
+  }
+
+
+  //need to shift this string to the left side
+  Paint_DrawString_EN(12, 77, "CORRECT", &Font20, GREEN, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
- inline static void incorrect_disp(){
+ inline static void incorrect_disp(){  //BEING CHANGED
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_Clear(BLACK);
+  //will add an extra graphic here if I can, like a cartoon explosion maybe
+  //using the bomb graphic here doesn't make much sense
   Paint_DrawString_EN (110, 100, "BOOM", &Font20, RED, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
