@@ -45,7 +45,11 @@ bool null_callback(repeating_timer_t *rt){return false;}
 
 
 bool init_display(){
-  DEV_Delay_ms (100);
+  while(!multicore_lockout_victim_is_initialized(0))
+    tight_loop_contents();
+  
+  multicore_lockout_start_blocking();
+   DEV_Delay_ms (100);
 
   if (DEV_Module_Init () != 0)
       return false;
@@ -107,6 +111,7 @@ bool init_display(){
   gpio_pull_down (hex_2);
   gpio_pull_down (hex_3);
 
+  multicore_lockout_end_blocking();
 
   return true;
 }
@@ -116,23 +121,24 @@ bool idx_timer_callback(repeating_timer_t *rt){
   if(interrupt)
     return false;
 
- 
+
   if(!fired)
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
   else 
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
- 
+
 
 
   display_functions[state].func();
-  
 
-  drive_hex (9 - index);
+
+  drive_hex(9 - index);
   ++index;
 
   fired = true;
 
-  if (index > 9 || !display_functions[state].repeating) return false;
+  if(index > 9 || !display_functions[state].repeating) { return false; index = 0;}
+
 
   return true;
 }
@@ -148,9 +154,10 @@ void core_one_interrupt_handler (void){
 
   multicore_fifo_drain();
   value   = (data & 0xFFFF0000) >> 16;
-  score_d = (data & 0x0000FF00) >> 8;
-  action  = (data & 0x000000F0) >> 4;
+  score_d = (data & 0x0000FF00) >>  8;
+  action  = (data & 0x000000F0) >>  4;
   state   =  data & 0x0000000F;
+
   if(action == 0)
       action = NOP;
   else

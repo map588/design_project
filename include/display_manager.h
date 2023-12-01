@@ -14,8 +14,8 @@
 #include "hardware/irq.h"
 #include "pico/multicore.h"
 #include "text_properties.h"
-#include "melodies.h"
 #include "pwm-tone.h"
+#include "melodies.h"
 #include <ctype.h>
 
 
@@ -75,6 +75,7 @@ inline static void selction (){
         Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
         Paint_DrawLine(158, 80, 158, 200, BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
         Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+        Paint_DrawString_EN(arr_pos[0], 210, "^", &Font20, WHITE, BLACK);
         LCD_2IN_Display((UBYTE *)s_buffer);
     }
     Paint_ClearWindows(0, 205, 319, 239, BLACK); // bottom bar
@@ -236,7 +237,7 @@ inline static void correct_disp(){
   Paint_Clear(BLACK);
   Paint_DrawString_EN(110, 100, "CORRECT", &Font20, GREEN, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
-  melody(&tone_gen, CORRECT, 1);
+  melody(&tone_gen, POSITIVE, 1);
 }
 
  inline static void incorrect_disp(){
@@ -244,7 +245,7 @@ inline static void correct_disp(){
   Paint_Clear(BLACK);
   Paint_DrawString_EN (110, 100, "BOOM", &Font20, RED, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
-  melody(&tone_gen, INCORRECT, 1);
+  melody(&tone_gen, NEGATIVE, 1);
 }
 
 inline static void play_again(){

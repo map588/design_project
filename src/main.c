@@ -129,6 +129,7 @@ int init(void)
   gpio_pull_up(wire1_pin);
   gpio_pull_up(wire2_pin);
 
+  multicore_lockout_victim_init();
   // gpio_is_input_hysteresis_enabled(pull_pin);
   // gpio_is_input_hysteresis_enabled(turn_pin);
   // gpio_is_input_hysteresis_enabled(wire1_pin);
@@ -192,21 +193,21 @@ int init(void)
    multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
    busy_wait_ms(1500);
 
-   // state = SELECT;
-   // while (*g_key == resting_keystate){tight_loop_contents();}
-   // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-   // do{
-   //   if(*g_key == '<' || *g_key == '>'){
-   //     switch(*g_key){
-   //       case '<': action = (actions)0x10; if(selection <= 0) selection--; break;
-   //       case '>': action = (actions)0x20; if(selection >= 2) selection++; break;
-   //     }
-   //    multicore_fifo_push_blocking(assemble_packet(SELECT, action, 0, 0));
-   //   }
+   state = SELECT;
+   while (*g_key == resting_keystate){tight_loop_contents();}
+   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
+   do{
+     if(*g_key == '<' || *g_key == '>'){
+       switch(*g_key){
+         case '<': action = (actions)0x10; if(selection <= 0) selection--; break;
+         case '>': action = (actions)0x20; if(selection >= 2) selection++; break;
+       }
+      multicore_fifo_push_blocking(assemble_packet(SELECT, action, 0, 0));
+     }
 
-   // }while(*g_key != '\n');
+   }while(*g_key != '\n');
 
-   selection = 0;
+   //selection = 0;
    switch (selection)
    {
    case 0:
@@ -222,8 +223,8 @@ int init(void)
 
    state = CONTINUE;
    multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-   // while (*g_key != '\n'){tight_loop_contents();}
-   while (!temp){tight_loop_contents();}
+   while (*g_key != '\n'){tight_loop_contents();}
+   //while (!temp){tight_loop_contents();}
 
 
   state = COUNTDOWN;
