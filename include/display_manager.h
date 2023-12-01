@@ -141,7 +141,7 @@ inline static void enclosure(){
   //draw the rectangle for the "display"
   Paint_DrawRectangle(160, 62, 266, 108, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw the rectangle for the keypad
-  Paint_DrawRectangle(177, 117, 248, 187, BLUE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(177, 117, 248, 187, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw the rectangle for the hex display
   Paint_DrawRectangle(151, 176, 163, 193, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
   
@@ -263,6 +263,19 @@ inline static void wire_draw(uint8_t base_color){
   LCD_2IN_DisplayWindows(24, 151, 56, 187, s_buffer);
 
 }
+
+/*
+inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
+  Paint_SelectImage((UBYTE *)s_buffer); //select image
+
+  //create layered circles
+  //order: red->orange->yellow->white
+  Paint_DrawCircle(x_cen, y_cen, 48*radfactor, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(x_cen, y_cen, 36*radfactor, ORANGE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(x_cen, y_cen, 24*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(x_cen, y_cen, 12*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+
+} */
 
 inline static void loading_bar(){
   uint16_t x1;
@@ -446,9 +459,9 @@ inline static void correct_disp(){
  inline static void incorrect_disp(){  //BEING CHANGED
   Paint_SelectImage ((UBYTE *)s_buffer);
   Paint_Clear(BLACK);
-  //will add an extra graphic here if I can, like a cartoon explosion maybe
-  //using the bomb graphic here doesn't make much sense
   Paint_DrawString_EN (110, 100, "BOOM", &Font20, RED, BLACK);
+  //add multiple explosion graphics in the form of concentric circles
+  //randomly place them around the screen
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
