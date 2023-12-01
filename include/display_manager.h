@@ -48,89 +48,6 @@ inline static void clearflags(){
       restart_state = false;
 }
 
-inline static void selction (){
-
-    const int arr_pos[3] = {64, 152, 240};
-    static uint8_t last_key = 0;
-    uint8_t key = action;
-
-    if(last_key > 0 && key == 0)
-        last_key--;
-    else if(last_key < 2 && key == 1)
-        last_key++;
-    else if(key == 3)
-        last_key = 0;
-
-    Paint_SelectImage((UBYTE *)s_buffer);
-
-    if (!fired || !select_state){
-        clearflags();
-        select_state = true;
-        Paint_Clear(BLACK);
-        Paint_DrawString_EN(110, 14, "Which Wire?", &Font16, WHITE, BLACK);
-        Paint_DrawString_EN(44, 55, "(easy)", &Font12, WHITE, BLACK);
-        Paint_DrawString_EN(124, 55, "(medium)", &Font12, WHITE, BLACK);
-        Paint_DrawString_EN(224, 55, "(hard)", &Font12, WHITE, BLACK);
-
-        Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-        Paint_DrawLine(158, 80, 158, 200, BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-        Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-        LCD_2IN_Display((UBYTE *)s_buffer);
-    }
-    Paint_ClearWindows(0, 205, 319, 239, BLACK); // bottom bar
-    int arrow_pos = arr_pos[last_key];
-
-
-    Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
-    LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
-}
-
-inline static void prompt_start(){
-  Paint_SelectImage((UBYTE *)s_buffer);
-  Paint_Clear(BLACK);
-  Paint_DrawString_EN(35, 112, "PRESS ENTER TO CONTINUE", &Font16, GREEN, BLACK);
-  Paint_DrawRectangle(33, 110, 300, 130, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
-  LCD_2IN_Display((UBYTE *)s_buffer);
-}
-
-inline static void countdown_to_start(){    
-  Paint_SelectImage((UBYTE *)s_buffer);
-  Paint_Clear(BLACK);
-
-  //draw the bomb here, then do the switch case
-  //move the countdown to the side, bomb on the right
-  
-  //call bomb function
-  enclosure();
-  //call turn function
-  turn_draw(0);
-  //call yank function
-  yank_draw(0);
-  //call wire function
-  wire_draw(0);
-
-
-  switch(index){ 
-    case 0:
-      Paint_DrawString_EN(75, 83, "3", &Font20, GREEN, BLACK);
-      break;
-    case 1:
-      Paint_DrawString_EN(75, 83, "2", &Font20, GREEN, BLACK);
-      break;
-    case 2:
-      Paint_DrawString_EN(75, 83, "1", &Font20, GREEN, BLACK);
-      break;
-    case 3:
-      Paint_DrawString_EN(12, 83, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
-      index = 9;
-      break;
-    default:
-      break;
-  }
-  LCD_2IN_Display((UBYTE *)s_buffer);
-  return;
-}
-
 inline static void enclosure(){
   Paint_SelectImage((UBYTE *)s_buffer);
 
@@ -264,7 +181,7 @@ inline static void wire_draw(uint8_t base_color){
 
 }
 
-/*
+
 inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
   Paint_SelectImage((UBYTE *)s_buffer); //select image
 
@@ -275,7 +192,91 @@ inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
   Paint_DrawCircle(x_cen, y_cen, 24*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(x_cen, y_cen, 12*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
 
-} */
+}
+
+inline static void selction (){
+
+    const int arr_pos[3] = {64, 152, 240};
+    static uint8_t last_key = 0;
+    uint8_t key = action;
+
+    if(last_key > 0 && key == 0)
+        last_key--;
+    else if(last_key < 2 && key == 1)
+        last_key++;
+    else if(key == 3)
+        last_key = 0;
+
+    Paint_SelectImage((UBYTE *)s_buffer);
+
+    if (!fired || !select_state){
+        clearflags();
+        select_state = true;
+        Paint_Clear(BLACK);
+        Paint_DrawString_EN(110, 14, "Which Wire?", &Font16, WHITE, BLACK);
+        Paint_DrawString_EN(44, 55, "(easy)", &Font12, WHITE, BLACK);
+        Paint_DrawString_EN(124, 55, "(medium)", &Font12, WHITE, BLACK);
+        Paint_DrawString_EN(224, 55, "(hard)", &Font12, WHITE, BLACK);
+
+        Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+        Paint_DrawLine(158, 80, 158, 200, BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+        Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+        LCD_2IN_Display((UBYTE *)s_buffer);
+    }
+    Paint_ClearWindows(0, 205, 319, 239, BLACK); // bottom bar
+    int arrow_pos = arr_pos[last_key];
+
+
+    Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
+    LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+}
+
+inline static void prompt_start(){
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_Clear(BLACK);
+  Paint_DrawString_EN(35, 112, "PRESS ENTER TO CONTINUE", &Font16, GREEN, BLACK);
+  Paint_DrawRectangle(33, 110, 300, 130, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  LCD_2IN_Display((UBYTE *)s_buffer);
+}
+
+inline static void countdown_to_start(){    
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_Clear(BLACK);
+
+  //draw the bomb here, then do the switch case
+  //move the countdown to the side, bomb on the right
+  
+  //call bomb function
+  enclosure();
+  //call turn function
+  turn_draw(0);
+  //call yank function
+  yank_draw(0);
+  //call wire function
+  wire_draw(0);
+
+
+  switch(index){ 
+    case 0:
+      Paint_DrawString_EN(75, 83, "3", &Font20, GREEN, BLACK);
+      break;
+    case 1:
+      Paint_DrawString_EN(75, 83, "2", &Font20, GREEN, BLACK);
+      break;
+    case 2:
+      Paint_DrawString_EN(75, 83, "1", &Font20, GREEN, BLACK);
+      break;
+    case 3:
+      Paint_DrawString_EN(12, 83, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
+      index = 9;
+      break;
+    default:
+      break;
+  }
+  LCD_2IN_Display((UBYTE *)s_buffer);
+  return;
+}
+
 
 inline static void loading_bar(){
   uint16_t x1;
