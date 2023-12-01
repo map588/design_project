@@ -40,7 +40,6 @@ function_holder display_functions[9] = {
 
 
 static bool interrupt;
-static char *g_key;
 
 bool null_callback(repeating_timer_t *rt){return false;}
 

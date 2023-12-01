@@ -99,16 +99,20 @@ inline static void countdown_to_start(){
   switch(index){ 
     case 0:
       Paint_DrawString_EN(154, 110, "3", &Font20, GREEN, BLACK);
+      tone(&tone_gen, NOTE_DS3, 50);
       break;
     case 1:
       Paint_DrawString_EN(154, 110, "2", &Font20, GREEN, BLACK);
+      tone(&tone_gen, NOTE_DS3, 50);
       break;
     case 2:
       Paint_DrawString_EN(154, 110, "1", &Font20, GREEN, BLACK);
+      tone(&tone_gen, NOTE_DS3, 50);
       break;
     case 3:
       Paint_DrawString_EN(45, 110, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
       index = 9;
+      tone(&tone_gen, NOTE_C4, 50);
       break;
     default:
       break;
@@ -232,6 +236,7 @@ inline static void correct_disp(){
   Paint_Clear(BLACK);
   Paint_DrawString_EN(110, 100, "CORRECT", &Font20, GREEN, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
+  melody(&tone_gen, CORRECT, 1);
 }
 
  inline static void incorrect_disp(){
@@ -239,6 +244,7 @@ inline static void correct_disp(){
   Paint_Clear(BLACK);
   Paint_DrawString_EN (110, 100, "BOOM", &Font20, RED, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
+  melody(&tone_gen, INCORRECT, 1);
 }
 
 inline static void play_again(){
@@ -309,83 +315,103 @@ inline static void display_key(){
   }
   else{
     
-    if(character == '\b'){
+    switch (character){
+      case '\b':
         str_buffer[str_idx] = '\0';
         if(str_idx > 0)
             str_idx--;
-    }
-    else if(character == '\n'){
-      for(int i = 1; i < str_idx; i++){
-        if(str_buffer[str_idx - i] == '\n' || i == str_idx - 1){
-            calc_idx = str_idx - i;
-            break;
+        break;
+      case '\n':
+        for(int i = 1; i < str_idx; i++){
+          if(str_buffer[str_idx - i] == '\n' || i == str_idx - 1){
+              calc_idx = str_idx - i;
+              break;
+          }
         }
-      }
-      for(int i = 0; i < str_idx; i++){
-        calc_buffer[i] = str_buffer[calc_idx + i];
-      }
-      op1 = strtoll(calc_buffer, &endptr, base);
-      
-      //Change of base
-      if(*endptr == '\0' && calc_buffer[0] != '\0' && op1 > 0 && op1 <= 16){
-        base = op1;
-        printf("Base changed to %d\n", base);
-      }
-      else if(*endptr == '\0'){
-        printf("Invalid base\n");
-      }
-
-      operand = *endptr;
-      while(operand != '\0'){
-        op2 = strtoll(endptr + 1 , &endptr, base);
-        switch (operand){
-          case '+':
-            op1 = op1 + op2;
-            break;
-          case '-':
-            op1 = op1 - op2;
-            break;
-          case '*':
-            op1 = op1 * op2;
-            break;
-          case '/':
-            op1 = (op2 == 0) ? 0 : op1 / op2;
-            break;
-          case '%':
-            op1 = (op2 == 0) ? 0 : op1 % op2;
-            break;
-          case '!':
-            op1 = !op2;
-            break;
-          case '&':
-            op1 = op1 & op2;
-            break;
-          case '|':
-            op1 = op1 | op2;
-            break;
-          default:
-            break;
+        for(int i = 0; i < str_idx; i++){
+          calc_buffer[i] = str_buffer[calc_idx + i];
         }
-      operand = *endptr;
-      }
-      result = op1;
-      str_buffer[str_idx] = ' ';
-      str_buffer[str_idx + 1] = '=';
-      str_buffer[str_idx + 2] = ' ';
+        op1 = strtoll(calc_buffer, &endptr, base);
+        
+        //Change of base
+        if(*endptr == '\0' && calc_buffer[0] != '\0' && op1 > 0 && op1 <= 16){
+          base = op1;
+          printf("Base changed to %d\n", base);
+        }
+        else if(*endptr == '\0'){
+          printf("Invalid base\n");
+        }
 
-      sprintf(str_buffer + str_idx + 3, "%lld\n", result);
-      while(str_buffer[str_idx] != '\0')
+        operand = *endptr;
+        while(operand != '\0'){
+          op2 = strtoll(endptr + 1 , &endptr, base);
+          switch (operand){
+            case '+':
+              op1 = op1 + op2;
+              break;
+            case '-':
+              op1 = op1 - op2;
+              break;
+            case '*':
+              op1 = op1 * op2;
+              break;
+            case '/':
+              op1 = (op2 == 0) ? 0 : op1 / op2;
+              break;
+            case '%':
+              op1 = (op2 == 0) ? 0 : op1 % op2;
+              break;
+            case '!':
+              op1 = !op2;
+              break;
+            case '&':
+              op1 = op1 & op2;
+              break;
+            case '|':
+              op1 = op1 | op2;
+              break;
+            default:
+              break;
+          }
+        operand = *endptr;
+        }
+        result = op1;
+        str_buffer[str_idx] = ' ';
+        str_buffer[str_idx + 1] = '=';
+        str_buffer[str_idx + 2] = ' ';
+
+        sprintf(str_buffer + str_idx + 3, "%lld\n", result);
+        while(str_buffer[str_idx] != '\0')
+          str_idx++;
+        endptr = str_buffer + str_idx;
+        calc_buffer[0] = '\0';
+        break;
+      case 0xAB:
+        str_buffer[str_idx] = '<';
+        str_buffer[str_idx + 1] = '<';
+        str_buffer[str_idx + 2] = '\0';
+        str_idx += 2;
+        break;
+      case 0xBB:
+        str_buffer[str_idx] = '>';
+        str_buffer[str_idx + 1] = '>';
+        str_buffer[str_idx + 2] = '\0';
+        str_idx += 2;
+        break;
+      case 0x88:
+        str_buffer[str_idx] = '^';
+        str_buffer[str_idx + 1] = '\0';
         str_idx++;
-      endptr = str_buffer + str_idx;
-      calc_buffer[0] = '\0';
+        break;
+      default:
+        str_buffer[str_idx] = (char)character;
+        str_buffer[str_idx + 1] = '\0';
+        str_idx++;
+        break;
     }
-    else{
-      str_buffer[str_idx] = (char)character;
-      str_buffer[str_idx + 1] = '\0';
-      str_idx++;
-    }
-
+   
     printf("%s", str_buffer);
+    tone(&tone_gen, NOTE_A3, 100);
 
     if(str_idx >= 4){
       if(str_buffer[str_idx - 4] = '.' && str_buffer[str_idx - 3] == '.' && str_buffer[str_idx - 2] == '.' &&
@@ -397,7 +423,7 @@ inline static void display_key(){
       }
     }
   }
-  tone(&tone_gen, NOTE_A3, 100);
+  
   // Paint_ClearWindows(0, 0, 320, 18, BLACK);
   // Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
   // LCD_2IN_Display((uint8_t *)s_buffer);

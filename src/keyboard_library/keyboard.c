@@ -6,12 +6,10 @@
 #define DATA_PIN 14
 #define CLOCK_PIN 15
 
-
 char scan_codes[] = {
-	'/','*','-','7','8','9','+','4','5','6','1','2','3','\n','0','.', ' ', ' ', ' ',
-	'%','&','!','A','^','B','|','<','C','>','D','v','E','\n','F','\b', ' ', ' ', ' ',
-};
-
+	'7', '8', '9', '\b', '/', '4', '5', '6', '~', '*', '1',  '2', '3',  '^', '-', '+',  '0', '.', '\n',
+	'A', 'B', 'C', '\b', '%', 'D', 'E', 'F', '~', '&', '<', 0xAB, '>', 0x88, '!', '|', 0xBB, ' ', '\n',
+};														 //  «		    XOR             »
 
 static PIO pio = pio0;
 static uint sm = 0;
@@ -20,7 +18,6 @@ uint32_t key_packet;
 
 void get_code(){
 	uint32_t input = pio_sm_get_blocking(pio, sm);
-
 	char key = input & 0x2F;
 
 	if(key > 37){

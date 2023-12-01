@@ -143,9 +143,6 @@ int init(void)
   keyboard_init(g_key);
 
 
-    //TODO: set up the timer interrupt
-    //TODO: change the gpio interrupts to PIO interrupts that simplify our inputs
-
   key_turned    = gpio_get(turn_pin);
   wire_pulled   = gpio_get(pull_pin);
   wire_position = gpio_get(wire1_pin);
@@ -178,51 +175,54 @@ int init(void)
   }
 
  int main(){
+ start:
+   init();
+   actions action = NOP;
+   uint8_t selection = 0;
+   uint8_t time_rate = 0;
+   uint16_t start_time = 3000;
+   score = 0;
 
-  init();
-start:
-  actions action = NOP;
-  uint8_t selection = 0;
-  uint8_t time_rate = 0;
-  uint16_t start_time = 3000;
-  score = 0;
+   callback = false;
+   game_over = false;
+   temp = false;
 
-  callback = false;
-  game_over = false;
-  temp = false;
+   state = LOADING;
+   time = 20000;
+   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
+   busy_wait_ms(1500);
 
+   // state = SELECT;
+   // while (*g_key == resting_keystate){tight_loop_contents();}
+   // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
+   // do{
+   //   if(*g_key == '<' || *g_key == '>'){
+   //     switch(*g_key){
+   //       case '<': action = (actions)0x10; if(selection <= 0) selection--; break;
+   //       case '>': action = (actions)0x20; if(selection >= 2) selection++; break;
+   //     }
+   //    multicore_fifo_push_blocking(assemble_packet(SELECT, action, 0, 0));
+   //   }
 
-  state = LOADING;
-  time = 20000;
-  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(1500);
+   // }while(*g_key != '\n');
 
- 
-  // state = SELECT;
-  // while (*g_key == resting_keystate){tight_loop_contents();}
-  // multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-  // do{
-  //   if(*g_key == '<' || *g_key == '>'){
-  //     switch(*g_key){
-  //       case '<': action = (actions)0x10; if(selection <= 0) selection--; break;
-  //       case '>': action = (actions)0x20; if(selection >= 2) selection++; break;
-  //     }
-  //    multicore_fifo_push_blocking(assemble_packet(SELECT, action, 0, 0));
-  //   }
+   selection = 0;
+   switch (selection)
+   {
+   case 0:
+     time_rate = 15;
+     break; // 3000ms to 1500ms / 100 steps is 15
+   case 1:
+     time_rate = 20;
+     break; // 3000ms to 1000ms / 100 steps is 20
+   case 2:
+     time_rate = 22;
+     break; // 3000ms to  800ms / 100 steps is 22
+   }
 
-  // }while(*g_key != '\n');
-
-  selection = 0;
-  switch(selection){
-    case 0: time_rate = 15; break;  //3000ms to 1500ms / 100 steps is 15
-    case 1: time_rate = 20; break;  //3000ms to 1000ms / 100 steps is 20
-    case 2: time_rate = 22; break;  //3000ms to  800ms / 100 steps is 22
-  }
-
- 
-  state = CONTINUE;
-  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-  // while (*g_key != '\n'){tight_loop_contents();}
+   state = CONTINUE;
+   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
+   // while (*g_key != '\n'){tight_loop_contents();}
    while (!temp){tight_loop_contents();}
 
 
