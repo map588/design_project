@@ -64,7 +64,7 @@ bool init_display(){
  if(!alarm_pool_add_repeating_timer_ms(core1_pool, 0, null_callback, NULL, &idx_timer))
     return false;
   
-  tone_gen.alarm_pool = alarm_pool_create_with_unused_hardware_alarm(4);
+  tone_gen.alarm_pool = core1_pool;
   tone_init(&tone_gen, buzzer);
   set_rest_duration(20);
   set_tempo(160);
@@ -79,6 +79,7 @@ bool init_display(){
 
   if (buffer == NULL){
     printf ("Failed to allocate memory...\r\n");
+    multicore_lockout_end_blocking();
     return false;
   }
 

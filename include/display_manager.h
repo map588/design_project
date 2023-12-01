@@ -274,11 +274,13 @@ inline static void play_again(){
 
 inline static void display_key(){
   static bool calculator_mode = false;
+  static bool insert = false;
   static int  str_idx = 0;
- 
+  static int  cursor_idx = 0;
+
   static char str_buffer [1024];
 
-  char calc_buffer[1024];
+
   static int calc_idx = 0;
   static int base = 10;
 
@@ -294,45 +296,66 @@ inline static void display_key(){
     key_state = true;
   }
 
+  if(str_idx >= 1024){
+    printf("Buffer full, hit delete or numlock->insert to clear\n");
+    return;
+  }
+
+
   // Paint_SelectImage((uint8_t *) s_buffer);
 
   char character = (char)score_d;
 
     switch(character){
       case '\b':
-        if (str_idx > 0){
-        str_buffer[str_idx-1] = '\0';
-        str_idx--;
+        if (cursor_idx == str_idx && str_idx > 0){
+          str_buffer[str_idx - 1] = '\0';
+          str_idx--;
+          cursor_idx--;
+        }
+        else if(cursor_idx < str_idx && str_idx > 0){
+          for(int i = cursor_idx; i < str_idx; i++){
+            str_buffer[i - 1] = str_buffer[i];
+          }
+          str_buffer[str_idx - 1] = '\0';
+          str_idx--;
         }
         break;
       case 0xAB:
-        str_buffer[str_idx]     =  '<';
-        str_buffer[str_idx + 1] = '\0';
-        str_idx ++;
-        break;
+        character = '<';
+        goto put_char;
       case 0xBB:
-        str_buffer[str_idx]     =  '>';
-        str_buffer[str_idx + 1] = '\0';
-        str_idx ++;
+        character = '>';
+        goto put_char;
+      case 'i':
+        insert = !insert;
         break;
-      case 0x88:
-        str_buffer[str_idx] = '^';
-        str_buffer[str_idx + 1] = '\0';
-        str_idx++;
+      case 'c':
+        str_buffer[0] = '\0';
+        str_idx = 0;
+        cursor_idx = 0;
+        break;
+      case '<':
+        if(cursor_idx > 0)
+          cursor_idx--;
+        break;
+      case '>':
+        if(cursor_idx < str_idx)
+          cursor_idx++;
         break;
       case '\n':
       if(!calculator_mode){
-        str_buffer[str_idx] = '\n';
-        str_buffer[str_idx + 1] = '\0';
-        str_idx++;
+        character = '\n';
+        goto put_char;
       }
       else{
-            for(int i = 1; i < str_idx; i++){
+        for(int i = 1; i < str_idx; i++){
           if(str_buffer[str_idx - i] == '\n' || i == str_idx - 1){
               calc_idx = str_idx - i;
               break;
           }
         }
+        char calc_buffer[512];
         for(int i = 0; i < str_idx; i++){
           calc_buffer[i] = str_buffer[calc_idx + i];
         }
@@ -346,8 +369,10 @@ inline static void display_key(){
         else if(*endptr == '\0'){
           printf("Invalid base\n");
         }
-
+        else{
         operand = *endptr;
+
+        //accumulate partial results
         while(operand != '\0'){
           op2 = strtoll(endptr + 1 , &endptr, base);
           switch (operand){
@@ -374,14 +399,25 @@ inline static void display_key(){
               break;
             case '|':
               op1 = op1 | op2;
+              break;
             case '^':
-
+              op1 = pow(op1, op2);
+              break;
+            case '#':
+              op1 = op1 ^ op2;
+              break;
+            case '<':
+              op1 = op1 << op2;
+              break;
+            case '>':
+              op1 = op1 >> op2;
               break;
             default:
               break;
           }
         operand = *endptr;
         }
+
         result = op1;
         str_buffer[str_idx] = ' ';
         str_buffer[str_idx + 1] = '=';
@@ -401,32 +437,56 @@ inline static void display_key(){
         str_buffer[str_idx] = '\n';
         str_buffer[str_idx + 1] = '\0';
         str_idx++;
-
+        cursor_idx = str_idx;
+        
         endptr = str_buffer + str_idx;
         calc_buffer[0] = '\0';
         break;
       }
+      }
       default:
+  put_char:
+      if(cursor_idx < str_idx && insert){
+        str_buffer[cursor_idx] = (char)character;
+        cursor_idx++;
+      }
+      else if(cursor_idx == str_idx){
         str_buffer[str_idx] = (char)character;
         str_buffer[str_idx + 1] = '\0';
         str_idx++;
+        cursor_idx++;
+      }
+      else if(cursor_idx < str_idx && !insert){
+        for(int i = str_idx; i > cursor_idx; i--){
+          str_buffer[i] = str_buffer[i - 1];
+        }
+        str_buffer[cursor_idx] = (char)character;
+        str_buffer[str_idx + 1] = '\0';
+        str_idx++;
+        cursor_idx++;
+      }
         break;
     }
 
     printf("%c%c%c%c", 0x1B, 0x5B, 0x32, 0x4A); //This clears the serial terminal
-    printf("%s", str_buffer);
+    printf("%s\t%u %u", str_buffer, cursor_idx, str_idx);
     tone(&tone_gen, NOTE_A3, 100);
 
-    if(str_idx >= 4){
-      if(str_buffer[str_idx - 4] == '.' && str_buffer[str_idx - 3] == '.' && 
-         str_buffer[str_idx - 2] == '.' && str_buffer[str_idx - 1] == '.' ){
+    if(str_idx >= 5){
+      if(str_buffer[str_idx - 5] == '.' && str_buffer[str_idx - 4] == '.' && 
+         str_buffer[str_idx - 3] == '.' && str_buffer[str_idx - 2] == '.' && 
+         str_buffer[str_idx - 1] == '.'){
         calculator_mode = !calculator_mode;
         str_idx = 0;
         str_buffer[str_idx] = '\0';
-        if(!calculator_mode)
+        if(!calculator_mode){
         printf("Calculator mode disengaged.\n");
-        else
+        melody(&tone_gen, CONFIRM, 1);
+        }
+        else{
         printf("Calculator mode engaged.\n");
+        melody(&tone_gen, REJECT, 1);
+        }
       }
     }
   
