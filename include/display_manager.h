@@ -101,7 +101,7 @@ inline static void countdown_to_start(){
   //move the countdown to the side, bomb on the right
   
   //call bomb function
-  enclosure(0);
+  enclosure();
   //call turn function
   turn_draw(0);
   //call yank function
