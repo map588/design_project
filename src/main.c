@@ -175,7 +175,7 @@ int init(void)
     return 0;
   }
 
- int main(){
+  int main(){
  start:
    init();
    actions action = NOP;
@@ -259,14 +259,16 @@ int init(void)
   game_over = false;
   restart_timer = add_alarm_in_ms(10010, restart_timer_callback, NULL, false);
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 10000));
-  busy_wait_ms(10020);
 
+ do{
+   if(*g_key == '\n'){
+     cancel_alarm(restart_timer);
+     printf("Restarting\n");
+      goto start;
+   }
+ }while(!game_over);
 
-  if(!game_over)
-    goto start;
-  else
-    display_exit();
-
-
+  busy_wait_ms(1000);
+  display_exit();
   return 0;
 }

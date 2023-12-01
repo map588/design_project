@@ -48,15 +48,15 @@ bool init_display(){
   while(!multicore_lockout_victim_is_initialized(0))
     tight_loop_contents();
   
-  multicore_lockout_start_blocking();
-   DEV_Delay_ms (100);
-
-  if (DEV_Module_Init () != 0)
-      return false;
   
-  DEV_SET_PWM (50);
-  LCD_2IN_Init (HORIZONTAL);
-  LCD_2IN_Clear (BLACK);
+   // DEV_Delay_ms (100);
+
+ // if (DEV_Module_Init () != 0)
+//    return false;
+  
+  // DEV_SET_PWM (50);
+  // LCD_2IN_Init (HORIZONTAL);
+  // LCD_2IN_Clear (BLACK);
 
   //Noteably we create an alarm pool before we allocate essentially the rest of the memory to the display buffer
  core1_pool = alarm_pool_create(2,8);
@@ -70,11 +70,11 @@ bool init_display(){
   set_tempo(160);
 
 
-
+  multicore_lockout_start_blocking();
   //This massive memory allocation needs to be on the heap, but it needs to be stored globally
   //We cannot directly store it globally because it will end up in the .data section of the binary
   //So we allocate it on the heap as a constant pointer and store the pointer globally into s_buffer
-  uint32_t Imagesize = LCD_2IN_HEIGHT * LCD_2IN_WIDTH * 2;
+  uint32_t Imagesize =  LCD_2IN_HEIGHT *  LCD_2IN_WIDTH * 2;
   void *const buffer = malloc(Imagesize);
 
   if (buffer == NULL){
@@ -84,12 +84,12 @@ bool init_display(){
 
   s_buffer = (uint16_t*) buffer;
 
-  Paint_NewImage ((UBYTE *)s_buffer, LCD_2IN.WIDTH, LCD_2IN.HEIGHT, ROTATE_90, BLACK);
-  Paint_SetScale (65);
-  Paint_Clear (BLACK);
-  Paint_SetRotate (ROTATE_270);
-  Paint_SelectImage ((UBYTE *)s_buffer);
-  LCD_2IN_Display   ((UBYTE *)s_buffer);
+  // Paint_NewImage ((UBYTE *)s_buffer, // LCD_2IN.WIDTH, // LCD_2IN.HEIGHT, ROTATE_90, BLACK);
+  // Paint_SetScale (65);
+  // Paint_Clear (BLACK);
+  // Paint_SetRotate (ROTATE_270);
+  // Paint_SelectImage ((UBYTE *)s_buffer);
+  // LCD_2IN_Display   ((UBYTE *)s_buffer);
 
   //sets up the pins to deal with hex display
   gpio_init (hex_0);
@@ -132,12 +132,12 @@ bool idx_timer_callback(repeating_timer_t *rt){
   display_functions[state].func();
 
 
-  drive_hex(9 - index);
-  ++index;
+  drive_hex(9 - idx);
+  ++idx;
 
   fired = true;
 
-  if(index > 9 || !display_functions[state].repeating) { return false; index = 0;}
+  if(idx > 9 || !display_functions[state].repeating) { return false; idx = 0;}
 
 
   return true;
@@ -163,7 +163,7 @@ void core_one_interrupt_handler (void){
   else
       action--;
 
-  index = 0;
+  idx = 0;
   fired = false;
   
   int32_t interval = ((int32_t) value) / -10;
@@ -211,6 +211,6 @@ void display_exit (){
   free (s_buffer);
   s_buffer = NULL;
 
-  DEV_Module_Exit ();
+  // DEV_Module_Exit ();
   return;
 }
