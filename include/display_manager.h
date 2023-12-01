@@ -276,7 +276,6 @@ inline static void display_key(){
   static bool calculator_mode = false;
   static bool insert = false;
   static int  str_idx = 0;
-  static int  cursor_idx = 0;
 
   static char str_buffer [1024];
 
@@ -308,15 +307,7 @@ inline static void display_key(){
 
     switch(character){
       case '\b':
-        if (cursor_idx == str_idx && str_idx > 0){
-          str_buffer[str_idx - 1] = '\0';
-          str_idx--;
-          cursor_idx--;
-        }
-        else if(cursor_idx < str_idx && str_idx > 0){
-          for(int i = cursor_idx; i < str_idx; i++){
-            str_buffer[i - 1] = str_buffer[i];
-          }
+        if ( str_idx > 0){
           str_buffer[str_idx - 1] = '\0';
           str_idx--;
         }
@@ -333,15 +324,9 @@ inline static void display_key(){
       case 'c':
         str_buffer[0] = '\0';
         str_idx = 0;
-        cursor_idx = 0;
         break;
       case '<':
-        if(cursor_idx > 0)
-          cursor_idx--;
-        break;
       case '>':
-        if(cursor_idx < str_idx)
-          cursor_idx++;
         break;
       case '\n':
       if(!calculator_mode){
@@ -356,7 +341,7 @@ inline static void display_key(){
           }
         }
         char calc_buffer[512];
-        for(int i = 0; i < str_idx; i++){
+        for(int i = 0; i < (str_idx - calc_idx); i++){
           calc_buffer[i] = str_buffer[calc_idx + i];
         }
         op1 = strtoll(calc_buffer, &endptr, base);
@@ -437,7 +422,6 @@ inline static void display_key(){
         str_buffer[str_idx] = '\n';
         str_buffer[str_idx + 1] = '\0';
         str_idx++;
-        cursor_idx = str_idx;
         
         endptr = str_buffer + str_idx;
         calc_buffer[0] = '\0';
@@ -446,30 +430,14 @@ inline static void display_key(){
       }
       default:
   put_char:
-      if(cursor_idx < str_idx && insert){
-        str_buffer[cursor_idx] = (char)character;
-        cursor_idx++;
-      }
-      else if(cursor_idx == str_idx){
         str_buffer[str_idx] = (char)character;
         str_buffer[str_idx + 1] = '\0';
         str_idx++;
-        cursor_idx++;
-      }
-      else if(cursor_idx < str_idx && !insert){
-        for(int i = str_idx; i > cursor_idx; i--){
-          str_buffer[i] = str_buffer[i - 1];
-        }
-        str_buffer[cursor_idx] = (char)character;
-        str_buffer[str_idx + 1] = '\0';
-        str_idx++;
-        cursor_idx++;
-      }
         break;
     }
 
     printf("%c%c%c%c", 0x1B, 0x5B, 0x32, 0x4A); //This clears the serial terminal
-    printf("%s\t%u %u", str_buffer, cursor_idx, str_idx);
+    printf("%s    %u %u", str_buffer, str_idx,calc_idx);
     tone(&tone_gen, NOTE_A3, 100);
 
     if(str_idx >= 5){
