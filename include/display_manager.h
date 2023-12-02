@@ -246,20 +246,17 @@ inline static void prompt_start(){
 }
 
 inline static void countdown_to_start(){    
-  Paint_SelectImage((UBYTE *)s_buffer);
-  Paint_Clear(BLACK);
+  if(!fired){
+    clearflags();
+    Paint_SelectImage((UBYTE *)s_buffer);
+    Paint_Clear(BLACK);
+    LCD_2IN_Display((UBYTE *)s_buffer);
+    fired = true;
+  }
 
   //draw the bomb here, then do the switch case
   //move the countdown to the side, bomb on the right
   
-  //call bomb function
-  enclosure();
-  //call turn function
-  turn_draw(0);
-  //call yank function
-  yank_draw(0);
-  //call wire function
-  wire_draw(0);
 
 
   switch(index){ 
@@ -474,9 +471,12 @@ inline static void correct_disp(){
 }
 
  inline static void incorrect_disp(){  //BEING CHANGED
+ if(!fired){
   Paint_SelectImage ((UBYTE *)s_buffer);
-  Paint_Clear(BLACK);
-  Paint_DrawString_EN (110, 100, "BOOM", &Font20, RED, BLACK);
+  Paint_ClearWindows(110, 100, 197, 120, BLACK);
+  Paint_DrawString_EN (110, 100, "BOOM", &Font24, RED, BLACK);
+  LCD_2IN_Display ((UBYTE *)s_buffer);
+ }
   //add multiple explosion graphics in the form of concentric circles
   //use a switch case depending on index
   //start at case index=9, work down to 0
@@ -528,8 +528,9 @@ inline static void play_again(){
     clearflags();
     restart_state = true;
     Paint_SelectImage((UBYTE *)s_buffer);
-    Paint_DrawString_EN(110, 100, "PLAY AGAIN?", &Font20, GREEN, BLACK);
+    Paint_DrawString_EN(100, 100, "AGAIN?", &Font20, GREEN, BLACK);
     LCD_2IN_Display((UBYTE *)s_buffer);
+    fired = true;
   }
     loading_bar();
 }
@@ -538,41 +539,39 @@ inline static void play_again(){
 inline static void display_key(){
   static bool calculator_mode = false;
   static int  str_idx = 0;
-
   static char str_buffer [1024];
-
-
   static int calc_idx = 0;
   static int base = 10;
 
-  long long op1;
-  char *endptr = str_buffer;
-  char operand;
-  long long op2;
-  long long result;
-  
 
-  if(!fired && !key_state){
-    Paint_Clear(BLACK);
-    key_state = true;
-  }
+  
 
   // if(str_idx >= 1024){
   //   printf("Buffer full, hit delete or numlock->insert to clear\n");
   //   return;
   // }
-
-
-  Paint_SelectImage((uint8_t *) s_buffer);
-
   char character = (char)score_d;
-
     if(!enabled){
       if(character == 'e')
         enabled = !enabled;
 
       return;
     }
+
+    long long op1;
+    char *endptr = str_buffer;
+    char operand;
+    long long op2;
+    long long result;
+
+
+    if (!key_state)
+    {
+      Paint_Clear(BLACK);
+      key_state = true;
+    }
+
+    Paint_SelectImage((uint8_t *)s_buffer);
 
     switch(character){
       case '\b':

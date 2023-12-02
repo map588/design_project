@@ -160,7 +160,7 @@ int init(void)
 
   int64_t game_timer_callback(alarm_id_t id, void * user_data){
     multicore_fifo_push_blocking(assemble_packet(INCORRECT, NOP, score, time));
-    busy_wait_ms(2000);
+    busy_wait_ms(6000);
     callback = true;
     game_over = true;
     return 0;
