@@ -15,6 +15,8 @@ static PIO pio = pio0;
 static uint sm = 0;
 static char *k_key;
 uint32_t key_packet;
+bool *key_pressed;
+
 
 void get_code(){
 	uint32_t input = pio_sm_get_blocking(pio, sm);
@@ -23,16 +25,17 @@ void get_code(){
 	if(input > 37){
 		return;
 	}
-	
+
 	*k_key = scan_codes[input];
-	
+	*key_pressed = true;
 	uint32_t key_packet = assemble_packet(KEYPRESS, 0, (uint8_t)*k_key, 0);
 	multicore_fifo_push_blocking(key_packet);
 }
 
 
-void keyboard_init(char *key){	
+void keyboard_init(char *key, bool *key_press){	
 	k_key = key;
+	key_pressed = key_press;
 	float freq_khz = 625.0f;
 	pio_gpio_init(pio, DATA_PIN);
 	pio_gpio_init(pio, CLOCK_PIN);

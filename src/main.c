@@ -34,10 +34,9 @@ static bool wire_pulled;
 static bool wire_position;
 static bool game_over;
 static bool temp;
-
+bool key_press;
 
 static alarm_id_t timer;
-static alarm_id_t restart_timer;
 //All of these enums are defined in enum.h, in the include folder
 
 
@@ -64,22 +63,22 @@ void action_isr(void){
     case turn_pin:
       if (action == TURN_IT)
            change_state(CORRECT);
-      else change_state(INCORRECT);
+      else if(action == YANK_IT || action == WIRE_IT) change_state(INCORRECT);
       break;
     case pull_pin:
       if(action == YANK_IT) 
            change_state(CORRECT);
-      else change_state(INCORRECT);
+      else if(action == TURN_IT || action == WIRE_IT) change_state(INCORRECT);
       break;
   case wire1_pin:
       if(action == WIRE_IT && wire_position == 0) 
            change_state(CORRECT);
-      else change_state(INCORRECT);
+      else if(action == YANK_IT || action == WIRE_IT || action == TURN_IT) change_state(INCORRECT);
       break;
   case wire2_pin:
       if(action == WIRE_IT && wire_position == 1) 
            change_state(CORRECT);
-      else change_state(INCORRECT);
+      else if(action == YANK_IT || action == WIRE_IT || action == TURN_IT) change_state(INCORRECT);
       break;
   default:
       change_state(INCORRECT);
@@ -127,8 +126,8 @@ int init(void)
 
   gpio_is_input_hysteresis_enabled(pull_pin);
   gpio_is_input_hysteresis_enabled(turn_pin);
-  gpio_is_input_hysteresis_enabled(wire1_pin);
-  gpio_is_input_hysteresis_enabled(wire2_pin);
+  // gpio_is_input_hysteresis_enabled(wire1_pin);
+  // gpio_is_input_hysteresis_enabled(wire2_pin);
     
     //calls the entry function for core 1
   multicore_launch_core1(core_one_main);
@@ -136,7 +135,7 @@ int init(void)
     //This currently goes to call a function in keyboard.c that sets up the PIO and the interrupt, but we will
     //change this depending on how we decode the keypad
   g_key = (char *)malloc(sizeof(char));
-  keyboard_init(g_key);
+  keyboard_init(g_key, &key_press);
 
 
     //TODO: set up the timer interrupt
@@ -174,13 +173,13 @@ int init(void)
   }
 
  int main(){
-
-  init();
 start:
+  init();
+
   actions action = NOP;
   uint8_t selection = 0;
   uint8_t time_rate = 0;
-  uint16_t start_time = 3000;
+  uint16_t start_time = 3500;
   score = 0;
 
   callback = false;
@@ -191,21 +190,27 @@ start:
   state = LOADING;
   time = 2000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(2100);
+  busy_wait_ms(2500);
 
  
   state = SELECT;
+  char select_key = ' ';
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
   do{
-    if(*g_key == '<' || *g_key == '>'){
-      switch(*g_key){
-        case '<': action = (actions)0x10; if(selection <= 0) selection--; break;
-        case '>': action = (actions)0x20; if(selection >= 2) selection++; break;
+    if(key_press){
+      key_press = false;
+      select_key = *g_key;
+      if(select_key == '<' || select_key == '>'){
+        switch(select_key){
+          case '<': action = TURN_IT; if(selection > 0) selection--; select_key = ' '; break;
+          case '>': action = YANK_IT; if(selection < 2) selection++; select_key = ' '; break;
+        }
+        multicore_fifo_push_blocking(assemble_packet(SELECT, action, 0, 0));
       }
-     multicore_fifo_push_blocking(assemble_packet(SELECT, action, 0, 0));
     }
+  }while(select_key != '\n');
 
-  }while(*g_key != '\n');
+  select_key = ' ';
 
   selection = 0;
   switch(selection){
@@ -217,9 +222,13 @@ start:
  
   state = CONTINUE;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-   while (*g_key != '\n'){tight_loop_contents();}
-   while (!temp){tight_loop_contents();}
-
+   while (select_key != '\n'){
+    if(key_press){
+      key_press = false;
+      select_key = *g_key;
+    }
+   }
+  select_key = ' ';
 
   state = COUNTDOWN;
   time = 3000;
@@ -251,9 +260,9 @@ start:
 
   state = RESTART;
   game_over = false;
-  restart_timer = add_alarm_in_ms(10010, restart_timer_callback, NULL, false);
+  timer = add_alarm_in_ms(10010, restart_timer_callback, NULL, false);
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 10000));
-  busy_wait_ms(10020);
+  while(!game_over || *g_key != '\n'){tight_loop_contents();}
 
 
   if(!game_over)

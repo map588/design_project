@@ -8,8 +8,9 @@
 #include "hardware/irq.h"
 #include "pico/multicore.h"
 
+
 // PIO program for scanning the keyboard matrix
-void keyboard_init(char *key);
+void keyboard_init(char *key, bool *key_press);
 void get_code();
 
 #endif

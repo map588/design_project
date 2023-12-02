@@ -209,8 +209,7 @@ inline static void selction (){
         last_key--;
     else if(last_key < 2 && key == 1)
         last_key++;
-    else if(key == 3)
-        last_key = 0;
+    
 
     Paint_SelectImage((UBYTE *)s_buffer);
 
@@ -508,7 +507,6 @@ inline static void play_again(){
     Paint_Clear(BLACK);
     Paint_DrawString_EN(110, 100, "PLAY AGAIN?", &Font20, GREEN, BLACK);
     LCD_2IN_Display((UBYTE *)s_buffer);
-    fired = true;
   }
     loading_bar();
 }
@@ -516,9 +514,9 @@ inline static void play_again(){
 
 inline static void display_key(){
   static bool calculator_mode = false;
-static bool enabled = false;
+  static bool enabled = false;
   static int  str_idx = 0;
-   static char str_buffer [512];
+  static char str_buffer [512];
   static int calc_idx = 0;
   static int base = 10;
 
@@ -528,14 +526,14 @@ static bool enabled = false;
 
   if(!enabled && character != 'c')
     return;
-  else if(character != 'c')
+  else if(character == 'c'){
     enabled = !enabled;
+    return;
+  }
   
-  
-
 
   long long op1;
-char calc_buffer[256];
+  char calc_buffer[256];
   char *endptr = str_buffer;
   char operand;
   long long op2;
@@ -543,10 +541,10 @@ char calc_buffer[256];
   
 //Paint_SelectImage((uint8_t *) s_buffer);
 
-  if (!fired && !key_state){
-   // Paint_Clear(BLACK);
-    key_state = true;
-  }
+  // if (!fired && !key_state){
+  //  // Paint_Clear(BLACK);
+  //   key_state = true;
+  // }
 
   if(!calculator_mode){
     if(character == '\b'){

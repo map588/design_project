@@ -21,7 +21,7 @@ function_holder display_functions[9] = {
     {game_UI, 1},
     {display_key, 0},
     {correct_disp, 0},
-    {incorrect_disp, 1},
+    {incorrect_disp, 0},
     {play_again, 1}
     //{random_key, false},unimplemented
 };
@@ -147,7 +147,6 @@ void core_one_interrupt_handler (void){
  for(int i = 0; i < 6 && multicore_fifo_rvalid(); i++)
      data = multicore_fifo_pop_blocking ();
 
-  multicore_fifo_drain();
   value   = (data & 0xFFFF0000) >> 16;
   score_d = (data & 0x0000FF00) >> 8;
   action  = (data & 0x000000F0) >> 4;
