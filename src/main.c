@@ -10,8 +10,11 @@
 
 const int pull_pin = 16;
 const int turn_pin = 17;
-const int wire1_pin = 18;
-const int wire2_pin = 19;
+const int wire0_pin = 18;
+const int wire1_pin = 19;
+
+//wire position gives 1 for 1 and 0 for 0, we can add this value to its base so we don't need the define
+const int wire_base = 18;
 
 //Assemble packet does this, but heres how it works
 //  V = time, A = action, P = Points (score), S = state
@@ -69,12 +72,12 @@ void action_isr(void){
            change_state(CORRECT);
       else if(action == TURN_IT || action == WIRE_IT) {time = 8000; change_state(INCORRECT);}
       break;
-  case wire1_pin:
+  case wire0_pin:
       if(action == WIRE_IT && wire_position == 0) 
            change_state(CORRECT);
       else if(action == YANK_IT || action == WIRE_IT || action == TURN_IT) {time = 8000; change_state(INCORRECT);}
       break;
-  case wire2_pin:
+  case wire1_pin:
       if(action == WIRE_IT && wire_position == 1) 
            change_state(CORRECT);
       else if(action == YANK_IT || action == WIRE_IT || action == TURN_IT) {time = 8000; change_state(INCORRECT);}
@@ -108,25 +111,27 @@ int init(void)
 
   cancel_alarm(timer);
 
+  multicore_lockout_victim_init();
+
   gpio_init(pull_pin);
   gpio_init(turn_pin);
+  gpio_init(wire0_pin);
   gpio_init(wire1_pin);
-  gpio_init(wire2_pin);
 
   gpio_set_dir(pull_pin, 0);
   gpio_set_dir(turn_pin, 0);
+  gpio_set_dir(wire0_pin, 0);
   gpio_set_dir(wire1_pin, 0);
-  gpio_set_dir(wire2_pin, 0);
 
   gpio_pull_up(pull_pin);
   gpio_pull_up(turn_pin);
+  gpio_pull_up(wire0_pin);
   gpio_pull_up(wire1_pin);
-  gpio_pull_up(wire2_pin);
 
   gpio_is_input_hysteresis_enabled(pull_pin);
   gpio_is_input_hysteresis_enabled(turn_pin);
+  // gpio_is_input_hysteresis_enabled(wire0_pin);
   // gpio_is_input_hysteresis_enabled(wire1_pin);
-  // gpio_is_input_hysteresis_enabled(wire2_pin);
     
     //calls the entry function for core 1
   multicore_launch_core1(core_one_main);
@@ -140,7 +145,8 @@ int init(void)
 
   key_turned    = gpio_get(turn_pin);
   wire_pulled   = gpio_get(pull_pin);
-  wire_position = gpio_get(wire1_pin);
+
+  wire_position = gpio_get(wire0_pin);
 
 
 
@@ -150,8 +156,8 @@ int init(void)
   gpio_set_irq_enabled_with_callback(turn_pin, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
   gpio_set_irq_enabled_with_callback(turn_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
 
+  gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
   gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
-  gpio_set_irq_enabled_with_callback(wire2_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
 }
 
 
@@ -162,11 +168,6 @@ int init(void)
     return 0;
     }
 
-  int64_t restart_timer_callback(alarm_id_t id, void * user_data){
-    game_over = true;
-    callback = true;
-    return 0;
-  }
 
  int main(){
 start:
@@ -188,7 +189,7 @@ start:
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
   busy_wait_ms(2500);
 
- 
+  pio_sm_restart(pio0, 0);
   state = SELECT;
   char select_key = ' ';
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
@@ -231,7 +232,7 @@ start:
   state = COUNTDOWN;
   time = 5000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(5500);
+  busy_wait_ms(5050);
 
 
   state = GAME;
@@ -245,6 +246,14 @@ start:
       while(!callback){tight_loop_contents();}
   }
     else{
+      if (wire_position){
+          gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, false, (void *)&action_isr);
+          gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
+      }else{
+          gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, false, (void *)&action_isr);
+          gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
+      }
+      
       callback = false;
       action = (actions)(((rand() % 3)  + 1) * ACTION);
       timer = add_alarm_in_ms(time + 10, game_timer_callback, NULL, true);
@@ -254,17 +263,16 @@ start:
       time -= time_rate;
     }
   }while (score < 100 && !game_over);
-  
-  busy_wait_ms(8500);
+  cancel_alarm(timer);
+
 
   irq_set_enabled(PIO0_IRQ_0, true);
 
   state = RESTART;
-  game_over = false;
-  timer = add_alarm_in_ms(10010, restart_timer_callback, NULL, false);
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 10000));
-  while(!game_over || select_key != '\n'){if(key_press){key_press = false; select_key = *g_key;}}
-  if(select_key == '\n') cancel_alarm(timer);
+  while(select_key != '\n' || select_key != '\b'){if(key_press){key_press = false; select_key = *g_key;}}
+  if(select_key == '\n') game_over = false;
+  else if(select_key == '\b') game_over = true;
 
   if(!game_over)
     goto start;

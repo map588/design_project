@@ -64,8 +64,7 @@ void keyboard_init(char *key, bool *key_press){
 
 
     irq_set_exclusive_handler(PIO0_IRQ_0, &get_code);
-	//irq_set_priority(PIO0_IRQ_0, 0xc0);
+	irq_set_priority(PIO0_IRQ_0, 0x00);
     irq_set_enabled(PIO0_IRQ_0, true);
-
     printf("\nstarting keypad\n");
 }

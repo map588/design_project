@@ -55,12 +55,12 @@ bool init_display(){
   LCD_2IN_Clear (BLACK);
 
   //Noteably we create an alarm pool before we allocate essentially the rest of the memory to the display buffer
- core1_pool = alarm_pool_create(2,8);
+ core1_pool = alarm_pool_create(2,10);
 
  if(!alarm_pool_add_repeating_timer_ms(core1_pool, 0, null_callback, NULL, &idx_timer))
     return false;
   
-  tone_gen.alarm_pool = alarm_pool_create_with_unused_hardware_alarm(4);
+  tone_gen.alarm_pool = alarm_pool_create_with_unused_hardware_alarm(6);
   tone_init(&tone_gen, buzzer);
   set_rest_duration(20);
   set_tempo(160);
@@ -121,49 +121,72 @@ bool idx_timer_callback(repeating_timer_t *rt){
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
   else 
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
- 
-  
+
   
   display_functions[state].func();
   
-
-  drive_hex (9 - index);
+  drive_hex(9 - index);
+  
   ++index;
 
   fired = true;
 
-  if (index > 9 || !display_functions[state].repeating) {index = 0; return false;}
+  if (index > 9 || !display_functions[state].repeating) {
+    index = 0;
+
+    if(state == INCORRECT)
+      multicore_lockout_end_blocking();
+
+    return false;
+  }
 
   return true;
 }
 
 void core_one_interrupt_handler (void){
   uint32_t data;
-
+  states new_state;
   interrupt = true;
 
   
  for(int i = 0; i < 6 && multicore_fifo_rvalid(); i++)
      data = multicore_fifo_pop_blocking ();
 
-  value   = (data & 0xFFFF0000) >> 16;
-  score_d = (data & 0x0000FF00) >> 8;
-  action  = (data & 0x000000F0) >> 4;
-  state   =  data & 0x0000000F;
+  value       = (data & 0xFFFF0000) >> 16;
+  score_d     = (data & 0x0000FF00) >> 8;
+  action      = (data & 0x000000F0) >> 4;
+  new_state   =  data & 0x0000000F;
   if(action == 0)
       action = NOP;
   else
       action--;
 
-  if (KEYPRESS == state)
-  {
-    display_functions[state].func();
-    return;
+  //TODO I think this is a possible solution for integrating the keyboard
+  //Right now its only relevant for RANDOM_KEY, RESTART, and SELECT, as well as the easteregg if it actually works
+  if (KEYPRESS == new_state){
+    switch(state){
+      case SELECT:
+      case CONTINUE:
+      case COUNTDOWN:
+      case GAME:
+      case CORRECT:
+      case INCORRECT:
+      case RANDOM_KEY:
+      case RESTART:
+      default:
+      state = new_state;
+      break; 
+    }
   }
+  else
+    state = new_state;
 
   index = 0;
   fired = false;
 
+  if(state == INCORRECT){
+    multicore_lockout_start_blocking();
+  }
 
   int32_t interval = ((int32_t) value) / -10;
 

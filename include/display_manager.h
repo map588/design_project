@@ -32,6 +32,7 @@ bool game_state = 0;
 bool load_state = 0;
 bool key_state = 0;
 bool restart_state = 0;
+bool incorrect_state = 0;
 
 
 static uint16_t *s_buffer;
@@ -231,23 +232,23 @@ inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
 
   //create layered circles
   //order: red->orange->yellow->white
-  Paint_DrawCircle(x_cen, y_cen, 48*radfactor, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawCircle(x_cen, y_cen, 32*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawCircle(x_cen, y_cen, 16*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawChar(x_cen - 12, y_cen - 6, '*', &Font20, WHITE, GRAY);
+  Paint_DrawCircle(x_cen, y_cen, (uint16_t)(48 * radfactor), RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(x_cen, y_cen, (uint16_t)(32 * radfactor), YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(x_cen, y_cen, (uint16_t)(16 * radfactor), WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //Paint_DrawChar(x_cen - 7, y_cen - 6, '*', &Font20, WHITE, BRRED);  //this draws a star in the middle of the explosion
 
   //need to partially update ONLY the area around the circle
   //take x_cen and y_cen, subtract both by 48*radfactor to get starting coords
   //add both by 48*radfactor to get end coords
-  int adjustedrad = 48*radfactor + 2;
+  int adjustedrad = (uint16_t)(48*radfactor) + 2;
 
-  int x1 = (x_cen - adjustedrad > 0)? x_cen - adjustedrad : 0;
-  int x2 = (x_cen + adjustedrad < 319)? x_cen + adjustedrad : 319;
-  int y1 = (y_cen - adjustedrad > 0)? y_cen - adjustedrad : 0;
-  int y2 = (y_cen + adjustedrad < 239)? y_cen + adjustedrad : 239;
+  // int x1 = (x_cen - adjustedrad > 0)? x_cen - adjustedrad : 0;
+  // int x2 = (x_cen + adjustedrad < 319)? x_cen + adjustedrad : 319;
+  // int y1 = (y_cen - adjustedrad > 0)? y_cen - adjustedrad : 0;
+  // int y2 = (y_cen + adjustedrad < 239)? y_cen + adjustedrad : 239;
 
-  LCD_2IN_DisplayWindows(y1, x1, y2, x2, s_buffer); // experimenting with just updating the whole display
-  //LCD_2IN_Display((UBYTE *)s_buffer);
+  //LCD_2IN_DisplayWindows(y1, x1, y2, x2, s_buffer); // experimenting with just updating the whole display
+  LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
 inline static void selction (){
@@ -322,7 +323,7 @@ inline static void countdown_to_start(){
       Paint_DrawString_EN(75, 83, "1", &Font20, GREEN, BLACK);
       break;
     case 5:
-      Paint_DrawString_EN(12, 83, "DEFUSE IT!", &Font20, RED, BLACK);
+      Paint_DrawString_EN(3, 83, "DEFUSE IT!", &Font20, RED, BLACK);
       break;
     case 6:
       index = 10;
@@ -436,6 +437,12 @@ inline static void write_prompt(){     //BEING CHANGED
   LCD_2IN_DisplayWindows(59, 6, 111, 145, s_buffer);
 }
 
+inline static void drive_hex(uint8_t hex){
+  gpio_put(hex_0,  hex & 0x01);
+  gpio_put(hex_1, (hex & 0x02) >> 1);
+  gpio_put(hex_2, (hex & 0x04) >> 2);
+  gpio_put(hex_3, (hex & 0x08) >> 3);
+}
 
 inline static void game_UI(){
    Paint_SelectImage((UBYTE *)s_buffer);
@@ -450,17 +457,11 @@ inline static void game_UI(){
       fired = true;
     }
 
-    tone(&tone_gen, NOTE_C3, value/20);
+    //drive_hex(9 - index);
+    tone(&tone_gen, NOTE_C3, value/50);
     loading_bar();
 }
 
-
-inline static void drive_hex(uint8_t hex){
-  gpio_put(hex_0,  hex & 0x01);
-  gpio_put(hex_1, (hex & 0x02) >> 1);
-  gpio_put(hex_2, (hex & 0x04) >> 2);
-  gpio_put(hex_3, (hex & 0x08) >> 3);
-}
 
 inline static void correct_disp(){
   Paint_SelectImage((UBYTE *)s_buffer);
@@ -478,7 +479,14 @@ inline static void correct_disp(){
 }
 
  inline static void incorrect_disp(){  //BEING CHANGED
- 
+    if(!fired || !incorrect_state){
+      clearflags();
+      incorrect_state = true;
+      Paint_SelectImage((UBYTE *)s_buffer);
+      Paint_ClearWindows(90, 80, 217, 140, BLACK);
+      Paint_DrawString_EN (110, 100, "BOOM", &Font24, RED, BLACK);
+      LCD_2IN_Display((UBYTE *)s_buffer);
+    }
  
   //add multiple explosion graphics in the form of concentric circles
   //use a switch case depending on index
@@ -500,28 +508,34 @@ inline static void correct_disp(){
       //need to figure out coordinates for each explosion, as well as radius factor
       //gonna just guess the coords and not change radius factor for now
       explosion_draw(262, 57, 1);
+      break;
     case 8:
       explosion_draw(134, 40, 1);
+      break;
     case 7:
       explosion_draw(132, 186, 1);
+      break;
     case 6:
       explosion_draw(265, 183, 1);
+      break;
     case 5:
       explosion_draw(56, 113, 1);
+      break;
     case 4:
       explosion_draw(68, 51, 1);
+      break;
     case 3:
       explosion_draw(218, 169, 1);
+      break;
     case 2:
       explosion_draw(205, 49, 1);
+      break;
     case 1:
       explosion_draw(77, 174, 1);
+      break;
     case 0:
-      Paint_SelectImage ((UBYTE *)s_buffer);
-      Paint_ClearWindows(90, 80, 217, 140, BLACK);
-      Paint_DrawString_EN (110, 100, "BOOM", &Font24, RED, BLACK);
-      LCD_2IN_Display((UBYTE *)s_buffer);
       explosion_draw(268, 108, 1);
+      break;
     default:
     break;
   }
@@ -713,7 +727,7 @@ inline static void display_key(){
 
     // printf("%c%c%c%c", 0x1B, 0x5B, 0x32, 0x4A); //This clears the serial terminal
     // printf("%s    %u %u", str_buffer, str_idx,calc_idx);
-    tone(&tone_gen, NOTE_A3, 100);
+    tone(&tone_gen, NOTE_A3, 50);
 
     if(str_idx >= 5){
       if(str_buffer[str_idx - 5] == '.' && str_buffer[str_idx - 4] == '.' && 
