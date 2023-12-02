@@ -53,7 +53,7 @@ typedef enum {
 #define GRED           0XFFE0
 #define GBLUE          0X07FF
 #define RED            0xF800
-#define MAGENTA        0xF812
+#define MAGENTA        0xF814
 #define GREEN          0x07E0
 #define CYAN           0x7FFF
 #define YELLOW         0xFFE0

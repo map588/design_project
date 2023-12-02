@@ -33,7 +33,6 @@ static bool key_turned;
 static bool wire_pulled;
 static bool wire_position;
 static bool game_over;
-static bool temp;
 static bool key_press;
 
 static alarm_id_t timer;
@@ -63,22 +62,22 @@ void action_isr(void){
     case turn_pin:
       if (action == TURN_IT)
            change_state(CORRECT);
-      else if(action == YANK_IT || action == WIRE_IT) {time = 6000; change_state(INCORRECT);}
+      else if(action == YANK_IT || action == WIRE_IT) {time = 8000; change_state(INCORRECT);}
       break;
     case pull_pin:
       if(action == YANK_IT) 
            change_state(CORRECT);
-      else if(action == TURN_IT || action == WIRE_IT) {time = 6000; change_state(INCORRECT);}
+      else if(action == TURN_IT || action == WIRE_IT) {time = 8000; change_state(INCORRECT);}
       break;
   case wire1_pin:
       if(action == WIRE_IT && wire_position == 0) 
            change_state(CORRECT);
-      else if(action == YANK_IT || action == WIRE_IT || action == TURN_IT) {time = 6000; change_state(INCORRECT);}
+      else if(action == YANK_IT || action == WIRE_IT || action == TURN_IT) {time = 8000; change_state(INCORRECT);}
       break;
   case wire2_pin:
       if(action == WIRE_IT && wire_position == 1) 
            change_state(CORRECT);
-      else if(action == YANK_IT || action == WIRE_IT || action == TURN_IT) {time = 6000; change_state(INCORRECT);}
+      else if(action == YANK_IT || action == WIRE_IT || action == TURN_IT) {time = 8000; change_state(INCORRECT);}
       break;
   default:
       change_state(INCORRECT);
@@ -138,8 +137,6 @@ int init(void)
   keyboard_init(g_key, &key_press);
 
 
-    //TODO: set up the timer interrupt
-    //TODO: change the gpio interrupts to PIO interrupts that simplify our inputs
 
   key_turned    = gpio_get(turn_pin);
   wire_pulled   = gpio_get(pull_pin);
@@ -159,8 +156,7 @@ int init(void)
 
 
   int64_t game_timer_callback(alarm_id_t id, void * user_data){
-    multicore_fifo_push_blocking(assemble_packet(INCORRECT, NOP, score, time));
-    busy_wait_ms(6000);
+    multicore_fifo_push_blocking(assemble_packet(INCORRECT, NOP, score, 8000));
     callback = true;
     game_over = true;
     return 0;
@@ -179,7 +175,7 @@ start:
   actions action = NOP;
   uint8_t selection = 0;
   uint8_t time_rate = 0;
-  uint16_t start_time = 3500;
+  uint16_t start_time = 6000;
   score = 0;
 
   callback = false;
@@ -230,10 +226,12 @@ start:
    }
   select_key = ' ';
 
+
+  irq_set_enabled(PIO0_IRQ_0, false);
   state = COUNTDOWN;
-  time = 3000;
+  time = 5000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(3150);
+  busy_wait_ms(5500);
 
 
   state = GAME;
@@ -257,14 +255,16 @@ start:
     }
   }while (score < 100 && !game_over);
   
-  busy_wait_ms(10000);
+  busy_wait_ms(8500);
+
+  irq_set_enabled(PIO0_IRQ_0, true);
 
   state = RESTART;
   game_over = false;
   timer = add_alarm_in_ms(10010, restart_timer_callback, NULL, false);
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 10000));
   while(!game_over || select_key != '\n'){if(key_press){key_press = false; select_key = *g_key;}}
-
+  if(select_key == '\n') cancel_alarm(timer);
 
   if(!game_over)
     goto start;

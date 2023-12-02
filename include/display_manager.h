@@ -44,24 +44,7 @@ inline static void clearflags(){
       restart_state = false;
 }
 
-inline static void enclosure(){
-  Paint_SelectImage((UBYTE *)s_buffer);
 
-  //clear area for enclosure
-  Paint_ClearWindows(143, 35, 283, 202, BLACK);
-  //draw the big rectangle for the enclosure
-  Paint_DrawRectangle(146, 38, 280, 198, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  //draw the rectangle for the "display"
-  Paint_DrawRectangle(160, 62, 266, 108, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  //draw the rectangle for the keypad
-  Paint_DrawRectangle(177, 117, 248, 187, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  //draw the rectangle for the hex display
-  Paint_DrawRectangle(151, 176, 163, 193, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  
-  //partially update the display for the enclosure
-  //TODO: partial update
-    LCD_2IN_DisplayWindows(35, 143, 202, 283, s_buffer);
-}
 
 //TODO: include ways to change color for these functions
 inline static void yank_draw(uint8_t base_color){
@@ -177,15 +160,81 @@ inline static void wire_draw(uint8_t base_color){
 
 }
 
+inline static void enclosure(int8_t prompt, bool correct){
+  const uint16_t colors[4] = {BLACK, RED, BLUE, GREEN};
+  Paint_SelectImage((UBYTE *)s_buffer);
+  //Dim the color on the screen
+  uint16_t color = colors[prompt + 1] & 0x3333;
+  //clear area for enclosure
+  Paint_ClearWindows(143, 35, 283, 202, BLACK);
+  //draw the big rectangle for the enclosure
+  Paint_DrawRectangle(146, 38, 280, 198, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the rectangle for the "display"
+  Paint_DrawRectangle(160, 62, 266, 108, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the rectangle for the keypad
+  Paint_DrawRectangle(177, 117, 248, 187, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the rectangle for the hex display
+  Paint_DrawRectangle(151, 176, 163, 193, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+
+  //partially update the display for the enclosure
+  //TODO: partial update
+  LCD_2IN_DisplayWindows(35, 143, 202, 283, s_buffer);
+
+  if(correct && prompt != -1) prompt += 3;
+
+  switch (prompt)
+  {
+    case -1:
+      turn_draw(0);
+      yank_draw(0);
+      wire_draw(0);
+    break;
+    case 0:
+      turn_draw(1);
+      yank_draw(0);
+      wire_draw(0);
+    break;
+    case 1:
+      turn_draw(0);
+      yank_draw(1);
+      wire_draw(0);
+    break;
+    case 2:
+      turn_draw(0);
+      yank_draw(0);
+      wire_draw(1);
+    break;
+    case 3:
+      turn_draw(2);
+      yank_draw(0);
+      wire_draw(0);
+    break;
+    case 4:
+      turn_draw(0);
+      yank_draw(2);
+      wire_draw(0);
+    break;
+    case 5:
+      turn_draw(0);
+      yank_draw(0);
+      wire_draw(2);
+    break;
+    default:
+    break;
+    }
+
+  
+}
+
 
 inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
-  Paint_SelectImage((UBYTE *)s_buffer); //select image
 
   //create layered circles
   //order: red->orange->yellow->white
   Paint_DrawCircle(x_cen, y_cen, 48*radfactor, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(x_cen, y_cen, 32*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(x_cen, y_cen, 16*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawChar(x_cen - 12, y_cen - 6, '*', &Font20, WHITE, GRAY);
 
   //need to partially update ONLY the area around the circle
   //take x_cen and y_cen, subtract both by 48*radfactor to get starting coords
@@ -197,8 +246,8 @@ inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
   int y1 = (y_cen - adjustedrad > 0)? y_cen - adjustedrad : 0;
   int y2 = (y_cen + adjustedrad < 239)? y_cen + adjustedrad : 239;
 
-  LCD_2IN_DisplayWindows(y1, x1, y2, x2, s_buffer);
-
+  LCD_2IN_DisplayWindows(y1, x1, y2, x2, s_buffer); // experimenting with just updating the whole display
+  //LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
 inline static void selction (){
@@ -261,28 +310,22 @@ inline static void countdown_to_start(){
 
   switch(index){ 
     case 0:
+      enclosure(-1,0);
+      break;
+    case 2: //This is intentional, I want the bomb to be drawn on the screen for 2 frames
       Paint_DrawString_EN(75, 83, "3", &Font20, GREEN, BLACK);
       break;
-    case 1:
+    case 3:
       Paint_DrawString_EN(75, 83, "2", &Font20, GREEN, BLACK);
       break;
-    case 2:
+    case 4:
       Paint_DrawString_EN(75, 83, "1", &Font20, GREEN, BLACK);
       break;
-    case 3:
-      Paint_DrawString_EN(12, 83, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
+    case 5:
+      Paint_DrawString_EN(12, 83, "DEFUSE IT!", &Font20, RED, BLACK);
       break;
-    case 4:
-      // call bomb function
-      enclosure();
-      // call turn function
-      turn_draw(0);
-      // call yank function
-      yank_draw(0);
-      // call wire function
-      wire_draw(0);
-      index = 9;
-      break;
+    case 6:
+      index = 10;
     default:
       break;
   }
@@ -318,7 +361,7 @@ inline static void loading_bar(){
           x2 = 220 + 10 * (i + 1) - 5;
           Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
     }
-    //LCD_2IN_Display((uint8_t *)s_buffer);
+
     LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
   }
   else {
@@ -365,43 +408,27 @@ inline static void populate_UI_elements(){
 
 inline static void write_prompt(){     //BEING CHANGED
   const char *prompt_str[3] = {"TURN IT", "YANK IT", "WIRE IT"};
-
+  const uint16_t colors[3] = {RED, BLUE, GREEN};
   Paint_SelectImage((UBYTE *)s_buffer);
   Paint_ClearWindows(6, 59, 145, 111, BLACK); // rough prompt window
 
   //draw the bomb graphic on screen
-  enclosure();
+  enclosure(action, 0);
 
-  //ensure correct portion of graphic is highlighted red
-  switch(action) {
-    case 0:
-      turn_draw(1);
-      yank_draw(0);
-      wire_draw(0);
-    break;
-    case 1:
-      turn_draw(0);
-      yank_draw(1);
-      wire_draw(0);
-    break;
-    case 2:
-      turn_draw(0);
-      yank_draw(0);
-      wire_draw(1);
-    break;
-    default:
-    break;
-  }
+  //trying out packing all of the graphics into one function
+
+
 
   //writes in the action to be done and the rectangle encompassing the string
-  Paint_DrawString_EN(20, 76, prompt_str[action], &Font20, GRED, BLACK);
-  Paint_DrawRectangle(17, 73, 140, 101, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
-
+  
   //dotted lines from corners of graphic display to corners of prompt window
-  Paint_DrawLine(160, 62, 17, 73, GRED, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
-  Paint_DrawLine(266, 62, 140, 73, GRED, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
-  Paint_DrawLine(160, 108, 17, 101, GRED, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
-  Paint_DrawLine(266, 108, 140, 101, GRED, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(160, 62, 7, 42, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(266, 62, 111, 42, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(160, 108, 7, 68, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(266, 108, 111, 68, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+
+  Paint_DrawString_EN(10, 45, prompt_str[action], &Font20, colors[action], BLACK);
+  Paint_DrawRectangle(7, 42, 111, 68, colors[action], DOT_FILL_AROUND, DRAW_FILL_EMPTY);
 
   //partial update which updates the prompt specifically
   //need to move this and the prompt itself off to the side
@@ -439,30 +466,10 @@ inline static void correct_disp(){
   Paint_SelectImage((UBYTE *)s_buffer);
   Paint_Clear(BLACK);
   //need to add in the bomb graphic
-  enclosure();
+  enclosure(action, 1);
+  
+  //TODO: I moved both switch statements into enclosure, and the boolean determines whether it should call the green or red setting
 
-  //switch case dependent on action
-  //determines which part of the graphic to highlight in green
-  //0=turn it, 1=yank it, 2=wire it
-  switch(action) {
-    case 0:
-      turn_draw(2);
-      yank_draw(0);
-      wire_draw(0);
-    break;
-    case 1:
-      turn_draw(0);
-      yank_draw(2);
-      wire_draw(0);
-    break;
-    case 2:
-      turn_draw(0);
-      yank_draw(0);
-      wire_draw(2);
-    break;
-    default:
-    break;
-  }
 
 
   //need to shift this string to the left side
@@ -471,12 +478,8 @@ inline static void correct_disp(){
 }
 
  inline static void incorrect_disp(){  //BEING CHANGED
- if(!fired){
-  Paint_SelectImage ((UBYTE *)s_buffer);
-  Paint_ClearWindows(110, 100, 197, 120, BLACK);
-  Paint_DrawString_EN (110, 100, "BOOM", &Font24, RED, BLACK);
-  LCD_2IN_Display ((UBYTE *)s_buffer);
- }
+ 
+ 
   //add multiple explosion graphics in the form of concentric circles
   //use a switch case depending on index
   //start at case index=9, work down to 0
@@ -514,6 +517,10 @@ inline static void correct_disp(){
     case 1:
       explosion_draw(77, 174, 1);
     case 0:
+      Paint_SelectImage ((UBYTE *)s_buffer);
+      Paint_ClearWindows(90, 80, 217, 140, BLACK);
+      Paint_DrawString_EN (110, 100, "BOOM", &Font24, RED, BLACK);
+      LCD_2IN_Display((UBYTE *)s_buffer);
       explosion_draw(268, 108, 1);
     default:
     break;
@@ -528,7 +535,7 @@ inline static void play_again(){
     clearflags();
     restart_state = true;
     Paint_SelectImage((UBYTE *)s_buffer);
-    Paint_DrawString_EN(100, 100, "AGAIN?", &Font20, GREEN, BLACK);
+    Paint_DrawString_EN(110, 100, "AGAIN?", &Font20, GREEN, BLACK);
     LCD_2IN_Display((UBYTE *)s_buffer);
     fired = true;
   }
