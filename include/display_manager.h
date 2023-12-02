@@ -469,28 +469,40 @@ inline static void correct_disp(){
   //use a switch case depending on index
   //start at case index=9, work down to 0
   //no break statements
+
+  //ZONE OF EXCLUSION FOR EXPLOSIONS
+  //X COORDS: 110 TO 197
+  //Y COORDS: 100 TO 120
+  //Assuming the radfactor is no greater than 1:
+  //x_cen can not be between 62 and 245
+  //x_cen can not be less than 49 or greater than 272
+  //y_cen can not be between 52 and 168
+  //y_cen can not be less than 48 or greater than 192
+  //center coordinates in that range will draw over the text
   switch(index){
     case 9:
       //in each case, add an explosion_draw
       //need to figure out coordinates for each explosion, as well as radius factor
+      //gonna just guess the coords and not change radius factor for now
+      explosion_draw(262, 57, 1);
     case 8:
-
+      explosion_draw(134, 40, 1);
     case 7:
-
+      explosion_draw(132, 186, 1);
     case 6:
-
+      explosion_draw(265, 183, 1);
     case 5:
-
+      explosion_draw(56, 113, 1);
     case 4:
-
+      explosion_draw(68, 51, 1);
     case 3:
-
+      explosion_draw(218, 169, 1);
     case 2:
-
+      explosion_draw(205, 49, 1);
     case 1:
-
+      explosion_draw(77, 174, 1);
     case 0:
-
+      explosion_draw(268, 108, 1);
     default:
     break;
   }
