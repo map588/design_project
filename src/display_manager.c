@@ -1,6 +1,6 @@
 
 //#include "display_functions.h"
-#include "display_manager.h"
+#include "display_functions.h"
 #include "hardware/pwm.h"
 
 static alarm_pool_t *core1_pool;
