@@ -130,7 +130,7 @@ inline static void wire_draw(uint8_t base_color){
   if(base_color == 1) //action is prompted
   {
   //draw a circle for the wire protruding from the top of the enclosure
-  Paint_DrawCircle(168, 38, 8, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(168, 38, 8, RED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   //draw a rectangle to cover the bottom half of the circle
   Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw 2 circles for the terminals
@@ -141,7 +141,7 @@ inline static void wire_draw(uint8_t base_color){
   }
   else if(base_color == 2) //action input successfully by player
   {
-  Paint_DrawCircle(168, 38, 8, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(168, 38, 8, GREEN, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
@@ -149,7 +149,7 @@ inline static void wire_draw(uint8_t base_color){
   }
   else //default colors
   {
-  Paint_DrawCircle(168, 38, 8, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(168, 38, 8, WHITE, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, BLUE, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
@@ -176,6 +176,8 @@ inline static void enclosure(int8_t prompt, bool correct){
   Paint_DrawRectangle(177, 117, 248, 187, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw the rectangle for the hex display
   Paint_DrawRectangle(151, 176, 163, 193, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the number 8 in red on the hex display
+  Paint_DrawString_EN(151, 176, "8", &Font16, RED, BLACK);
 
   //partially update the display for the enclosure
   //TODO: partial update
@@ -275,7 +277,7 @@ inline static void selction (){
         Paint_DrawString_EN(224, 55, "(hard)", &Font12, WHITE, BLACK);
 
         Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-        Paint_DrawLine(158, 80, 158, 200, BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+        Paint_DrawLine(158, 80, 158, 200, YELLOW, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
         Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
         LCD_2IN_Display((UBYTE *)s_buffer);
     }
