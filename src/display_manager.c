@@ -21,7 +21,7 @@ function_holder display_functions[9] = {
     {game_UI, 1},
     {display_key, 0},
     {correct_disp, 0},
-    {incorrect_disp, 0},
+    {incorrect_disp, 1},
     {play_again, 1}
     //{random_key, false},unimplemented
 };

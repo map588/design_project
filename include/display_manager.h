@@ -14,8 +14,8 @@
 #include "hardware/irq.h"
 #include "pico/multicore.h"
 #include "text_properties.h"
-#include "pwm-tone.h"
 #include "melodies.h"
+#include "pwm-tone.h"
 #include <ctype.h>
 
 
@@ -182,25 +182,15 @@ inline static void wire_draw(uint8_t base_color){
 }
 
 
-// inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
-//   Paint_SelectImage((UBYTE *)s_buffer); //select image
+inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
+  Paint_SelectImage((UBYTE *)s_buffer); //select image
 
-<<<<<<< HEAD
   //create layered circles
   //order: red->orange->yellow->white
   Paint_DrawCircle(x_cen, y_cen, 48*radfactor, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(x_cen, y_cen, 32*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(x_cen, y_cen, 16*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
-=======
-//   //create layered circles
-//   //order: red->orange->yellow->white
-//   Paint_DrawCircle(x_cen, y_cen, 48*radfactor, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
-//   Paint_DrawCircle(x_cen, y_cen, 36*radfactor, ORANGE, DOT_FILL_AROUND, DRAW_FILL_FULL);
-//   Paint_DrawCircle(x_cen, y_cen, 24*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
-//   Paint_DrawCircle(x_cen, y_cen, 12*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
->>>>>>> 40a70fb0609300b565a95b464d9b779b9d759e3e
 
-<<<<<<< HEAD
   //need to partially update ONLY the area around the circle
   //take x_cen and y_cen, subtract both by 48*radfactor to get starting coords
   //add both by 48*radfactor to get end coords
@@ -208,9 +198,6 @@ inline static void wire_draw(uint8_t base_color){
   LCD_2IN_DisplayWindows(y_cen-adjustedrad, x_cen-adjustedrad, y_cen+adjustedrad, x_cen+adjustedrad, s_buffer);
 
 }
-=======
-// }
->>>>>>> 40a70fb0609300b565a95b464d9b779b9d759e3e
 
 inline static void selction (){
 
@@ -480,7 +467,35 @@ inline static void correct_disp(){
   Paint_Clear(BLACK);
   Paint_DrawString_EN (110, 100, "BOOM", &Font20, RED, BLACK);
   //add multiple explosion graphics in the form of concentric circles
-  explosion_draw()
+  //use a switch case depending on index
+  //start at case index=9, work down to 0
+  //no break statements
+  switch(index){
+    case 9:
+      //in each case, add an explosion_draw
+      //need to figure out coordinates for each explosion, as well as radius factor
+    case 8:
+
+    case 7:
+
+    case 6:
+
+    case 5:
+
+    case 4:
+
+    case 3:
+
+    case 2:
+
+    case 1:
+
+    case 0:
+
+    default:
+    break;
+  }
+
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
@@ -501,9 +516,9 @@ inline static void play_again(){
 
 inline static void display_key(){
   static bool calculator_mode = false;
-  static bool enabled = false;
+static bool enabled = false;
   static int  str_idx = 0;
-  static char str_buffer [512];
+   static char str_buffer [512];
   static int calc_idx = 0;
   static int base = 10;
 
@@ -520,16 +535,16 @@ inline static void display_key(){
 
 
   long long op1;
-  char calc_buffer[256];
+char calc_buffer[256];
   char *endptr = str_buffer;
   char operand;
   long long op2;
   long long result;
-
-   //Paint_SelectImage((uint8_t *) s_buffer);
+  
+//Paint_SelectImage((uint8_t *) s_buffer);
 
   if (!fired && !key_state){
-    // Paint_Clear(BLACK);
+   // Paint_Clear(BLACK);
     key_state = true;
   }
 
