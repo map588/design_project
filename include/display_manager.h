@@ -171,8 +171,8 @@ inline static void wire_draw(uint8_t base_color){
   {
   Paint_DrawCircle(168, 38, 8, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawCircle(160, 47, 6, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawCircle(160, 47, 6, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(160, 47, 6, BLUE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawLine(160, 38, 160, 47, WHITE, DOT_FILL_AROUND, LINE_STYLE_SOLID);
   }
 
@@ -185,14 +185,32 @@ inline static void wire_draw(uint8_t base_color){
 // inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
 //   Paint_SelectImage((UBYTE *)s_buffer); //select image
 
+<<<<<<< HEAD
+  //create layered circles
+  //order: red->orange->yellow->white
+  Paint_DrawCircle(x_cen, y_cen, 48*radfactor, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(x_cen, y_cen, 32*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(x_cen, y_cen, 16*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+=======
 //   //create layered circles
 //   //order: red->orange->yellow->white
 //   Paint_DrawCircle(x_cen, y_cen, 48*radfactor, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
 //   Paint_DrawCircle(x_cen, y_cen, 36*radfactor, ORANGE, DOT_FILL_AROUND, DRAW_FILL_FULL);
 //   Paint_DrawCircle(x_cen, y_cen, 24*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
 //   Paint_DrawCircle(x_cen, y_cen, 12*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+>>>>>>> 40a70fb0609300b565a95b464d9b779b9d759e3e
 
+<<<<<<< HEAD
+  //need to partially update ONLY the area around the circle
+  //take x_cen and y_cen, subtract both by 48*radfactor to get starting coords
+  //add both by 48*radfactor to get end coords
+  int adjustedrad = 48*radfactor;
+  LCD_2IN_DisplayWindows(y_cen-adjustedrad, x_cen-adjustedrad, y_cen+adjustedrad, x_cen+adjustedrad, s_buffer);
+
+}
+=======
 // }
+>>>>>>> 40a70fb0609300b565a95b464d9b779b9d759e3e
 
 inline static void selction (){
 
@@ -351,7 +369,7 @@ inline static void populate_UI_elements(){
 
 
 inline static void write_prompt(){     //BEING CHANGED
-  const char *prompt_str[3] = {"   TURN IT   ", "   YANK IT   ", "   WIRE IT   "};
+  const char *prompt_str[3] = {"TURN IT", "YANK IT", "WIRE IT"};
 
   Paint_SelectImage((UBYTE *)s_buffer);
   Paint_ClearWindows(6, 59, 145, 111, BLACK); // rough prompt window
@@ -462,7 +480,7 @@ inline static void correct_disp(){
   Paint_Clear(BLACK);
   Paint_DrawString_EN (110, 100, "BOOM", &Font20, RED, BLACK);
   //add multiple explosion graphics in the form of concentric circles
-  //randomly place them around the screen
+  explosion_draw()
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
