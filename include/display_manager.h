@@ -14,8 +14,8 @@
 #include "hardware/irq.h"
 #include "pico/multicore.h"
 #include "text_properties.h"
-#include "melodies.h"
 #include "pwm-tone.h"
+#include "melodies.h"
 #include <ctype.h>
 
 
@@ -182,17 +182,17 @@ inline static void wire_draw(uint8_t base_color){
 }
 
 
-inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
-  Paint_SelectImage((UBYTE *)s_buffer); //select image
+// inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
+//   Paint_SelectImage((UBYTE *)s_buffer); //select image
 
-  //create layered circles
-  //order: red->orange->yellow->white
-  Paint_DrawCircle(x_cen, y_cen, 48*radfactor, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawCircle(x_cen, y_cen, 36*radfactor, ORANGE, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawCircle(x_cen, y_cen, 24*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawCircle(x_cen, y_cen, 12*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+//   //create layered circles
+//   //order: red->orange->yellow->white
+//   Paint_DrawCircle(x_cen, y_cen, 48*radfactor, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+//   Paint_DrawCircle(x_cen, y_cen, 36*radfactor, ORANGE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+//   Paint_DrawCircle(x_cen, y_cen, 24*radfactor, YELLOW, DOT_FILL_AROUND, DRAW_FILL_FULL);
+//   Paint_DrawCircle(x_cen, y_cen, 12*radfactor, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
 
-}
+// }
 
 inline static void selction (){
 
@@ -483,29 +483,37 @@ inline static void play_again(){
 
 inline static void display_key(){
   static bool calculator_mode = false;
+  static bool enabled = false;
   static int  str_idx = 0;
- 
   static char str_buffer [512];
-
-  char calc_buffer[256];
   static int calc_idx = 0;
   static int base = 10;
 
+ 
+  char character = (char)score_d;
+
+
+  if(!enabled && character != 'c')
+    return;
+  else if(character != 'c')
+    enabled = !enabled;
+  
+  
+
+
   long long op1;
+  char calc_buffer[256];
   char *endptr = str_buffer;
   char operand;
   long long op2;
   long long result;
-  
 
-  if(!fired && !key_state){
-   // Paint_Clear(BLACK);
+   //Paint_SelectImage((uint8_t *) s_buffer);
+
+  if (!fired && !key_state){
+    // Paint_Clear(BLACK);
     key_state = true;
   }
-
-  //Paint_SelectImage((uint8_t *) s_buffer);
-
-  char character = (char)score_d;
 
   if(!calculator_mode){
     if(character == '\b'){

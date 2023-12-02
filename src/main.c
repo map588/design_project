@@ -62,11 +62,7 @@ void action_isr(void){
 
   switch(irq_action){
     case turn_pin:
-      if(state = CONTINUE || game_over == 1){
-        temp = true;
-        cancel_alarm(restart_timer);
-      }
-      else if (action == TURN_IT)
+      if (action == TURN_IT)
            change_state(CORRECT);
       else change_state(INCORRECT);
       break;
@@ -221,7 +217,7 @@ start:
  
   state = CONTINUE;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-  // while (*g_key != '\n'){tight_loop_contents();}
+   while (*g_key != '\n'){tight_loop_contents();}
    while (!temp){tight_loop_contents();}
 
 
