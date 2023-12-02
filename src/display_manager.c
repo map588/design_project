@@ -21,7 +21,7 @@ function_holder display_functions[9] = {
     {game_UI, 1},
     {display_key, 0},
     {correct_disp, 0},
-    {incorrect_disp, 0},
+    {incorrect_disp, 1},
     {play_again, 1}
     //{random_key, false},unimplemented
 };
@@ -40,7 +40,6 @@ function_holder display_functions[9] = {
 
 
 static bool interrupt;
-static char *g_key;
 
 bool null_callback(repeating_timer_t *rt){return false;}
 
@@ -123,8 +122,8 @@ bool idx_timer_callback(repeating_timer_t *rt){
   else 
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
  
-
-
+  
+  
   display_functions[state].func();
   
 
@@ -156,9 +155,15 @@ void core_one_interrupt_handler (void){
   else
       action--;
 
+  if (KEYPRESS == state && !enabled)
+  {
+    return;
+  }
+
   index = 0;
   fired = false;
-  
+
+
   int32_t interval = ((int32_t) value) / -10;
 
   cancel_repeating_timer(&idx_timer);

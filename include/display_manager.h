@@ -18,8 +18,8 @@
 #include "pwm-tone.h"
 #include <ctype.h>
 
-
 static bool fired;
+static bool enabled;
 static uint16_t value;
 static uint8_t action;
 static uint8_t score_d;
@@ -526,157 +526,199 @@ inline static void play_again(){
 
 inline static void display_key(){
   static bool calculator_mode = false;
-  static bool enabled = false;
+  static bool insert = false;
   static int  str_idx = 0;
-  static char str_buffer [512];
+
+  static char str_buffer [1024];
+
+
   static int calc_idx = 0;
   static int base = 10;
 
- 
-  char character = (char)score_d;
-
-
-  if(!enabled && character != 'c')
-    return;
-  else if(character == 'c'){
-    enabled = !enabled;
-    return;
-  }
-  
-
   long long op1;
-  char calc_buffer[256];
   char *endptr = str_buffer;
   char operand;
   long long op2;
   long long result;
   
-//Paint_SelectImage((uint8_t *) s_buffer);
 
-  // if (!fired && !key_state){
-  //  // Paint_Clear(BLACK);
-  //   key_state = true;
+  if(!fired && !key_state){
+    // Paint_Clear(BLACK);
+    key_state = true;
+  }
+
+  // if(str_idx >= 1024){
+  //   printf("Buffer full, hit delete or numlock->insert to clear\n");
+  //   return;
   // }
 
-  if(!calculator_mode){
-    if(character == '\b'){
-        str_buffer[str_idx] = '\0';
-        if(str_idx > 0)
-            str_idx--;
-    }
-    else{
-      str_buffer[str_idx] = (char)character;
-      str_buffer[str_idx + 1] = '\0';
-      str_idx++;
-    }
 
-    printf("%s", str_buffer);
+  // Paint_SelectImage((uint8_t *) s_buffer);
 
-    //80085
-    if(str_idx >= 4){
-      if(str_buffer[str_idx - 4] == '.' && str_buffer[str_idx - 3] == '.' && 
-         str_buffer[str_idx - 2] == '.' && str_buffer[str_idx - 1] == '.' && str_buffer[str_idx] == '.'){
-        calculator_mode = true;
+  char character = (char)score_d;
+
+    switch(character){
+      case '\b':
+        if ( str_idx > 0){
+          str_buffer[str_idx - 1] = '\0';
+          str_idx--;
+        }
+        break;
+      case 0xAB:
+        character = '<';
+        goto put_char;
+      case 0xBB:
+        character = '>';
+        goto put_char;
+      case 'i':
+        insert = !insert;
+        break;
+      case 'c':
+        str_buffer[0] = '\0';
         str_idx = 0;
-        str_buffer[str_idx] = '\0';
-        printf("Calculator mode engaged.\n");
+        break;
+      case '<':
+      case '>':
+        break;
+      case '\n':
+      if(!calculator_mode){
+        character = '\n';
+        goto put_char;
       }
-    }
-  }
-  else{
-    
-    if(character == '\b'){
-        str_buffer[str_idx] = '\0';
-        if(str_idx > 0)
-            str_idx--;
-    }
-    else if(character == '\n'){
-      for(int i = 1; i < str_idx; i++){
-        if(str_buffer[str_idx - i] == '\n' || i == str_idx - 1){
-            calc_idx = str_idx - i;
-            break;
+      else{
+        for(int i = 1; i < str_idx; i++){
+          if(str_buffer[str_idx - i] == '\n' || i == str_idx - 1){
+              calc_idx = str_idx - i;
+              break;
+          }
         }
-      }
-      for(int i = 0; i < str_idx; i++){
-        calc_buffer[i] = str_buffer[calc_idx + i];
-      }
-      op1 = strtoll(calc_buffer, &endptr, base);
-      
-      //Change of base
-      if(*endptr == '\0' && calc_buffer[0] != '\0' && op1 > 0 && op1 <= 16){
-        base = op1;
-        printf("Base changed to %d\n", base);
-      }
-      else if(*endptr == '\0'){
-        printf("Invalid base\n");
-      }
-
-      operand = *endptr;
-      while(operand != '\0'){
-        op2 = strtoll(endptr + 1 , &endptr, base);
-        switch (operand){
-          case '+':
-            op1 = op1 + op2;
-            break;
-          case '-':
-            op1 = op1 - op2;
-            break;
-          case '*':
-            op1 = op1 * op2;
-            break;
-          case '/':
-            op1 = (op2 == 0) ? 0 : op1 / op2;
-            break;
-          case '%':
-            op1 = (op2 == 0) ? 0 : op1 % op2;
-            break;
-          case '!':
-            op1 = !op2;
-            break;
-          case '&':
-            op1 = op1 & op2;
-            break;
-          case '|':
-            op1 = op1 | op2;
-            break;
-          default:
-            break;
+        char calc_buffer[512];
+        for(int i = 0; i < (str_idx - calc_idx); i++){
+          calc_buffer[i] = str_buffer[calc_idx + i];
         }
-      operand = *endptr;
-      }
-      result = op1;
-      str_buffer[str_idx] = ' ';
-      str_buffer[str_idx + 1] = '=';
-      str_buffer[str_idx + 2] = ' ';
+        op1 = strtoll(calc_buffer, &endptr, base);
+        
+        //Change of base
+        if(*endptr == '\0' && calc_buffer[0] != '\0' && op1 > 0 && op1 <= 16){
+          base = op1;
+          char base_str[32];
+          sprintf(base_str,"Base changed to %d\n", base);
+          Paint_DrawString_EN(5, 5, base_str, key_text.font_size, key_text.color, key_text.background);
+        }
+        else if(*endptr == '\0'){
+          Paint_DrawString_EN(5, 5, "Invalid base.", key_text.font_size, key_text.color, key_text.background);
+          //printf("Invalid base\n");
+        }
+        else{
+        operand = *endptr;
 
-      sprintf(str_buffer + str_idx + 3, "%lld\n", result);
-      while(str_buffer[str_idx] != '\0')
+        //accumulate partial results
+        while(operand != '\0'){
+          op2 = strtoll(endptr + 1 , &endptr, base);
+          switch (operand){
+            case '+':
+              op1 = op1 + op2;
+              break;
+            case '-':
+              op1 = op1 - op2;
+              break;
+            case '*':
+              op1 = op1 * op2;
+              break;
+            case '/':
+              op1 = (op2 == 0) ? 0 : op1 / op2;
+              break;
+            case '%':
+              op1 = (op2 == 0) ? 0 : op1 % op2;
+              break;
+            case '!':
+              op1 = !op2;
+              break;
+            case '&':
+              op1 = op1 & op2;
+              break;
+            case '|':
+              op1 = op1 | op2;
+              break;
+            case '^':
+              //op1 = pow(op1, op2);
+              break;
+            case '#':
+              op1 = op1 ^ op2;
+              break;
+            case '<':
+              op1 = op1 << op2;
+              break;
+            case '>':
+              op1 = op1 >> op2;
+              break;
+            default:
+              break;
+          }
+        operand = *endptr;
+        }
+
+        result = op1;
+        str_buffer[str_idx] = ' ';
+        str_buffer[str_idx + 1] = '=';
+        str_buffer[str_idx + 2] = ' ';
+        str_buffer[str_idx + 3] = '\0';
+        str_idx += 3;
+        char result_str[256];
+        int result_idx = 0;
+
+        sprintf(result_str, "%lld", result);
+       
+        while(result_str[result_idx] != '\0'){
+          str_buffer[str_idx] = result_str[result_idx];
+          str_idx++;
+          result_idx++;
+        }
+        str_buffer[str_idx] = '\n';
+        str_buffer[str_idx + 1] = '\0';
         str_idx++;
-      endptr = str_buffer + str_idx;
-      calc_buffer[0] = '\0';
-    }
-    else{
-      str_buffer[str_idx] = (char)character;
-      str_buffer[str_idx + 1] = '\0';
-      str_idx++;
+        
+        endptr = str_buffer + str_idx;
+        calc_buffer[0] = '\0';
+        break;
+      }
+      }
+      default:
+  put_char:
+        str_buffer[str_idx] = (char)character;
+        str_buffer[str_idx + 1] = '\0';
+        str_idx++;
+        break;
     }
 
-    printf("%s", str_buffer);
+    // printf("%c%c%c%c", 0x1B, 0x5B, 0x32, 0x4A); //This clears the serial terminal
+    // printf("%s    %u %u", str_buffer, str_idx,calc_idx);
+    tone(&tone_gen, NOTE_A3, 100);
 
-    if(str_idx >= 4){
-      if(str_buffer[str_idx - 4] = '.' && str_buffer[str_idx - 3] == '.' && str_buffer[str_idx - 2] == '.' &&
-         str_buffer[str_idx - 1] == '.' && str_buffer[str_idx] == '.'){
-        calculator_mode = false;
+    if(str_idx >= 5){
+      if(str_buffer[str_idx - 5] == '.' && str_buffer[str_idx - 4] == '.' && 
+         str_buffer[str_idx - 3] == '.' && str_buffer[str_idx - 2] == '.' && 
+         str_buffer[str_idx - 1] == '.'){
+        calculator_mode = !calculator_mode;
         str_idx = 0;
         str_buffer[str_idx] = '\0';
-        printf("Calculator mode disengaged.\n");
+        if(!calculator_mode){
+        // printf("Calculator mode disengaged.\n");
+        Paint_DrawString_EN(5, 5, "Calculator mode disengaged.", key_text.font_size, key_text.color, key_text.background);
+
+        melody(&tone_gen, CONFIRM, 1);
+        }
+        else{
+        // printf("Calculator mode engaged.\n");
+        Paint_DrawString_EN(5, 5, "Calculator mode engaged.", key_text.font_size, key_text.color, key_text.background);
+        melody(&tone_gen, REJECT, 1);
+        }
       }
     }
-  }
-  tone(&tone_gen, NOTE_A3, 100);
-  // Paint_ClearWindows(0, 0, 320, 18, BLACK);
-  // Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
-  // LCD_2IN_Display((uint8_t *)s_buffer);
+  
+   Paint_ClearWindows(0, 0, 320, 18, BLACK);
+   Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
+   LCD_2IN_Display((uint8_t *)s_buffer);
 }
 
 
