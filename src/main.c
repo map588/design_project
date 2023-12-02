@@ -34,7 +34,7 @@ static bool wire_pulled;
 static bool wire_position;
 static bool game_over;
 static bool temp;
-bool *const key_press;
+static bool key_press;
 
 static alarm_id_t timer;
 //All of these enums are defined in enum.h, in the include folder
@@ -135,7 +135,7 @@ int init(void)
     //This currently goes to call a function in keyboard.c that sets up the PIO and the interrupt, but we will
     //change this depending on how we decode the keypad
   g_key = (char *)malloc(sizeof(char));
-  keyboard_init(g_key, key_press);
+  keyboard_init(g_key, &key_press);
 
 
     //TODO: set up the timer interrupt
@@ -184,7 +184,7 @@ start:
 
   callback = false;
   game_over = false;
-  *key_press = false;
+  key_press = false;
 
 
   state = LOADING;
@@ -197,8 +197,8 @@ start:
   char select_key = ' ';
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
   do{
-    if(*key_press){
-      *key_press = false;
+    if(key_press){
+      key_press = false;
       select_key = *g_key;
       if(select_key == '<' || select_key == '>'){
         switch(select_key){
@@ -223,8 +223,8 @@ start:
   state = CONTINUE;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
    while (select_key != '\n'){
-    if(*key_press){
-      *key_press = false;
+    if(key_press){
+       key_press = false;
       select_key = *g_key;
     }
    }
@@ -263,7 +263,7 @@ start:
   game_over = false;
   timer = add_alarm_in_ms(10010, restart_timer_callback, NULL, false);
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 10000));
-  while(!game_over || select_key != '\n'){if(*key_press){*key_press = false; select_key = *g_key;}}
+  while(!game_over || select_key != '\n'){if(key_press){key_press = false; select_key = *g_key;}}
 
 
   if(!game_over)

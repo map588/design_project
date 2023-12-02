@@ -132,7 +132,7 @@ bool idx_timer_callback(repeating_timer_t *rt){
 
   fired = true;
 
-  if (index > 9 || !display_functions[state].repeating) return false;
+  if (index > 9 || !display_functions[state].repeating) {index = 0; return false;}
 
   return true;
 }
@@ -155,8 +155,9 @@ void core_one_interrupt_handler (void){
   else
       action--;
 
-  if (KEYPRESS == state && !enabled)
+  if (KEYPRESS == state)
   {
+    display_functions[state].func();
     return;
   }
 

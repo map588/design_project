@@ -14,8 +14,8 @@
 #include "hardware/irq.h"
 #include "pico/multicore.h"
 #include "text_properties.h"
-#include "melodies.h"
 #include "pwm-tone.h"
+#include "melodies.h"
 #include <ctype.h>
 
 static bool fired;
@@ -34,11 +34,7 @@ bool key_state = 0;
 bool restart_state = 0;
 
 
-
-
 static uint16_t *s_buffer;
-
-
 
 inline static void clearflags(){
       select_state = false;
@@ -194,8 +190,14 @@ inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
   //need to partially update ONLY the area around the circle
   //take x_cen and y_cen, subtract both by 48*radfactor to get starting coords
   //add both by 48*radfactor to get end coords
-  int adjustedrad = 48*radfactor;
-  LCD_2IN_DisplayWindows(y_cen-adjustedrad, x_cen-adjustedrad, y_cen+adjustedrad, x_cen+adjustedrad, s_buffer);
+  int adjustedrad = 48*radfactor + 2;
+
+  int x1 = (x_cen - adjustedrad > 0)? x_cen - adjustedrad : 0;
+  int x2 = (x_cen + adjustedrad < 319)? x_cen + adjustedrad : 319;
+  int y1 = (y_cen - adjustedrad > 0)? y_cen - adjustedrad : 0;
+  int y2 = (y_cen + adjustedrad < 239)? y_cen + adjustedrad : 239;
+
+  LCD_2IN_DisplayWindows(y1, x1, y2, x2, s_buffer);
 
 }
 
@@ -272,6 +274,16 @@ inline static void countdown_to_start(){
       break;
     case 3:
       Paint_DrawString_EN(12, 83, "DEFUSE THE BOMB!", &Font20, RED, BLACK);
+      break;
+    case 4:
+      // call bomb function
+      enclosure();
+      // call turn function
+      turn_draw(0);
+      // call yank function
+      yank_draw(0);
+      // call wire function
+      wire_draw(0);
       index = 9;
       break;
     default:
@@ -507,7 +519,7 @@ inline static void correct_disp(){
     break;
   }
 
-  LCD_2IN_Display((UBYTE *)s_buffer);
+  //LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
 inline static void play_again(){
@@ -516,7 +528,6 @@ inline static void play_again(){
     clearflags();
     restart_state = true;
     Paint_SelectImage((UBYTE *)s_buffer);
-    Paint_Clear(BLACK);
     Paint_DrawString_EN(110, 100, "PLAY AGAIN?", &Font20, GREEN, BLACK);
     LCD_2IN_Display((UBYTE *)s_buffer);
   }
@@ -526,7 +537,6 @@ inline static void play_again(){
 
 inline static void display_key(){
   static bool calculator_mode = false;
-  static bool insert = false;
   static int  str_idx = 0;
 
   static char str_buffer [1024];
@@ -543,7 +553,7 @@ inline static void display_key(){
   
 
   if(!fired && !key_state){
-    // Paint_Clear(BLACK);
+    Paint_Clear(BLACK);
     key_state = true;
   }
 
@@ -553,9 +563,16 @@ inline static void display_key(){
   // }
 
 
-  // Paint_SelectImage((uint8_t *) s_buffer);
+  Paint_SelectImage((uint8_t *) s_buffer);
 
   char character = (char)score_d;
+
+    if(!enabled){
+      if(character == 'e')
+        enabled = !enabled;
+
+      return;
+    }
 
     switch(character){
       case '\b':
@@ -570,9 +587,6 @@ inline static void display_key(){
       case 0xBB:
         character = '>';
         goto put_char;
-      case 'i':
-        insert = !insert;
-        break;
       case 'c':
         str_buffer[0] = '\0';
         str_idx = 0;

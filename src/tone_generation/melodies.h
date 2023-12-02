@@ -32,13 +32,13 @@ struct note_t ERROR[] = {
 };
 
 struct note_t CONFIRM[] = {
-    {NOTE_C7, 128},
+    {NOTE_C6, 128},
     {REST, 128},
-    {NOTE_C7, 128},
+    {NOTE_C6, 128},
     {REST, 128},
-    {NOTE_C7, 128},
+    {NOTE_C6, 128},
     {REST, 128},
-    {NOTE_C7, 128},
+    {NOTE_C6, 128},
     {REST, 128},
     {REST, 8},
     {MELODY_END, 0},
