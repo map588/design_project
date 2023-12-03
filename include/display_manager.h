@@ -339,8 +339,8 @@ inline static void selction (){
 
     Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
     //likely gonna convert this into a full update unless it slows it down a lot
-    LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
-    //LCD_2IN_Display((UBYTE *)s_buffer);
+    //LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+    LCD_2IN_Display((UBYTE *)s_buffer);
 
 }
 
