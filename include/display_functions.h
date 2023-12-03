@@ -25,23 +25,23 @@ inline static void countdown_to_start()
     case 2: //This is intentional, I want the bomb to be drawn on the screen for 2 frames
       Paint_DrawString_EN(75, 83, "3", &Font20, GREEN, BLACK);
       drive_hex(3);
-      tone(&tone_gen, NOTE_GS2, 100);
+      tone(&tone_gen, NOTE_GS3, 100);
       break;
     case 3:
       Paint_DrawString_EN(75, 83, "2", &Font20, GREEN, BLACK);
       drive_hex(2);
-      tone(&tone_gen, NOTE_GS2, 100);
+      tone(&tone_gen, NOTE_GS3, 100);
 
       break;
     case 4:
       Paint_DrawString_EN(75, 83, "1", &Font20, GREEN, BLACK);
       drive_hex(1);
-      tone(&tone_gen, NOTE_GS2, 100);
+      tone(&tone_gen, NOTE_GS3, 100);
       break;
     case 5:
       Paint_DrawString_EN(3, 83, "DEFUSE IT!", &Font20, RED, BLACK);
       drive_hex(0);
-      tone(&tone_gen, NOTE_FS3, 200);
+      tone(&tone_gen, NOTE_FS4, 200);
       break;
     case 6:
       clear_hex();
@@ -53,7 +53,8 @@ inline static void countdown_to_start()
   return;
 }
 
-inline static void loading_bar(){
+static void __time_critical_func(loading_bar)()
+{
   uint16_t x1;
   uint16_t x2;
   uint16_t y1;

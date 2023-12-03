@@ -1,6 +1,5 @@
 
 #include "display_functions.h"
-#include "hardware/pwm.h"
 
 static alarm_pool_t *core1_pool;
 static repeating_timer_t idx_timer;
@@ -12,7 +11,7 @@ typedef struct{
   bool repeating;
 }function_holder;
 //{LOADING, SELECT, CONTINUE, COUNTDOWN, GAME, KEYPRESS, CORRECT, INCORRECT, RANDOM_KEY, RESTART} states;
-function_holder display_functions[9] = {
+function_holder display_functions[10] = {
     {loading_bar, 1},
     {selction, 0},
     {prompt_start, 0},
@@ -63,8 +62,6 @@ bool init_display(){
   tone_init(&tone_gen, buzzer);
   set_rest_duration(20);
   set_tempo(160);
-
-  irq_set_priority(TIMER_IRQ_1, 0x20);
 
 
   //This massive memory allocation needs to be on the heap, but it needs to be stored globally
@@ -133,15 +130,14 @@ bool idx_timer_callback(repeating_timer_t *rt){
     return false;
 
  
-  // if(!fired)
-  //   gpio_put(PICO_DEFAULT_LED_PIN, 1);
-  // else 
-  //   gpio_put(PICO_DEFAULT_LED_PIN, 0);
+  if (state == LOADING)
+    loading_hex();
 
-  // if (state == LOADING)
-  //   loading_hex();
 
-    display_functions[state].func();
+  
+  //calls the function pointer in the struct
+  display_functions[state].func();
+
 
   ++index;
 
@@ -210,9 +206,6 @@ void core_one_interrupt_handler (void){
   multicore_fifo_clear_irq();
   return;
 }
-
-
-
 
 
 //core 1 entry

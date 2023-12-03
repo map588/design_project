@@ -14,6 +14,7 @@
 static alarm_id_t tone_a;
 static alarm_id_t melody_a;
 static alarm_id_t rest_a;
+static bool tone_playing = false;
 
 uint32_t clock;
 uint16_t melody_repeat;
@@ -39,6 +40,7 @@ void tone_init(struct tonegenerator_t* gen, uint8_t gpio){
 }
 
 void tone(struct tonegenerator_t* gen, float freq, uint16_t duration) {
+    gpio_set_outover(gen->gpio, GPIO_OVERRIDE_NORMAL);
     if(freq != REST){
         _tone_pwm_on(gen, freq);
         if (tone_a) cancel_alarm(tone_a);
@@ -47,6 +49,7 @@ void tone(struct tonegenerator_t* gen, float freq, uint16_t duration) {
 }
 
 void melody(struct tonegenerator_t* gen, struct note_t *notes, int8_t repeat){
+    gpio_set_outover(gen->gpio, GPIO_OVERRIDE_NORMAL);
     melody_repeat = repeat;
     melody_index = 0;
     struct melody_t mel;
@@ -65,12 +68,14 @@ void set_rest_duration(uint16_t duration){
 
 void stop_tone(struct tonegenerator_t* gen){
     pwm_set_enabled(gen->slice, false);
+    gpio_set_outover(gen->gpio, GPIO_OVERRIDE_LOW);
 }
 
 void stop_melody(struct tonegenerator_t* gen){
     if (tone_a) cancel_alarm(tone_a);
     if (melody_a) cancel_alarm(melody_a);
     pwm_set_enabled(gen->slice, false);
+    gpio_set_outover(gen->gpio, GPIO_OVERRIDE_LOW);
 }
 
 void _pwm_set_freq(struct tonegenerator_t* gen, float freq) {
@@ -85,6 +90,7 @@ void _tone_pwm_on(struct tonegenerator_t* gen, float freq){
     else if(freq > NOTE_FS9) {freq = NOTE_FS9;}
     pwm_set_enabled(gen->slice, false);
     _pwm_set_freq(gen, freq);
+    gpio_set_outover(gen->gpio, GPIO_OVERRIDE_NORMAL);
     pwm_set_enabled(gen->slice, true);
 }
 
@@ -123,6 +129,7 @@ void _melody_tone(struct tonegenerator_t *gen, float freq, uint16_t duration)
 static int64_t _tone_complete(alarm_id_t id, void *user_data) {
     struct tonegenerator_t* gen = (struct tonegenerator_t*) user_data;
     pwm_set_enabled(gen->slice, false);
+    gpio_set_outover(gen->gpio, GPIO_OVERRIDE_LOW);
     return 0;
 }
 
@@ -130,6 +137,7 @@ static int64_t _melody_note_complete(alarm_id_t id, void *user_data)
 {
     struct tonegenerator_t* gen = (struct tonegenerator_t*) user_data;
     pwm_set_enabled(gen->slice, false);
+    gpio_set_outover(gen->gpio, GPIO_OVERRIDE_LOW);
 
     if(rest_duration > 0){
         if (rest_a) cancel_alarm(rest_a);

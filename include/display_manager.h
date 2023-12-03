@@ -12,10 +12,11 @@
 
 #define LED_a 28
 
-#define buzzer 17
+#define buzzer 9
 
-#include "definitions.h"
+
 #include "pico/stdlib.h"
+#include "pico/platform.h"
 #include "pico/time.h"
 #include "hardware/irq.h"
 #include "pico/multicore.h"
@@ -23,6 +24,7 @@
 #include "pwm-tone.h"
 #include "melodies.h"
 #include <ctype.h>
+#include "definitions.h"
 
 static bool fired;
 static bool enabled;
@@ -138,7 +140,7 @@ inline static void wire_draw(uint8_t base_color){
   //draw a circle for the wire protruding from the top of the enclosure
   Paint_DrawCircle(168, 38, 8, RED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   //draw a rectangle to cover the bottom half of the circle
-  Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(151, 38, 187, 57, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw 2 circles for the terminals
   Paint_DrawCircle(160, 47, 6, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
@@ -148,7 +150,7 @@ inline static void wire_draw(uint8_t base_color){
   else if(base_color == 2) //action input successfully by player
   {
   Paint_DrawCircle(168, 38, 8, GREEN, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
-  Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(151, 38, 187, 57, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawLine(160, 38, 160, 47, GREEN, DOT_FILL_AROUND, LINE_STYLE_SOLID);
@@ -156,14 +158,14 @@ inline static void wire_draw(uint8_t base_color){
   else //default colors
   {
   Paint_DrawCircle(168, 38, 8, WHITE, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
-  Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(151, 38, 187, 57, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, BLUE, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawLine(160, 38, 160, 47, WHITE, DOT_FILL_AROUND, LINE_STYLE_SOLID);
   }
 
   //TODO: partial update for wire
-  LCD_2IN_DisplayWindows(24, 151, 56, 187, s_buffer);
+  LCD_2IN_DisplayWindows(24, 151, 57, 187, s_buffer);
 }
 
 inline static void draw_mini_hex(){
@@ -189,20 +191,20 @@ inline static void enclosure(int8_t prompt, bool correct){
   //draw an even tinier bomb in the display with an even tinier display
   Paint_DrawRectangle(226, 70, 246, 100, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawRectangle(228, 72, 244, 86, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawPoint(236, 73, MAGENTA, DOT_PIXEL_6X6, DOT_FILL_RIGHTUP);
+  Paint_DrawRectangle(236, 76, 242, 82, MAGENTA, DOT_PIXEL_2X2, DRAW_FILL_FULL);
 
   //draw the rectangle for the keypad
   Paint_DrawRectangle(177, 117, 248, 187, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //add greater detail to keypad to reflect number of keys
   //vertical lines for keypad
-  Paint_DrawLine(191, 117, 191, 187, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
-  Paint_DrawLine(205, 117, 205, 187, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
-  Paint_DrawLine(219, 117, 219, 187, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
-  Paint_DrawLine(233, 117, 233, 187, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(191, 117, 191, 187, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
+  Paint_DrawLine(205, 117, 205, 187, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
+  Paint_DrawLine(219, 117, 219, 187, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
+  Paint_DrawLine(233, 117, 233, 187, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
   //horizontal lines for keypad
-  Paint_DrawLine(177, 134, 248, 134, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
-  Paint_DrawLine(177, 151, 248, 151, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
-  Paint_DrawLine(177, 168, 248, 168, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(177, 134, 248, 134, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
+  Paint_DrawLine(177, 151, 248, 151, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
+  Paint_DrawLine(177, 168, 248, 168, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
   //draw the rectangle for the index display
   draw_mini_hex();
   

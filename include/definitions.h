@@ -8,20 +8,20 @@
 #include "../lib/GUI/GUI_Paint.h"
 #include "../lib/LCD/LCD_2in.h"
 #include "enums.h"
+#include "pico/platform.h"
 #include <stdint.h>
 
 
 void core_one_main();
 void display_exit();
 
-inline uint32_t assemble_packet(states state, actions action, uint8_t score, uint16_t data)
- {
-    uint32_t packet = 0;
-    packet |= state;
-    packet |= action;
-    packet |= score * SCORES;
-    packet |= data * TIME;
-    return packet;
+static uint32_t __time_critical_func(assemble_packet)(states state, actions action, uint8_t score, uint16_t data){
+   uint32_t packet = 0;
+   packet |= state;
+   packet |= action;
+   packet |= score * SCORES;
+   packet |= data * TIME;
+   return packet;
  }
 
 

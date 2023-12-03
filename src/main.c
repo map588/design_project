@@ -3,8 +3,8 @@
 #include "pico/rand.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
-#include "keyboard.h"
 #include "definitions.h"
+#include "keyboard.h"
 
 #define resting_keystate 32
 
@@ -156,6 +156,8 @@ int init(void)
 
   wire_position = gpio_get(wire0_pin);
 
+  //timer interrupt for losing is highest priority
+  irq_set_priority(TIMER_IRQ_3, 0x00);
 
 
   gpio_set_irq_enabled_with_callback(pull_pin, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
@@ -164,14 +166,19 @@ int init(void)
   gpio_set_irq_enabled_with_callback(turn_pin, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
   gpio_set_irq_enabled_with_callback(turn_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
 
-  gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
-  gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
+   if (wire_position){
+     gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, false, (void *)&action_isr);
+     gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
+      }else{
+          gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, false, (void *)&action_isr);
+          gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
+      }
 }
 
 
   int64_t game_timer_callback(alarm_id_t id, void * user_data){
     multicore_fifo_push_blocking(assemble_packet(INCORRECT, NOP, score, 8000));
-    callback = true;
+    callback  = true;
     game_over = true;
     return 0;
     }
@@ -195,19 +202,13 @@ start:
 
   state = LOADING;
   time = 5000;
-  do{
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
   busy_wait_ms(5060);
-  if(key_press){
-    key_press = false;
-    select_key = *g_key;
-  }
- }while(select_key != '\n');
+
 
   select_key = ' ';
   pio_sm_restart(pio0, 0);
   state = SELECT;
-  
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
   do{
     if(key_press){
@@ -225,7 +226,6 @@ start:
 
   select_key = ' ';
 
-  selection = 0;
   switch(selection){
     case 0: time_rate = 15; break;  //3000ms to 1500ms / 100 steps is 15
     case 1: time_rate = 20; break;  //3000ms to 1000ms / 100 steps is 20
@@ -235,21 +235,23 @@ start:
  
   state = CONTINUE;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
-   while (select_key != '\n'){
+   do{
     if(key_press){
        key_press = false;
       select_key = *g_key;
     }
-   }
+   }while (select_key != '\n');
+
+
   select_key = ' ';
 
-
+  //disable the keyboard
   irq_set_enabled(PIO0_IRQ_0, false);
+
   state = COUNTDOWN;
   time = 5000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
   busy_wait_ms(5050);
-
 
   state = GAME;
   time = (uint16_t) start_time;
@@ -257,10 +259,12 @@ start:
   do{
     if(score != 0 && score % 20 == 0) {
       state = RANDOM_KEY;
+      irq_set_enabled(PIO0_IRQ_0, true);
       timer = add_alarm_in_ms(3010, game_timer_callback, NULL, false);
-      multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, (rand()%1000)));
+      multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, (get_rand_32()%1000)));
       while(!callback){tight_loop_contents();}
-  }
+      irq_set_enabled(PIO0_IRQ_0, false);
+    }
     else{
       if (wire_position){
           gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, false, (void *)&action_isr);
@@ -286,7 +290,7 @@ start:
 
   state = RESTART;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 10000));
-  while(select_key != '\n' || select_key != '\b'){if(key_press){key_press = false; select_key = *g_key;}}
+  while(select_key != '\n' || select_key != '\b'){if(key_press){key_press = false; select_key = *g_key;} tight_loop_contents();}
   if(select_key == '\n') game_over = false;
   else if(select_key == '\b') game_over = true;
 
