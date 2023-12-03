@@ -55,12 +55,12 @@ bool init_display(){
   LCD_2IN_Clear (BLACK);
 
   //Noteably we create an alarm pool before we allocate essentially the rest of the memory to the display buffer
- core1_pool = alarm_pool_create(2,10);
+ core1_pool = alarm_pool_create(2,16);
 
  if(!alarm_pool_add_repeating_timer_ms(core1_pool, 0, null_callback, NULL, &idx_timer))
     return false;
   
-  tone_gen.alarm_pool = alarm_pool_create_with_unused_hardware_alarm(6);
+  tone_gen.alarm_pool = alarm_pool_create_with_unused_hardware_alarm(8);
   tone_init(&tone_gen, buzzer);
   set_rest_duration(20);
   set_tempo(160);
@@ -96,6 +96,8 @@ bool init_display(){
   gpio_init (hex_f);
   gpio_init (hex_g);
 
+  gpio_init (LED_a);
+
 
   gpio_init (PICO_DEFAULT_LED_PIN);
   
@@ -107,6 +109,8 @@ bool init_display(){
   gpio_set_dir (hex_f, GPIO_OUT);
   gpio_set_dir (hex_g, GPIO_OUT);
 
+  gpio_set_dir (LED_a, GPIO_OUT);
+
 
   gpio_pull_down (hex_a);
   gpio_pull_down (hex_b);
@@ -115,6 +119,9 @@ bool init_display(){
   gpio_pull_down (hex_e);
   gpio_pull_down (hex_f);
   gpio_pull_down (hex_g);
+  gpio_pull_down (buzzer);
+
+  gpio_pull_down (LED_a);
 
 
   gpio_set_dir (PICO_DEFAULT_LED_PIN, GPIO_OUT);
@@ -133,15 +140,19 @@ bool idx_timer_callback(repeating_timer_t *rt){
   else 
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
-  
-  display_functions[state].func();
+  if (state == LOADING)
+    loading_hex();
 
-  drive_hex(9 - index);
+    display_functions[state].func();
+
   ++index;
+
+  
 
   fired = true;
 
   if (index > 9 || !display_functions[state].repeating) {
+    clear_hex();
     index = 0;
     return false;
   }

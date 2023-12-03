@@ -10,7 +10,9 @@
 #define hex_f  7
 #define hex_g  8
 
-#define buzzer 28
+#define LED_a 28
+
+#define buzzer 9
 
 #include "definitions.h"
 #include "pico/stdlib.h"
@@ -170,7 +172,7 @@ inline static void draw_mini_hex(){
   Paint_ClearWindows(151, 176, 163, 193, BLACK);
   //draw the number 8 in red on the index display
   sprintf(hex_str, "%x", (9 - index));
-  Paint_DrawChar(151, 176, hex_str[0], &Font16, RED, BLACK);
+  Paint_DrawChar(151, 176, hex_str[0], &Font16, BLACK, RED);
 }
 
 inline static void enclosure(int8_t prompt, bool correct){
@@ -185,8 +187,10 @@ inline static void enclosure(int8_t prompt, bool correct){
   //draw the rectangle for the "display"
   Paint_DrawRectangle(160, 62, 266, 108, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw an even tinier bomb in the display with an even tinier display
-  Paint_DrawRectangle(200, 70, 220, 100, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawRectangle(202, 74, 218, 82, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(226, 70, 246, 100, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(228, 72, 244, 86, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawPoint(236, 73, MAGENTA, DOT_PIXEL_6X6, DOT_FILL_RIGHTUP);
+
   //draw the rectangle for the keypad
   Paint_DrawRectangle(177, 117, 248, 187, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //add greater detail to keypad to reflect number of keys
@@ -278,6 +282,7 @@ inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
 inline static void selction (){
 
     const int arr_pos[3] = {64, 152, 240};
+    const note_t notes[3] = {NOTE_C4, NOTE_C4, NOTE_C2};
     static uint8_t last_key = 0;
     uint8_t key = action;
 
@@ -347,10 +352,10 @@ inline static void selction (){
     Paint_DrawLine(arrow_pos-24, 140, 111, 140, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID); //x diff: -24
 
     Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
+    tone_play(&tone_gen, notes[last_key], 50);
     //likely gonna convert this into a full update unless it slows it down a lot
     //LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
     LCD_2IN_Display((UBYTE *)s_buffer);
-
 }
 
 inline static void prompt_start(){
@@ -361,31 +366,38 @@ inline static void prompt_start(){
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
-inline static void drive_hex(){
-  const uint8_t hexpins[10] = 
-  { 
-    0x7F, //0
-    0x0C, //1
-    0xB7, //2
-    0x9F, //3
-    0xCC, //4
-    0xDA, //5
-    0xFA, //6
-    0x0F, //7
-    0xFF, //8
-    0xDF  //9
+inline static void drive_hex(uint8_t hex){
+  const uint8_t hexpins[10] = { 
+  0b0111111, //0
+  0b0000110, //1
+  0b1011011, //2
+  0b1001111, //3
+  0b1100110, //4
+  0b1101101, //5
+  0b1111101, //6
+  0b0000111, //7
+  0b1111111, //8
+  0b1101111  //9
   };
 
-    gpio_put(hexpins[index] & (0x40),hex_a);
-    gpio_put(hexpins[index] & (0x20),hex_b);
-    gpio_put(hexpins[index] & (0x10),hex_c);
-    gpio_put(hexpins[index] & (0x08),hex_d);
-    gpio_put(hexpins[index] & (0x04),hex_e);
-    gpio_put(hexpins[index] & (0x02),hex_f);
-    gpio_put(hexpins[index] & (0x01),hex_g);
+  gpio_put_masked(0x1FC, hexpins[hex]<<2);
+  }
+
+  inline static void loading_hex(){
+    static uint32_t last_pos = 0;
+    gpio_put_masked(0x1FC, 0b0000000 << 2);
+    gpio_put((last_pos % 6) + 2, 1);
+    last_pos++;
+  }
+
+  inline static void clear_hex(){
+    gpio_put_masked(0x1FC, 0b0000000 << 2);
   }
   
-    
+  inline static void blink_led(){
+    bool led = (index & 0x01);
+    gpio_put(LED_a, led);
+  }
   
 
 

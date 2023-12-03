@@ -15,6 +15,7 @@ typedef enum // Lookup for the state of the game
     RANDOM_KEY
 } states;
 
+
 typedef enum //Lookup for the action of the game
 {TURN_IT = 0x10, YANK_IT = 0x20, WIRE_IT = 0x30, NOP = 0x40} actions;
 

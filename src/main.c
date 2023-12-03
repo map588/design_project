@@ -101,7 +101,6 @@ int init(void)
 
   stdio_init_all();
 
-
   timer = add_alarm_in_ms(50, null_call, NULL, false);
 
   if(timer == -1){
@@ -110,8 +109,16 @@ int init(void)
   }
 
   cancel_alarm(timer);
+  //init the random number generator
+  static rng_128_t *rng;
+  rng = (rng_128_t *)malloc(sizeof(rng_128_t));
 
-  
+  get_rand_128(rng);
+  while(rng->r[0] == 0 && rng->r[1] == 0)
+    tight_loop_contents();
+
+  free(rng);
+
   multicore_lockout_victim_init();
 
   gpio_init(pull_pin);
