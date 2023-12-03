@@ -28,6 +28,7 @@
 
 static bool fired;
 static bool enabled;
+static bool *key_lock;
 static uint16_t value;
 static uint8_t action;
 static uint8_t score_d;
@@ -41,6 +42,7 @@ bool load_state = 0;
 bool key_state = 0;
 bool restart_state = 0;
 bool incorrect_state = 0;
+
 
 
 static uint16_t *s_buffer;
@@ -191,20 +193,20 @@ inline static void enclosure(int8_t prompt, bool correct){
   //draw an even tinier bomb in the display with an even tinier display
   Paint_DrawRectangle(226, 70, 246, 100, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawRectangle(228, 72, 244, 86, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawRectangle(236, 76, 242, 82, MAGENTA, DOT_PIXEL_2X2, DRAW_FILL_FULL);
+  Paint_DrawRectangle(236, 76, 239, 82, MAGENTA, DOT_PIXEL_2X2, DRAW_FILL_FULL);
 
   //draw the rectangle for the keypad
   Paint_DrawRectangle(177, 117, 248, 187, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //add greater detail to keypad to reflect number of keys
   //vertical lines for keypad
-  Paint_DrawLine(191, 117, 191, 187, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
-  Paint_DrawLine(205, 117, 205, 187, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
-  Paint_DrawLine(219, 117, 219, 187, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
-  Paint_DrawLine(233, 117, 233, 187, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
+  Paint_DrawLine(191, 117, 191, 187, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+  Paint_DrawLine(205, 117, 205, 187, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+  Paint_DrawLine(219, 117, 219, 187, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+  Paint_DrawLine(233, 117, 233, 187, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
   //horizontal lines for keypad
-  Paint_DrawLine(177, 134, 248, 134, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
-  Paint_DrawLine(177, 151, 248, 151, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
-  Paint_DrawLine(177, 168, 248, 168, BLACK, DOT_PIXEL_3X3, LINE_STYLE_SOLID);
+  Paint_DrawLine(177, 134, 248, 134, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+  Paint_DrawLine(177, 151, 248, 151, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+  Paint_DrawLine(177, 168, 248, 168, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
   //draw the rectangle for the index display
   draw_mini_hex();
   
@@ -284,19 +286,15 @@ inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
 inline static void selction (){
 
     const int arr_pos[3] = {64, 152, 240};
-    const float notes[3] = {NOTE_C4, NOTE_C4, NOTE_C2};
+    const float notes[3] = {NOTE_C4, NOTE_C3, NOTE_C2};
     static uint8_t last_key = 0;
+    static uint32_t last_time = 0;
     uint8_t key = action;
 
-    if(last_key > 0 && key == 0)
-        last_key--;
-    else if(last_key < 2 && key == 1)
-        last_key++;
     
-
     Paint_SelectImage((UBYTE *)s_buffer);
 
-    if (!fired || !select_state){
+    if (!fired && !select_state){
         clearflags();
         select_state = true;
         Paint_Clear(BLACK);
@@ -308,10 +306,44 @@ inline static void selction (){
         Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
         Paint_DrawLine(158, 80, 158, 200, YELLOW, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
         Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+
         LCD_2IN_Display((UBYTE *)s_buffer);
     }
+
+    if ((time_us_32() - last_time) < 100000)
+      return;
+
+    //clears the previous scissors
+    Paint_ClearWindows( arr_pos[last_key]-55, 120, arr_pos[last_key]+55, 154, BLACK);
+
+    // Redraws the old wire
+    switch (last_key){
+     case 0:   Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID); break;
+     case 1:   Paint_DrawLine(158, 80, 158, 200, YELLOW, DOT_PIXEL_4X4, LINE_STYLE_SOLID); break;
+     case 2:   Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID); break;
+     default:  break;
+    }
+
+    //last_key gets updated here
+    if (last_key > 0 && key == 0)
+        last_key--;
+    else if(last_key < 2 && key == 1)
+        last_key++;
+    else if((last_key == 2 && key == 1)||(last_key == 0 && key == 0)){
+      tone(&tone_gen, notes[last_key], 50);
+      last_time = time_us_32();
+      return;
+    }
+
+    //do the jingle
+    tone(&tone_gen, notes[last_key], 20);
+
     Paint_ClearWindows(0, 205, 319, 239, BLACK); // bottom bar
     int arrow_pos = arr_pos[last_key];
+
+    //This will make the lower blade under the wire
+    Paint_DrawRectangle(arrow_pos - 16, 140, arrow_pos + 35, 146, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
+
 
     //new addition: pair of scissors layered on the wire the arrow is positioned under
     //NOTES TO SELF FOR MAKING THIS
@@ -322,12 +354,18 @@ inline static void selction (){
 
     //possible arrow positions: 64, 152, 240
 
-    //im gonna hardcode it over the green wire to start, then implement it to change based on arrow position
-    //Paint_DrawCircle(x_cen, y_cen, (uint16_t)(48 * radfactor), RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
-    Paint_DrawRectangle(arrow_pos-27, 134, arrow_pos+35, 146, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL); //x diff: -27
-    Paint_DrawCircle(arrow_pos-31, 125, 16, BLUE, DOT_FILL_AROUND, DRAW_FILL_EMPTY); //x diff: -31
-    Paint_DrawCircle(arrow_pos-31, 157, 16, BLUE, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  
+    //Redraws the new wire
+    switch (last_key){
+     case 0:   Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID); break;
+     case 1:   Paint_DrawLine(158, 80, 158, 200, YELLOW, DOT_PIXEL_4X4, LINE_STYLE_SOLID); break;
+     case 2:   Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID); break;
+     default:  break;
+    }
 
+    //Draws the top half of the scissors
+    Paint_DrawRectangle(arrow_pos-16, 134, arrow_pos+35, 140, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL); //x diff: -27
+ 
     //now i need to draw multiple lines to form the tip of the scissors
     //loop is pointless
     Paint_DrawLine(arrow_pos+37, 135, arrow_pos+37, 145, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID); //x diff: +37
@@ -351,20 +389,28 @@ inline static void selction (){
     Paint_DrawPoint(arrow_pos+50, 140, GRAY, DOT_PIXEL_1X1, DOT_FILL_AROUND);
     Paint_DrawPoint(arrow_pos+51, 140, GRAY, DOT_PIXEL_1X1, DOT_FILL_AROUND);
 
-    Paint_DrawLine(arrow_pos-24, 140, 111, 140, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID); //x diff: -24
+    Paint_DrawLine(arrow_pos-24, 140, arrow_pos+50, 140, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID); //x diff: -24
+
+    //Draws the scissor handles
+    Paint_DrawRectangle(arrow_pos - 47, 128, arrow_pos - 15, 140, RED & 0x7777, DOT_PIXEL_4X4, DRAW_FILL_EMPTY); // x diff: -31
+    Paint_DrawRectangle(arrow_pos - 47, 140, arrow_pos - 15, 152, RED & 0x7777, DOT_PIXEL_4X4, DRAW_FILL_EMPTY);
+
 
     Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
-    tone(&tone_gen, notes[last_key], 50);
     //likely gonna convert this into a full update unless it slows it down a lot
     //LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+    last_time = time_us_32();
     LCD_2IN_Display((UBYTE *)s_buffer);
-}
+    }
 
 inline static void prompt_start(){
   Paint_SelectImage((UBYTE *)s_buffer);
   Paint_Clear(BLACK);
   Paint_DrawString_EN(35, 112, "PRESS ENTER TO CONTINUE", &Font16, GREEN, BLACK);
   Paint_DrawRectangle(33, 110, 300, 130, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  if(*key_lock){
+    Paint_Clear(BLACK);
+  }
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 

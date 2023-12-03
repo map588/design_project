@@ -37,6 +37,7 @@ static bool wire_pulled;
 static bool wire_position;
 static bool game_over;
 static bool key_press;
+static bool key_lock;
 
 static alarm_id_t timer;
 //All of these enums are defined in enum.h, in the include folder
@@ -136,10 +137,6 @@ int init(void)
   gpio_pull_up(wire0_pin);
   gpio_pull_up(wire1_pin);
 
-  gpio_is_input_hysteresis_enabled(pull_pin);
-  gpio_is_input_hysteresis_enabled(turn_pin);
-  // gpio_is_input_hysteresis_enabled(wire0_pin);
-  // gpio_is_input_hysteresis_enabled(wire1_pin);
     
     //calls the entry function for core 1
   multicore_launch_core1(core_one_main);
@@ -148,7 +145,6 @@ int init(void)
     //change this depending on how we decode the keypad
   g_key = (char *)malloc(sizeof(char));
   keyboard_init(g_key, &key_press);
-
 
 
   key_turned    = gpio_get(turn_pin);
@@ -171,17 +167,17 @@ int init(void)
      gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
       }else{
           gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, false, (void *)&action_isr);
-          gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
+          gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL,  true, (void *)&action_isr);
       }
 }
 
 
-  int64_t game_timer_callback(alarm_id_t id, void * user_data){
-    multicore_fifo_push_blocking(assemble_packet(INCORRECT, NOP, score, 8000));
-    callback  = true;
-    game_over = true;
-    return 0;
-    }
+int64_t game_timer_callback(alarm_id_t id, void * user_data){
+  callback  = true;
+  game_over = true;
+  multicore_fifo_push_blocking(assemble_packet(INCORRECT, NOP, score, 10000));
+  return 0;
+}
 
 
  int main(){
@@ -192,19 +188,19 @@ start:
   uint8_t selection = 0;
   uint8_t time_rate = 0;
   uint16_t start_time = 6000;
-  score = 0;
+  char select_key;
 
+
+select:
+  score = 0;
   callback = false;
   game_over = false;
   key_press = false;
 
-  char select_key = ' ';
-
   state = LOADING;
-  time = 5000;
+  time = 3000;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(5060);
-
+  busy_wait_ms(3060);
 
   select_key = ' ';
   pio_sm_restart(pio0, 0);
@@ -236,12 +232,13 @@ start:
   state = CONTINUE;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
    do{
-    if(key_press){
+    if(key_press && !key_lock){
+      if(*g_key == '\n')
        key_press = false;
-      select_key = *g_key;
+       select_key = *g_key;
     }
-   }while (select_key != '\n');
-
+   }while (select_key != '\n' && select_key != '<');
+    if(select_key == '<') goto select;
 
   select_key = ' ';
 
@@ -283,22 +280,14 @@ start:
       time -= time_rate;
     }
   }while (score < 100 && !game_over);
-  cancel_alarm(timer);
+  if(score == 100)
+    cancel_alarm(timer);
 
-
+  busy_wait_ms(1000);
   irq_set_enabled(PIO0_IRQ_0, true);
-
-  state = RESTART;
-  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 10000));
-  while(select_key != '\n' || select_key != '\b'){if(key_press){key_press = false; select_key = *g_key;} tight_loop_contents();}
-  if(select_key == '\n') game_over = false;
-  else if(select_key == '\b') game_over = true;
-
-  if(!game_over)
-    goto start;
-  else
-    display_exit();
-
+  busy_wait_ms(1000);
+  state = LOADING;
+  goto select;
 
   return 0;
 }

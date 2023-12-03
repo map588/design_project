@@ -3,7 +3,7 @@
 
 static alarm_pool_t *core1_pool;
 static repeating_timer_t idx_timer;
-
+static bool *key_lock;
 
 typedef void (*function_ptr)(void);
 typedef struct{
@@ -94,9 +94,6 @@ bool init_display(){
   gpio_init (hex_g);
 
   gpio_init (LED_a);
-
-
-  gpio_init (PICO_DEFAULT_LED_PIN);
   
   gpio_set_dir (hex_a, GPIO_OUT);
   gpio_set_dir (hex_b, GPIO_OUT);
@@ -118,7 +115,6 @@ bool init_display(){
   gpio_pull_down (hex_g);
 
   gpio_pull_down (LED_a);
-
 
 
   return true;
@@ -159,6 +155,13 @@ void core_one_interrupt_handler (void){
   states new_state;
   interrupt = true;
 
+  if(state == NULL_STATE){
+  while(!multicore_fifo_rvalid()){tight_loop_contents();}
+   key_lock =  (bool *)multicore_fifo_pop_blocking();
+   state = LOADING;
+   return;
+  }
+
   
  for(int i = 0; i < 6 && multicore_fifo_rvalid(); i++)
      data = multicore_fifo_pop_blocking ();
@@ -176,8 +179,8 @@ void core_one_interrupt_handler (void){
   //Right now its only relevant for RANDOM_KEY, RESTART, and SELECT, as well as the easteregg if it actually works
   if (KEYPRESS == new_state){
     switch(state){
-      case SELECT:
-      case CONTINUE:
+      case SELECT: break;
+      case CONTINUE: *key_lock = true; break;
       case COUNTDOWN:
       case GAME:
       case CORRECT:

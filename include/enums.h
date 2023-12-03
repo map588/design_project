@@ -12,7 +12,8 @@ typedef enum // Lookup for the state of the game
     CORRECT,
     INCORRECT,
     RESTART,
-    RANDOM_KEY
+    RANDOM_KEY,
+    NULL_STATE
 } states;
 
 

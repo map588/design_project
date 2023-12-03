@@ -204,6 +204,7 @@ switch(index){
     //need to figure out coordinates for each explosion, as well as radius factor
     //gonna just guess the coords and not change radius factor for now
     explosion_draw(262, 57, 1);
+    multicore_lockout_end_blocking();
     break;
   case 8:
     explosion_draw(134, 40, 1);
@@ -228,6 +229,8 @@ switch(index){
     break;
   case 1:
     explosion_draw(77, 174, 1);
+    busy_wait_ms(10);
+    multicore_lockout_start_blocking();
     break;
   case 0:
     explosion_draw(268, 108, 1);
@@ -286,12 +289,13 @@ inline static void display_key()
     //   return;
     // }
     char character = (char)score_d;
-    if (!enabled)
-    {
-        if (character == 'e')
+    if (!enabled){
+     if (character == 'e'){
             enabled = !enabled;
-
-        return;
+            *key_lock = true;
+            return;
+     }else
+       *key_lock = false;
     }
 
     long long op1;
@@ -329,6 +333,10 @@ inline static void display_key()
         break;
     case '<':
     case '>':
+        break;
+    case 'e':
+        enabled = !enabled;
+        *key_lock = false;
         break;
     case '\n':
         if (!calculator_mode)
