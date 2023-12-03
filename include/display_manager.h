@@ -130,7 +130,7 @@ inline static void wire_draw(uint8_t base_color){
   if(base_color == 1) //action is prompted
   {
   //draw a circle for the wire protruding from the top of the enclosure
-  Paint_DrawCircle(168, 38, 8, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(168, 38, 8, RED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   //draw a rectangle to cover the bottom half of the circle
   Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw 2 circles for the terminals
@@ -141,7 +141,7 @@ inline static void wire_draw(uint8_t base_color){
   }
   else if(base_color == 2) //action input successfully by player
   {
-  Paint_DrawCircle(168, 38, 8, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(168, 38, 8, GREEN, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
@@ -149,7 +149,7 @@ inline static void wire_draw(uint8_t base_color){
   }
   else //default colors
   {
-  Paint_DrawCircle(168, 38, 8, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawCircle(168, 38, 8, WHITE, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   Paint_DrawRectangle(151, 38, 187, 56, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, BLUE, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
@@ -172,10 +172,25 @@ inline static void enclosure(int8_t prompt, bool correct){
   Paint_DrawRectangle(146, 38, 280, 198, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw the rectangle for the "display"
   Paint_DrawRectangle(160, 62, 266, 108, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw an even tinier bomb in the display with an even tinier display
+  Paint_DrawRectangle(200, 70, 220, 100, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(202, 74, 218, 82, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw the rectangle for the keypad
   Paint_DrawRectangle(177, 117, 248, 187, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //add greater detail to keypad to reflect number of keys
+  //vertical lines for keypad
+  Paint_DrawLine(191, 117, 191, 187, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(205, 117, 205, 187, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(219, 117, 219, 187, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(233, 117, 233, 187, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  //horizontal lines for keypad
+  Paint_DrawLine(177, 134, 248, 134, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(177, 151, 248, 151, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(177, 168, 248, 168, BLACK, DOT_FILL_AROUND, LINE_STYLE_SOLID);
   //draw the rectangle for the hex display
   Paint_DrawRectangle(151, 176, 163, 193, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  //draw the number 8 in red on the hex display
+  Paint_DrawString_EN(151, 176, "8", &Font16, RED, BLACK);
 
   //partially update the display for the enclosure
   //TODO: partial update
@@ -275,16 +290,58 @@ inline static void selction (){
         Paint_DrawString_EN(224, 55, "(hard)", &Font12, WHITE, BLACK);
 
         Paint_DrawLine(70, 80, 70, 200, GREEN, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
-        Paint_DrawLine(158, 80, 158, 200, BLUE, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
+        Paint_DrawLine(158, 80, 158, 200, YELLOW, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
         Paint_DrawLine(246, 80, 246, 200, RED, DOT_PIXEL_4X4, LINE_STYLE_SOLID);
         LCD_2IN_Display((UBYTE *)s_buffer);
     }
     Paint_ClearWindows(0, 205, 319, 239, BLACK); // bottom bar
     int arrow_pos = arr_pos[last_key];
 
+    //new addition: pair of scissors layered on the wire the arrow is positioned under
+    //NOTES TO SELF FOR MAKING THIS
+    //coords of center of top circle: 33, 125, radius of 16
+    //coords of center of low circle: 33, 157, radius of 16
+    //beginning of gray rectangle: 4 to the right from top circle center, 9 below top circle center
+    //end of gray rectangle, 62 right of start x, 12 below start y for rectangle
+
+    //possible arrow positions: 64, 152, 240
+
+    //im gonna hardcode it over the green wire to start, then implement it to change based on arrow position
+    //Paint_DrawCircle(x_cen, y_cen, (uint16_t)(48 * radfactor), RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+    Paint_DrawRectangle(arrow_pos-27, 134, 99, 146, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL); //x diff: -27
+    Paint_DrawCircle(arrow_pos-31, 125, 16, GRAY, DOT_FILL_AROUND, DRAW_FILL_EMPTY); //x diff: -31
+    Paint_DrawCircle(arrow_pos-31, 157, 16, GRAY, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+
+    //now i need to draw multiple lines to form the tip of the scissors
+    //loop is pointless
+    Paint_DrawLine(arrow_pos+37, 135, arrow_pos+37, 145, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID); //x diff: +37
+    Paint_DrawLine(arrow_pos+38, 135, arrow_pos+38, 145, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(arrow_pos+39, 135, arrow_pos+39, 145, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawLine(arrow_pos+40, 136, arrow_pos+40, 144, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(arrow_pos+41, 136, arrow_pos+41, 144, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(arrow_pos+42, 136, arrow_pos+42, 144, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawLine(arrow_pos+43, 137, arrow_pos+43, 143, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(arrow_pos+44, 137, arrow_pos+44, 143, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(arrow_pos+45, 137, arrow_pos+45, 143, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawLine(arrow_pos+46, 138, arrow_pos+46, 142, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(arrow_pos+47, 138, arrow_pos+47, 142, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawLine(arrow_pos+48, 139, arrow_pos+48, 141, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(arrow_pos+49, 139, arrow_pos+49, 141, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawPoint(arrow_pos+50, 140, GRAY, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    Paint_DrawPoint(arrow_pos+51, 140, GRAY, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+
+    Paint_DrawLine(arrow_pos-24, 140, 111, 140, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID); //x diff: -24
 
     Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
-    LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+    //likely gonna convert this into a full update unless it slows it down a lot
+    //LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+    LCD_2IN_Display((UBYTE *)s_buffer);
+
 }
 
 inline static void prompt_start(){
@@ -293,6 +350,13 @@ inline static void prompt_start(){
   Paint_DrawString_EN(35, 112, "PRESS ENTER TO CONTINUE", &Font16, GREEN, BLACK);
   Paint_DrawRectangle(33, 110, 300, 130, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   LCD_2IN_Display((UBYTE *)s_buffer);
+}
+inline static void drive_hex(uint8_t hex)
+{
+    gpio_put(hex_0, hex & 0x01);
+    gpio_put(hex_1, (hex & 0x02) >> 1);
+    gpio_put(hex_2, (hex & 0x04) >> 2);
+    gpio_put(hex_3, (hex & 0x08) >> 3);
 }
 
 inline static void countdown_to_start(){    
@@ -315,15 +379,19 @@ inline static void countdown_to_start(){
       break;
     case 2: //This is intentional, I want the bomb to be drawn on the screen for 2 frames
       Paint_DrawString_EN(75, 83, "3", &Font20, GREEN, BLACK);
+      drive_hex(3);
       break;
     case 3:
       Paint_DrawString_EN(75, 83, "2", &Font20, GREEN, BLACK);
+      drive_hex(2);
       break;
     case 4:
       Paint_DrawString_EN(75, 83, "1", &Font20, GREEN, BLACK);
+      drive_hex(1);
       break;
     case 5:
       Paint_DrawString_EN(3, 83, "DEFUSE IT!", &Font20, RED, BLACK);
+      drive_hex(0);
       break;
     case 6:
       index = 10;
@@ -373,7 +441,7 @@ inline static void loading_bar(){
         LCD_2IN_DisplayWindows(205, y1 - 2, 319, y2 + 2, s_buffer);
         Paint_ClearWindows(205, 223, 319, 239, BLACK);
     }
-
+      drive_hex(index);
       LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
 }
 
@@ -425,11 +493,13 @@ inline static void write_prompt(){     //BEING CHANGED
   //dotted lines from corners of graphic display to corners of prompt window
   Paint_DrawLine(160, 62, 7, 42, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
   Paint_DrawLine(266, 62, 111, 42, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
-  Paint_DrawLine(160, 108, 7, 68, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
-  Paint_DrawLine(266, 108, 111, 68, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(160, 108, 7, 88, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(266, 108, 111, 88, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
 
-  Paint_DrawString_EN(10, 45, prompt_str[action], &Font20, colors[action], BLACK);
-  Paint_DrawRectangle(7, 42, 111, 68, colors[action], DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+ 
+  Paint_DrawRectangle(7, 42, 111, 88, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(7, 42, 111, 88, colors[action], DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  Paint_DrawString_EN(10, 55, prompt_str[action], &Font20, colors[action], BLACK);
 
   //partial update which updates the prompt specifically
   //need to move this and the prompt itself off to the side
@@ -437,30 +507,7 @@ inline static void write_prompt(){     //BEING CHANGED
   LCD_2IN_DisplayWindows(59, 6, 111, 145, s_buffer);
 }
 
-inline static void drive_hex(uint8_t hex){
-  gpio_put(hex_0,  hex & 0x01);
-  gpio_put(hex_1, (hex & 0x02) >> 1);
-  gpio_put(hex_2, (hex & 0x04) >> 2);
-  gpio_put(hex_3, (hex & 0x08) >> 3);
-}
 
-inline static void game_UI(){
-   Paint_SelectImage((UBYTE *)s_buffer);
-
-   if (!fired){
-      clearflags();
-      game_state = true;
-      Paint_Clear(BLACK);
-      write_prompt(action);
-      populate_UI_elements(value, score_d);
-      LCD_2IN_Display((UBYTE *)s_buffer);
-      fired = true;
-    }
-
-    //drive_hex(9 - index);
-    tone(&tone_gen, NOTE_C3, value/50);
-    loading_bar();
-}
 
 
 inline static void correct_disp(){
@@ -556,212 +603,5 @@ inline static void play_again(){
     loading_bar();
 }
 
-
-inline static void display_key(){
-  static bool calculator_mode = false;
-  static int  str_idx = 0;
-  static char str_buffer [1024];
-  static int calc_idx = 0;
-  static int base = 10;
-
-
-  
-
-  // if(str_idx >= 1024){
-  //   printf("Buffer full, hit delete or numlock->insert to clear\n");
-  //   return;
-  // }
-  char character = (char)score_d;
-    if(!enabled){
-      if(character == 'e')
-        enabled = !enabled;
-
-      return;
-    }
-
-    long long op1;
-    char *endptr = str_buffer;
-    char operand;
-    long long op2;
-    long long result;
-
-
-    if (!key_state)
-    {
-      Paint_Clear(BLACK);
-      key_state = true;
-    }
-
-    Paint_SelectImage((uint8_t *)s_buffer);
-
-    switch(character){
-      case '\b':
-        if ( str_idx > 0){
-          str_buffer[str_idx - 1] = '\0';
-          str_idx--;
-        }
-        break;
-      case 0xAB:
-        character = '<';
-        goto put_char;
-      case 0xBB:
-        character = '>';
-        goto put_char;
-      case 'c':
-        str_buffer[0] = '\0';
-        str_idx = 0;
-        break;
-      case '<':
-      case '>':
-        break;
-      case '\n':
-      if(!calculator_mode){
-        character = '\n';
-        goto put_char;
-      }
-      else{
-        for(int i = 1; i < str_idx; i++){
-          if(str_buffer[str_idx - i] == '\n' || i == str_idx - 1){
-              calc_idx = str_idx - i;
-              break;
-          }
-        }
-        char calc_buffer[512];
-        for(int i = 0; i < (str_idx - calc_idx); i++){
-          calc_buffer[i] = str_buffer[calc_idx + i];
-        }
-        op1 = strtoll(calc_buffer, &endptr, base);
-        
-        //Change of base
-        if(*endptr == '\0' && calc_buffer[0] != '\0' && op1 > 0 && op1 <= 16){
-          base = op1;
-          char base_str[32];
-          sprintf(base_str,"Base changed to %d\n", base);
-          Paint_DrawString_EN(5, 5, base_str, key_text.font_size, key_text.color, key_text.background);
-        }
-        else if(*endptr == '\0'){
-          Paint_DrawString_EN(5, 5, "Invalid base.", key_text.font_size, key_text.color, key_text.background);
-          //printf("Invalid base\n");
-        }
-        else{
-        operand = *endptr;
-
-        //accumulate partial results
-        while(operand != '\0'){
-          op2 = strtoll(endptr + 1 , &endptr, base);
-          switch (operand){
-            case '+':
-              op1 = op1 + op2;
-              break;
-            case '-':
-              op1 = op1 - op2;
-              break;
-            case '*':
-              op1 = op1 * op2;
-              break;
-            case '/':
-              op1 = (op2 == 0) ? 0 : op1 / op2;
-              break;
-            case '%':
-              op1 = (op2 == 0) ? 0 : op1 % op2;
-              break;
-            case '!':
-              op1 = !op2;
-              break;
-            case '&':
-              op1 = op1 & op2;
-              break;
-            case '|':
-              op1 = op1 | op2;
-              break;
-            case '^':
-              //op1 = pow(op1, op2);
-              break;
-            case '#':
-              op1 = op1 ^ op2;
-              break;
-            case '<':
-              op1 = op1 << op2;
-              break;
-            case '>':
-              op1 = op1 >> op2;
-              break;
-            default:
-              break;
-          }
-        operand = *endptr;
-        }
-
-        result = op1;
-        str_buffer[str_idx] = ' ';
-        str_buffer[str_idx + 1] = '=';
-        str_buffer[str_idx + 2] = ' ';
-        str_buffer[str_idx + 3] = '\0';
-        str_idx += 3;
-        char result_str[256];
-        int result_idx = 0;
-
-        sprintf(result_str, "%lld", result);
-       
-        while(result_str[result_idx] != '\0'){
-          str_buffer[str_idx] = result_str[result_idx];
-          str_idx++;
-          result_idx++;
-        }
-        str_buffer[str_idx] = '\n';
-        str_buffer[str_idx + 1] = '\0';
-        str_idx++;
-        
-        endptr = str_buffer + str_idx;
-        calc_buffer[0] = '\0';
-        break;
-      }
-      }
-      default:
-  put_char:
-        str_buffer[str_idx] = (char)character;
-        str_buffer[str_idx + 1] = '\0';
-        str_idx++;
-        break;
-    }
-
-    // printf("%c%c%c%c", 0x1B, 0x5B, 0x32, 0x4A); //This clears the serial terminal
-    // printf("%s    %u %u", str_buffer, str_idx,calc_idx);
-    tone(&tone_gen, NOTE_A3, 50);
-
-    if(str_idx >= 5){
-      if(str_buffer[str_idx - 5] == '.' && str_buffer[str_idx - 4] == '.' && 
-         str_buffer[str_idx - 3] == '.' && str_buffer[str_idx - 2] == '.' && 
-         str_buffer[str_idx - 1] == '.'){
-        calculator_mode = !calculator_mode;
-        str_idx = 0;
-        str_buffer[str_idx] = '\0';
-        if(!calculator_mode){
-        // printf("Calculator mode disengaged.\n");
-        Paint_DrawString_EN(5, 5, "Calculator mode disengaged.", key_text.font_size, key_text.color, key_text.background);
-
-        melody(&tone_gen, CONFIRM, 1);
-        }
-        else{
-        // printf("Calculator mode engaged.\n");
-        Paint_DrawString_EN(5, 5, "Calculator mode engaged.", key_text.font_size, key_text.color, key_text.background);
-        melody(&tone_gen, REJECT, 1);
-        }
-      }
-    }
-  
-   Paint_ClearWindows(0, 0, 320, 18, BLACK);
-   Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
-   LCD_2IN_Display((uint8_t *)s_buffer);
-}
-
-
-// inline void correct_disp(void);
-
-// inline void incorrect_disp(void);
-
-// inline void end_disp(int score);
-
-// inline void restart_disp(void);
 
 #endif 

@@ -183,15 +183,23 @@ start:
   game_over = false;
   key_press = false;
 
+  char select_key = ' ';
 
   state = LOADING;
-  time = 2000;
+  time = 5000;
+  do{
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
   busy_wait_ms(2500);
+  if(key_press){
+    key_press = false;
+    select_key = *g_key;
+  }
+ }while(select_key != '\n');
 
+  select_key = ' ';
   pio_sm_restart(pio0, 0);
   state = SELECT;
-  char select_key = ' ';
+  
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
   do{
     if(key_press){
@@ -256,7 +264,7 @@ start:
       
       callback = false;
       action = (actions)(((rand() % 3)  + 1) * ACTION);
-      timer = add_alarm_in_ms(time + 10, game_timer_callback, NULL, true);
+      timer = add_alarm_in_ms(time + 10, game_timer_callback, NULL, false);
       multicore_fifo_push_blocking(assemble_packet(state, action, score, time));
       while(!callback){tight_loop_contents();}
       score++;
