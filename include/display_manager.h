@@ -174,7 +174,7 @@ inline static void enclosure(int8_t prompt, bool correct){
   Paint_DrawRectangle(160, 62, 266, 108, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw an even tinier bomb in the display with an even tinier display
   Paint_DrawRectangle(200, 70, 220, 100, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawRectangle(160, 62, 266, 108, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(202, 74, 218, 82, color, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw the rectangle for the keypad
   Paint_DrawRectangle(177, 117, 248, 187, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //add greater detail to keypad to reflect number of keys
