@@ -88,25 +88,36 @@ bool init_display(){
   LCD_2IN_Display   ((UBYTE *)s_buffer);
 
   //sets up the pins to deal with hex display
-  gpio_init (hex_0);
-  gpio_init (hex_1);
-  gpio_init (hex_2);
-  gpio_init (hex_3);
+  gpio_init (hex_a);
+  gpio_init (hex_b);
+  gpio_init (hex_c);
+  gpio_init (hex_d);
+  gpio_init (hex_e);
+  gpio_init (hex_f);
+  gpio_init (hex_g);
+
 
   gpio_init (PICO_DEFAULT_LED_PIN);
   
-  gpio_set_dir (hex_0, GPIO_OUT);
-  gpio_set_dir (hex_1, GPIO_OUT);
-  gpio_set_dir (hex_2, GPIO_OUT);
-  gpio_set_dir (hex_3, GPIO_OUT);
+  gpio_set_dir (hex_a, GPIO_OUT);
+  gpio_set_dir (hex_b, GPIO_OUT);
+  gpio_set_dir (hex_c, GPIO_OUT);
+  gpio_set_dir (hex_d, GPIO_OUT);
+  gpio_set_dir (hex_e, GPIO_OUT);
+  gpio_set_dir (hex_f, GPIO_OUT);
+  gpio_set_dir (hex_g, GPIO_OUT);
+
+
+  gpio_pull_down (hex_a);
+  gpio_pull_down (hex_b);
+  gpio_pull_down (hex_c);
+  gpio_pull_down (hex_d);
+  gpio_pull_down (hex_e);
+  gpio_pull_down (hex_f);
+  gpio_pull_down (hex_g);
+
 
   gpio_set_dir (PICO_DEFAULT_LED_PIN, GPIO_OUT);
-
-  gpio_pull_down (hex_0);
-  gpio_pull_down (hex_1);
-  gpio_pull_down (hex_2);
-  gpio_pull_down (hex_3);
-
 
   return true;
 }

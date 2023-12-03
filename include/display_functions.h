@@ -3,6 +3,247 @@
 
 #include "display_manager.h"
 
+inline static void countdown_to_start()
+{
+    if (!fired)
+    {
+        clearflags();
+        Paint_SelectImage((UBYTE *)s_buffer);
+        Paint_Clear(BLACK);
+        LCD_2IN_Display((UBYTE *)s_buffer);
+        fired = true;
+    }
+
+    // draw the bomb here, then do the switch case
+    // move the countdown to the side, bomb on the right
+
+    switch (index)
+    { 
+    case 0:
+      enclosure(-1,0);
+      break;
+    case 2: //This is intentional, I want the bomb to be drawn on the screen for 2 frames
+      Paint_DrawString_EN(75, 83, "3", &Font20, GREEN, BLACK);
+      drive_hex(3);
+      break;
+    case 3:
+      Paint_DrawString_EN(75, 83, "2", &Font20, GREEN, BLACK);
+      drive_hex(2);
+      break;
+    case 4:
+      Paint_DrawString_EN(75, 83, "1", &Font20, GREEN, BLACK);
+      drive_hex(1);
+      break;
+    case 5:
+      Paint_DrawString_EN(3, 83, "DEFUSE IT!", &Font20, RED, BLACK);
+      drive_hex(0);
+      break;
+    case 6:
+      index = 10;
+    default:
+      break;
+  }
+  LCD_2IN_Display((UBYTE *)s_buffer);
+  return;
+}
+
+inline static void loading_bar(){
+  uint16_t x1;
+  uint16_t x2;
+  uint16_t y1;
+  uint16_t y2;
+
+  y1 = 225;
+  y2 = 235;
+  Paint_SelectImage((UBYTE *)s_buffer);
+
+  if (!fired && !load_state){
+        clearflags();
+        load_state = true;
+        Paint_Clear(BLACK);
+        LCD_2IN_Display((UBYTE *)s_buffer);
+  } 
+
+  if (index == 0){
+      Paint_ClearWindows(205, y1 - 2, 319, y2 + 2, BLACK);
+      x1 = 220;
+      x2 = 225;
+
+    for(int i = 1; i <= 9; i++){
+          x1 = 220 + 10 * (i);
+          x2 = 220 + 10 * (i + 1) - 5;
+          Paint_DrawRectangle(x1, y1, x2, y2, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
+    }
+
+    LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+  }
+  else {
+      Paint_ClearWindows(205, 223, 215 + 10 * (index + 1) + 3 , y2 + 2, BLACK);
+  }
+      
+    if(index >= 9){
+        LCD_2IN_DisplayWindows(205, y1 - 2, 319, y2 + 2, s_buffer);
+        Paint_ClearWindows(205, 223, 319, 239, BLACK);
+    }
+      drive_hex(index);
+      LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+}
+
+inline static void populate_UI_elements(){
+ 
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_ClearWindows(0, 0, 319, 29, BLACK);   // top bar
+  Paint_ClearWindows(0, 220, 120, 239, BLACK); // approximately time window
+  uint8_t round = score_d / 20;
+  uint8_t n_round = 20 - (score_d % 20);
+
+  char score_str[20]; 
+  char round_str[20]; 
+  char nextR_str[20]; 
+  char  time_str[20];  
+
+  sprintf(score_str, "SCORE: %u", score_d);
+  sprintf(round_str, "ROUND: %u",  round);
+  sprintf(nextR_str, "NEXT ROUND: %u", n_round);
+  sprintf(time_str, "TIME: %u ms", value);
+
+  
+  Paint_DrawString_EN(2,   2, score_str, &Font12,  GREEN, BLACK);
+  Paint_DrawString_EN(2,  16, nextR_str, &Font12, YELLOW, BLACK);
+  Paint_DrawString_EN(2, 226,  time_str, &Font12,   CYAN, BLACK);
+  Paint_DrawString_EN(260, 2, round_str, &Font12,    RED, BLACK);
+
+  
+  LCD_2IN_DisplayWindows(0, 0, 30, 319, s_buffer);
+  LCD_2IN_DisplayWindows(224, 0, 239, 100, s_buffer);
+}
+
+
+inline static void write_prompt(){     //BEING CHANGED
+  const char *prompt_str[3] = {"TURN IT", "YANK IT", "WIRE IT"};
+  const uint16_t colors[3] = {RED, BLUE, GREEN};
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_ClearWindows(6, 59, 145, 111, BLACK); // rough prompt window
+
+  //draw the bomb graphic on screen
+  enclosure(action, 0);
+
+  //trying out packing all of the graphics into one function
+
+
+
+  //writes in the action to be done and the rectangle encompassing the string
+  
+  //dotted lines from corners of graphic display to corners of prompt window
+  Paint_DrawLine(160, 62, 7, 42, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(266, 62, 111, 42, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(160, 108, 7, 88, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(266, 108, 111, 88, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+
+ 
+  Paint_DrawRectangle(7, 42, 111, 88, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(7, 42, 111, 88, colors[action], DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  Paint_DrawString_EN(10, 55, prompt_str[action], &Font20, colors[action], BLACK);
+
+  //partial update which updates the prompt specifically
+  //need to move this and the prompt itself off to the side
+  //TODO: changed the dimensions of this partial update
+  LCD_2IN_DisplayWindows(59, 6, 111, 145, s_buffer);
+}
+
+
+inline static void correct_disp(){
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_Clear(BLACK);
+  //need to add in the bomb graphic
+  enclosure(action, 1);
+  
+  //TODO: I moved both switch statements into enclosure, and the boolean determines whether it should call the green or red setting
+
+
+
+  //need to shift this string to the left side
+  Paint_DrawString_EN(12, 77, "CORRECT", &Font20, GREEN, BLACK);
+  LCD_2IN_Display((UBYTE *)s_buffer);
+}
+
+inline static void incorrect_disp(){  //BEING CHANGED
+  if(!fired || !incorrect_state){
+    clearflags();
+    incorrect_state = true;
+    Paint_SelectImage((UBYTE *)s_buffer);
+    Paint_ClearWindows(90, 80, 217, 140, BLACK);
+    Paint_DrawString_EN (110, 100, "BOOM", &Font24, RED, BLACK);
+    LCD_2IN_Display((UBYTE *)s_buffer);
+  }
+
+//add multiple explosion graphics in the form of concentric circles
+//use a switch case depending on index
+//start at case index=9, work down to 0
+//no break statements
+
+//ZONE OF EXCLUSION FOR EXPLOSIONS
+//X COORDS: 110 TO 197
+//Y COORDS: 100 TO 120
+//Assuming the radfactor is no greater than 1:
+//x_cen can not be between 62 and 245
+//x_cen can not be less than 49 or greater than 272
+//y_cen can not be between 52 and 168
+//y_cen can not be less than 48 or greater than 192
+//center coordinates in that range will draw over the text
+switch(index){
+  case 9:
+    //in each case, add an explosion_draw
+    //need to figure out coordinates for each explosion, as well as radius factor
+    //gonna just guess the coords and not change radius factor for now
+    explosion_draw(262, 57, 1);
+    break;
+  case 8:
+    explosion_draw(134, 40, 1);
+    break;
+  case 7:
+    explosion_draw(132, 186, 1);
+    break;
+  case 6:
+    explosion_draw(265, 183, 1);
+    break;
+  case 5:
+    explosion_draw(56, 113, 1);
+    break;
+  case 4:
+    explosion_draw(68, 51, 1);
+    break;
+  case 3:
+    explosion_draw(218, 169, 1);
+    break;
+  case 2:
+    explosion_draw(205, 49, 1);
+    break;
+  case 1:
+    explosion_draw(77, 174, 1);
+    break;
+  case 0:
+    explosion_draw(268, 108, 1);
+    break;
+  default:
+  break;
+}
+
+//LCD_2IN_Display((UBYTE *)s_buffer);
+}
+
+inline static void play_again(){
+if (!fired)
+{
+  clearflags();
+  restart_state = true;
+  Paint_SelectImage((UBYTE *)s_buffer);
+  Paint_DrawString_EN(110, 100, "AGAIN?", &Font20, GREEN, BLACK);
+  LCD_2IN_Display((UBYTE *)s_buffer);
+  fired = true;
+}
+  loading_bar();
+}
 
 
 inline static void game_UI()
@@ -238,12 +479,5 @@ inline static void display_key()
     LCD_2IN_Display((uint8_t *)s_buffer);
 }
 
-// inline void correct_disp(void);
-
-// inline void incorrect_disp(void);
-
-// inline void end_disp(int score);
-
-// inlin
 
 #endif // !DISPLAY_MANAGER_H

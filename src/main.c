@@ -111,6 +111,7 @@ int init(void)
 
   cancel_alarm(timer);
 
+  
   multicore_lockout_victim_init();
 
   gpio_init(pull_pin);
@@ -189,7 +190,7 @@ start:
   time = 5000;
   do{
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(2500);
+  busy_wait_ms(5100);
   if(key_press){
     key_press = false;
     select_key = *g_key;
@@ -263,7 +264,7 @@ start:
       }
       
       callback = false;
-      action = (actions)(((rand() % 3)  + 1) * ACTION);
+      action = (actions)(((get_rand_32() % 3)  + 1) * ACTION);
       timer = add_alarm_in_ms(time + 10, game_timer_callback, NULL, false);
       multicore_fifo_push_blocking(assemble_packet(state, action, score, time));
       while(!callback){tight_loop_contents();}
