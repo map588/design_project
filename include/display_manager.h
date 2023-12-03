@@ -297,9 +297,49 @@ inline static void selction (){
     Paint_ClearWindows(0, 205, 319, 239, BLACK); // bottom bar
     int arrow_pos = arr_pos[last_key];
 
+    //new addition: pair of scissors layered on the wire the arrow is positioned under
+    //NOTES TO SELF FOR MAKING THIS
+    //coords of center of top circle: 33, 125, radius of 16
+    //coords of center of low circle: 33, 157, radius of 16
+    //beginning of gray rectangle: 4 to the right from top circle center, 9 below top circle center
+    //end of gray rectangle, 62 right of start x, 12 below start y for rectangle
+
+    //im gonna hardcode it over the green wire to start, then implement it to change based on arrow position
+    //Paint_DrawCircle(x_cen, y_cen, (uint16_t)(48 * radfactor), RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
+    Paint_DrawRectangle(37, 134, 99, 146, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
+    Paint_DrawCircle(33, 125, 16, GRAY, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+    Paint_DrawCircle(33, 157, 16, GRAY, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+
+    //now i need to draw multiple lines to form the tip of the scissors
+    //loop is pointless
+    Paint_DrawLine(101, 135, 101, 145, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(102, 135, 102, 145, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(103, 135, 103, 145, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawLine(104, 136, 104, 144, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(105, 136, 105, 144, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(106, 136, 106, 144, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawLine(107, 137, 107, 143, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(108, 137, 108, 143, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(109, 137, 109, 143, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawLine(110, 138, 110, 142, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(111, 138, 111, 142, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawLine(112, 139, 112, 141, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+    Paint_DrawLine(113, 139, 113, 141, GRAY, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+    Paint_DrawPoint(114, 140, GRAY, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    Paint_DrawPoint(115, 140, GRAY, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+
+    Paint_DrawLine(40, 140, 111, 140, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 
     Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
+    //likely gonna convert this into a full update unless it slows it down a lot
     LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
+    //LCD_2IN_Display((UBYTE *)s_buffer);
+
 }
 
 inline static void prompt_start(){
