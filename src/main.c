@@ -256,7 +256,7 @@ start:
       
       callback = false;
       action = (actions)(((rand() % 3)  + 1) * ACTION);
-      timer = add_alarm_in_ms(time + 10, game_timer_callback, NULL, true);
+      timer = add_alarm_in_ms(time + 10, game_timer_callback, NULL, false);
       multicore_fifo_push_blocking(assemble_packet(state, action, score, time));
       while(!callback){tight_loop_contents();}
       score++;

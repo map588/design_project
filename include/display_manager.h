@@ -427,11 +427,13 @@ inline static void write_prompt(){     //BEING CHANGED
   //dotted lines from corners of graphic display to corners of prompt window
   Paint_DrawLine(160, 62, 7, 42, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
   Paint_DrawLine(266, 62, 111, 42, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
-  Paint_DrawLine(160, 108, 7, 68, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
-  Paint_DrawLine(266, 108, 111, 68, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(160, 108, 7, 88, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
+  Paint_DrawLine(266, 108, 111, 88, WHITE, DOT_FILL_AROUND, LINE_STYLE_DOTTED);
 
-  Paint_DrawString_EN(10, 45, prompt_str[action], &Font20, colors[action], BLACK);
-  Paint_DrawRectangle(7, 42, 111, 68, colors[action], DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+ 
+  Paint_DrawRectangle(7, 42, 111, 88, BLACK, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(7, 42, 111, 88, colors[action], DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  Paint_DrawString_EN(10, 55, prompt_str[action], &Font20, colors[action], BLACK);
 
   //partial update which updates the prompt specifically
   //need to move this and the prompt itself off to the side
