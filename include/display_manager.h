@@ -309,6 +309,13 @@ inline static void prompt_start(){
   Paint_DrawRectangle(33, 110, 300, 130, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
+inline static void drive_hex(uint8_t hex)
+{
+    gpio_put(hex_0, hex & 0x01);
+    gpio_put(hex_1, (hex & 0x02) >> 1);
+    gpio_put(hex_2, (hex & 0x04) >> 2);
+    gpio_put(hex_3, (hex & 0x08) >> 3);
+}
 
 inline static void countdown_to_start(){    
   if(!fired){
@@ -330,15 +337,19 @@ inline static void countdown_to_start(){
       break;
     case 2: //This is intentional, I want the bomb to be drawn on the screen for 2 frames
       Paint_DrawString_EN(75, 83, "3", &Font20, GREEN, BLACK);
+      drive_hex(3);
       break;
     case 3:
       Paint_DrawString_EN(75, 83, "2", &Font20, GREEN, BLACK);
+      drive_hex(2);
       break;
     case 4:
       Paint_DrawString_EN(75, 83, "1", &Font20, GREEN, BLACK);
+      drive_hex(1);
       break;
     case 5:
       Paint_DrawString_EN(3, 83, "DEFUSE IT!", &Font20, RED, BLACK);
+      drive_hex(0);
       break;
     case 6:
       index = 10;
@@ -388,7 +399,7 @@ inline static void loading_bar(){
         LCD_2IN_DisplayWindows(205, y1 - 2, 319, y2 + 2, s_buffer);
         Paint_ClearWindows(205, 223, 319, 239, BLACK);
     }
-
+      drive_hex(index);
       LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
 }
 

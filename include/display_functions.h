@@ -3,13 +3,7 @@
 
 #include "display_manager.h"
 
-inline static void drive_hex(uint8_t hex)
-{
-    gpio_put(hex_0, hex & 0x01);
-    gpio_put(hex_1, (hex & 0x02) >> 1);
-    gpio_put(hex_2, (hex & 0x04) >> 2);
-    gpio_put(hex_3, (hex & 0x08) >> 3);
-}
+
 
 inline static void game_UI()
 {

@@ -125,8 +125,6 @@ bool idx_timer_callback(repeating_timer_t *rt){
   
   display_functions[state].func();
   
-  drive_hex(9 - index);
-  
   ++index;
 
   fired = true;
