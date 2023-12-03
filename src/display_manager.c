@@ -124,17 +124,14 @@ bool idx_timer_callback(repeating_timer_t *rt){
 
   
   display_functions[state].func();
-  
+
+  drive_hex(9 - index);
   ++index;
 
   fired = true;
 
   if (index > 9 || !display_functions[state].repeating) {
     index = 0;
-
-    if(state == INCORRECT)
-      multicore_lockout_end_blocking();
-
     return false;
   }
 
@@ -182,9 +179,6 @@ void core_one_interrupt_handler (void){
   index = 0;
   fired = false;
 
-  if(state == INCORRECT){
-    multicore_lockout_start_blocking();
-  }
 
   int32_t interval = ((int32_t) value) / -10;
 
