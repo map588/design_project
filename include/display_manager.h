@@ -308,7 +308,7 @@ inline static void selction (){
 
     //im gonna hardcode it over the green wire to start, then implement it to change based on arrow position
     //Paint_DrawCircle(x_cen, y_cen, (uint16_t)(48 * radfactor), RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
-    Paint_DrawRectangle(arrow_pos-27, 134, 99, 146, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL); //x diff: -27
+    Paint_DrawRectangle(arrow_pos-27, 134, arrow_pos-27, 146, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL); //x diff: -27
     Paint_DrawCircle(arrow_pos-31, 125, 16, GRAY, DOT_FILL_AROUND, DRAW_FILL_EMPTY); //x diff: -31
     Paint_DrawCircle(arrow_pos-31, 157, 16, GRAY, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
 
