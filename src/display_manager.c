@@ -1,5 +1,4 @@
 
-//#include "display_functions.h"
 #include "display_functions.h"
 #include "hardware/pwm.h"
 
@@ -22,8 +21,8 @@ function_holder display_functions[9] = {
     {display_key, 0},
     {correct_disp, 0},
     {incorrect_disp, 1},
-    {play_again, 1}
-    //{random_key, false},unimplemented
+    {play_again, 1},
+    {random_key, 0},
 };
 
 //    0,0             320              X
@@ -60,11 +59,12 @@ bool init_display(){
  if(!alarm_pool_add_repeating_timer_ms(core1_pool, 0, null_callback, NULL, &idx_timer))
     return false;
   
-  tone_gen.alarm_pool = alarm_pool_create_with_unused_hardware_alarm(8);
+  tone_gen.alarm_pool = alarm_pool_create(1,8);
   tone_init(&tone_gen, buzzer);
   set_rest_duration(20);
   set_tempo(160);
 
+  irq_set_priority(TIMER_IRQ_1, 0x20);
 
 
   //This massive memory allocation needs to be on the heap, but it needs to be stored globally
@@ -119,12 +119,10 @@ bool init_display(){
   gpio_pull_down (hex_e);
   gpio_pull_down (hex_f);
   gpio_pull_down (hex_g);
-  gpio_pull_down (buzzer);
 
   gpio_pull_down (LED_a);
 
 
-  gpio_set_dir (PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
   return true;
 }
@@ -135,13 +133,13 @@ bool idx_timer_callback(repeating_timer_t *rt){
     return false;
 
  
-  if(!fired)
-    gpio_put(PICO_DEFAULT_LED_PIN, 1);
-  else 
-    gpio_put(PICO_DEFAULT_LED_PIN, 0);
+  // if(!fired)
+  //   gpio_put(PICO_DEFAULT_LED_PIN, 1);
+  // else 
+  //   gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
-  if (state == LOADING)
-    loading_hex();
+  // if (state == LOADING)
+  //   loading_hex();
 
     display_functions[state].func();
 
@@ -231,7 +229,7 @@ void core_one_main (){
 
 
   //default priority is 0x80, so this will take priority over the timer
-  irq_set_priority(SIO_IRQ_PROC1, 0x00);
+  irq_set_priority(SIO_IRQ_PROC1, 0x40);
   irq_set_enabled(SIO_IRQ_PROC1, true);
 
 

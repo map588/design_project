@@ -36,7 +36,7 @@ struct tonegenerator_t {
 };
 
 void tone_init(struct tonegenerator_t* gen, uint8_t gpio);
-void tone(struct tonegenerator_t *gen, int freq, uint16_t duration);
+void tone(struct tonegenerator_t *gen, float freq, uint16_t duration);
 void melody(struct tonegenerator_t* gen, struct note_t *notes, int8_t repeat);
 
 void set_tempo(uint16_t bpm);
@@ -45,9 +45,9 @@ void stop_tone(struct tonegenerator_t* gen);
 void stop_melody(struct tonegenerator_t* gen);
 
 void _pwm_set_freq(struct tonegenerator_t* gen, float freq);
-void _tone_pwm_on(struct tonegenerator_t* gen, int freq);
+void _tone_pwm_on(struct tonegenerator_t* gen, float freq);
 void _melody_step(struct tonegenerator_t* gen);
-void _melody_tone(struct tonegenerator_t *gen, int freq, uint16_t duration);
+void _melody_tone(struct tonegenerator_t *gen, float freq, uint16_t duration);
 
 static int64_t _tone_complete(alarm_id_t id, void *user_data);
 static int64_t _melody_note_complete(alarm_id_t id, void *user_data);

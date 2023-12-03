@@ -197,7 +197,7 @@ start:
   time = 5000;
   do{
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, time));
-  busy_wait_ms(5100);
+  busy_wait_ms(5060);
   if(key_press){
     key_press = false;
     select_key = *g_key;

@@ -38,7 +38,7 @@ void tone_init(struct tonegenerator_t* gen, uint8_t gpio){
     clock = SYS_CLK_KHZ * 1000;
 }
 
-void tone(struct tonegenerator_t* gen, int freq, uint16_t duration) {
+void tone(struct tonegenerator_t* gen, float freq, uint16_t duration) {
     if(freq != REST){
         _tone_pwm_on(gen, freq);
         if (tone_a) cancel_alarm(tone_a);
@@ -80,7 +80,7 @@ void _pwm_set_freq(struct tonegenerator_t* gen, float freq) {
     pwm_set_gpio_level(gen->gpio, 5000);
 }
 
-void _tone_pwm_on(struct tonegenerator_t* gen, int freq){
+void _tone_pwm_on(struct tonegenerator_t* gen, float freq){
     if(freq < NOTE_G1) {freq = NOTE_G1;}
     else if(freq > NOTE_FS9) {freq = NOTE_FS9;}
     pwm_set_enabled(gen->slice, false);
@@ -113,7 +113,7 @@ void _melody_step(struct tonegenerator_t* gen){
     }
 }
 
-void _melody_tone(struct tonegenerator_t *gen, int freq, uint16_t duration)
+void _melody_tone(struct tonegenerator_t *gen, float freq, uint16_t duration)
 {
     if(freq != REST){ _tone_pwm_on(gen, freq); }
     if (melody_a) cancel_alarm(melody_a);

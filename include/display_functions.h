@@ -93,7 +93,7 @@ inline static void loading_bar(){
     }
       
       blink_led();
-      tone(&tone_gen, NOTE_C3, value / 50);
+      tone(&tone_gen, NOTE_C3, value / 20);
 
       LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
 }
@@ -268,7 +268,7 @@ inline static void game_UI()
     }
 
     drive_hex(9 - index);
-    tone(&tone_gen, NOTE_C3, value / 50);
+    //tone(&tone_gen, NOTE_C3, value / 50);
     loading_bar();
 }
 
@@ -481,9 +481,24 @@ inline static void display_key()
     }
 
     Paint_ClearWindows(0, 0, 320, 18, BLACK);
-    Paint_DrawString_EN(5, 5, str_buffer, key_text.font_size, key_text.color, key_text.background);
+    Paint_DrawString_EN(5, 5, str_buffer, &Font16, WHITE, BLACK);
     LCD_2IN_Display((uint8_t *)s_buffer);
 }
 
+inline static void random_key(){
+    if (!fired)
+    {
+        clearflags();
+        Paint_SelectImage((UBYTE *)s_buffer);
+        Paint_Clear(BLACK);
+        LCD_2IN_Display((UBYTE *)s_buffer);
+        fired = true;
+    }
+
+    Paint_SelectImage((UBYTE *)s_buffer);
+    Paint_ClearWindows(0, 0, 320, 18, BLACK);
+    Paint_DrawString_EN(5, 5, "Random key pressed.", &Font16, WHITE, BLACK);
+    LCD_2IN_Display((uint8_t *)s_buffer);
+}
 
 #endif // !DISPLAY_MANAGER_H

@@ -12,7 +12,7 @@
 
 #define LED_a 28
 
-#define buzzer 9
+#define buzzer 17
 
 #include "definitions.h"
 #include "pico/stdlib.h"
@@ -172,7 +172,7 @@ inline static void draw_mini_hex(){
   Paint_ClearWindows(151, 176, 163, 193, BLACK);
   //draw the number 8 in red on the index display
   sprintf(hex_str, "%x", (9 - index));
-  Paint_DrawChar(151, 176, hex_str[0], &Font16, BLACK, RED);
+  Paint_DrawChar(152, 177, hex_str[0], &Font16, BLACK, RED);
 }
 
 inline static void enclosure(int8_t prompt, bool correct){
@@ -282,7 +282,7 @@ inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
 inline static void selction (){
 
     const int arr_pos[3] = {64, 152, 240};
-    const note_t notes[3] = {NOTE_C4, NOTE_C4, NOTE_C2};
+    const float notes[3] = {NOTE_C4, NOTE_C4, NOTE_C2};
     static uint8_t last_key = 0;
     uint8_t key = action;
 
@@ -352,7 +352,7 @@ inline static void selction (){
     Paint_DrawLine(arrow_pos-24, 140, 111, 140, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID); //x diff: -24
 
     Paint_DrawString_EN(arrow_pos, 210, "^", &Font20, WHITE, BLACK);
-    tone_play(&tone_gen, notes[last_key], 50);
+    tone(&tone_gen, notes[last_key], 50);
     //likely gonna convert this into a full update unless it slows it down a lot
     //LCD_2IN_DisplayWindows(200, 0, 239, 319, s_buffer);
     LCD_2IN_Display((UBYTE *)s_buffer);
@@ -399,7 +399,5 @@ inline static void drive_hex(uint8_t hex){
     gpio_put(LED_a, led);
   }
   
-
-
 
 #endif 
