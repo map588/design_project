@@ -115,7 +115,7 @@ inline static void populate_UI_elements(){
   sprintf(score_str, "SCORE: %u", score_d);
   sprintf(round_str, "ROUND: %u",  round);
   sprintf(nextR_str, "NEXT ROUND: %u", n_round);
-  sprintf(time_str, "TIME: %u ms", value);
+  sprintf(time_str,  "TIME: %u ms", value);
 
   
   Paint_DrawString_EN(2,   2, score_str, &Font12,  GREEN, BLACK);
@@ -137,8 +137,7 @@ inline static void write_prompt(){     //BEING CHANGED
 
   //draw the bomb graphic on screen
   enclosure(action, 0);
-
-
+ 
   //writes in the action to be done and the rectangle encompassing the string
   
   //dotted lines from corners of graphic display to corners of prompt window
@@ -475,11 +474,9 @@ inline static void display_key()
             {
                 // printf("Calculator mode disengaged.\n");
                 Paint_DrawString_EN(5, 5, "Calculator mode disengaged.", key_text.font_size, key_text.color, key_text.background);
-
                 melody(&tone_gen, CONFIRM, 1);
             }
-            else
-            {
+            else{
                 // printf("Calculator mode engaged.\n");
                 Paint_DrawString_EN(5, 5, "Calculator mode engaged.", key_text.font_size, key_text.color, key_text.background);
                 melody(&tone_gen, REJECT, 1);
@@ -493,18 +490,18 @@ inline static void display_key()
 }
 
 inline static void random_key(){
-    if (!fired)
-    {
+    if (!fired){
         clearflags();
         Paint_SelectImage((UBYTE *)s_buffer);
         Paint_Clear(BLACK);
         LCD_2IN_Display((UBYTE *)s_buffer);
         fired = true;
     }
-
+    char random_prompt[20];
+    sprintf(random_prompt, "%u", (char)value);
     Paint_SelectImage((UBYTE *)s_buffer);
     Paint_ClearWindows(0, 0, 320, 18, BLACK);
-    Paint_DrawString_EN(5, 5, "Random key pressed.", &Font16, WHITE, BLACK);
+    Paint_DrawString_EN(68, 108, random_prompt, &Font24, WHITE, BLACK);
     LCD_2IN_Display((uint8_t *)s_buffer);
 }
 
