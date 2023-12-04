@@ -272,7 +272,7 @@ inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
   //need to partially update ONLY the area around the circle
   //take x_cen and y_cen, subtract both by 48*radfactor to get starting coords
   //add both by 48*radfactor to get end coords
-  int adjustedrad = (uint16_t)(48*radfactor) + 2;
+  //int adjustedrad = (uint16_t)(48*radfactor) + 2;
 
   // int x1 = (x_cen - adjustedrad > 0)? x_cen - adjustedrad : 0;
   // int x2 = (x_cen + adjustedrad < 319)? x_cen + adjustedrad : 319;

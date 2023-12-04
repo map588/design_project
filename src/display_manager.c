@@ -181,7 +181,6 @@ void core_one_interrupt_handler (void){
       case CORRECT:
       case INCORRECT:
       case RANDOM_KEY:
-      case RESTART:
       default:
       state = new_state;
       break; 

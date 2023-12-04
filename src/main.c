@@ -55,6 +55,12 @@ inline static void change_state(states new_state){
 }
 void action_isr(void){
   volatile uint32_t irq_action;
+  static uint32_t last_time;
+  
+  //80ms debounce
+  if(time_us_32 - last_time < 80000)
+      return;
+
 
   cancel_alarm(timer);
   // Inline assembly to read the time of R5 into irq_pin

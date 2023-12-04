@@ -124,7 +124,7 @@ inline static void populate_UI_elements(){
   Paint_DrawString_EN(260, 2, round_str, &Font12,    RED, BLACK);
 
   
-  LCD_2IN_DisplayWindows(0, 0, 30, 319, s_buffer);
+  LCD_2IN_DisplayWindows(  0, 0,  30, 319, s_buffer);
   LCD_2IN_DisplayWindows(224, 0, 239, 100, s_buffer);
 }
 
