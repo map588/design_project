@@ -37,7 +37,6 @@ static bool wire_pulled;
 static bool wire_position;
 static bool game_over;
 static bool key_press;
-static bool key_lock;
 
 static alarm_id_t timer;
 //All of these enums are defined in enum.h, in the include folder
@@ -149,7 +148,6 @@ int init(void)
 
   key_turned    = gpio_get(turn_pin);
   wire_pulled   = gpio_get(pull_pin);
-
   wire_position = gpio_get(wire0_pin);
 
   //timer interrupt for losing is highest priority
@@ -162,13 +160,14 @@ int init(void)
   gpio_set_irq_enabled_with_callback(turn_pin, GPIO_IRQ_EDGE_RISE, true, (void *)&action_isr);
   gpio_set_irq_enabled_with_callback(turn_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
 
-   if (wire_position){
+  if (wire_position){
      gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL, false, (void *)&action_isr);
-     gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, true, (void *)&action_isr);
-      }else{
-          gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, false, (void *)&action_isr);
-          gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL,  true, (void *)&action_isr);
+     gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL,  true, (void *)&action_isr);
       }
+  else{
+    gpio_set_irq_enabled_with_callback(wire0_pin, GPIO_IRQ_EDGE_FALL, false, (void *)&action_isr);
+    gpio_set_irq_enabled_with_callback(wire1_pin, GPIO_IRQ_EDGE_FALL,  true, (void *)&action_isr);
+  }
 }
 
 
@@ -184,16 +183,16 @@ int64_t game_timer_callback(alarm_id_t id, void * user_data){
 start:
   init();
 
-  actions action = NOP;
-  uint8_t selection = 0;
-  uint8_t time_rate = 0;
+  actions  action = NOP;
+  uint8_t  selection = 0;
+  uint8_t  time_rate = 0;
   uint16_t start_time = 6000;
   char select_key;
 
 
 select:
   score = 0;
-  callback = false;
+  callback  = false;
   game_over = false;
   key_press = false;
 
@@ -228,11 +227,11 @@ select:
     case 2: time_rate = 22; break;  //3000ms to  800ms / 100 steps is 22
   }
 
- 
+
   state = CONTINUE;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
    do{
-    if(key_press && !key_lock){
+    if(key_press){
       if(*g_key == '\n')
        key_press = false;
        select_key = *g_key;

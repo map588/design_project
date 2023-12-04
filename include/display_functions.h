@@ -168,7 +168,6 @@ inline static void correct_disp(){
   //TODO: I moved both switch statements into enclosure, and the boolean determines whether it should call the green or red setting
 
 
-
   //need to shift this string to the left side
   Paint_DrawString_EN(12, 77, "CORRECT", &Font20, GREEN, BLACK);
   LCD_2IN_Display((UBYTE *)s_buffer);
@@ -203,10 +202,10 @@ switch(index){
     //in each case, add an explosion_draw
     //need to figure out coordinates for each explosion, as well as radius factor
     //gonna just guess the coords and not change radius factor for now
-    explosion_draw(262, 57, 1);
     multicore_lockout_end_blocking();
     break;
   case 8:
+    explosion_draw(262, 57, 1);
     explosion_draw(134, 40, 1);
     break;
   case 7:
@@ -242,18 +241,18 @@ switch(index){
 //LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
-inline static void play_again(){
-if (!fired)
-{
-  clearflags();
-  restart_state = true;
-  Paint_SelectImage((UBYTE *)s_buffer);
-  Paint_DrawString_EN(110, 100, "AGAIN?", &Font20, GREEN, BLACK);
-  LCD_2IN_Display((UBYTE *)s_buffer);
-  fired = true;
-}
-  loading_bar();
-}
+// inline static void play_again(){
+// if (!fired)
+// {
+//   clearflags();
+//   restart_state = true;
+//   Paint_SelectImage((UBYTE *)s_buffer);
+//   Paint_DrawString_EN(110, 100, "AGAIN?", &Font20, GREEN, BLACK);
+//   LCD_2IN_Display((UBYTE *)s_buffer);
+//   fired = true;
+// }
+//   loading_bar();
+// }
 
 
 inline static void game_UI()
