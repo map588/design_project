@@ -298,10 +298,10 @@ select:
        select_key = *g_key;
     }
   } while (select_key != '\n');
-  select_key = ' ';
   state = CONTINUE;
   multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
   do{
+    select_key = ' ';
     if(key_press){
       if(*g_key == '\n')
        key_press = false;

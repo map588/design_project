@@ -173,13 +173,8 @@ inline static void correct_disp(){
 }
 
 inline static void incorrect_disp(){  //BEING CHANGED
-  if(!incorrect_state){
-    clearflags();
-    incorrect_state = true;
-    Paint_SelectImage((UBYTE *)s_buffer);
-    Paint_Clear(BLACK);
-    Paint_DrawString_EN (110, 100, "BOOM", &Font24, RED, BLACK);
-    LCD_2IN_Display((UBYTE *)s_buffer);
+  if(!incorrect_state || !fired){
+   
   }
 
 //add multiple explosion graphics in the form of concentric circles
@@ -201,14 +196,15 @@ switch(index){
     //in each case, add an explosion_draw
     //need to figure out coordinates for each explosion, as well as radius factor
     //gonna just guess the coords and not change radius factor for now
+     explosion_draw(262, 57, 1);
     multicore_lockout_end_blocking();
     break;
   case 8:
-    explosion_draw(262, 57, 1);
     explosion_draw(134, 40, 1);
     break;
   case 7:
     explosion_draw(132, 186, 1);
+    
     break;
   case 6:
     explosion_draw(265, 183, 1);
@@ -221,16 +217,23 @@ switch(index){
     break;
   case 3:
     explosion_draw(218, 169, 1);
+    explosion_draw(268, 108, 1);
     break;
   case 2:
     explosion_draw(205, 49, 1);
+    explosion_draw(77, 174, 1);
     break;
   case 1:
-    explosion_draw(77, 174, 1);
     multicore_lockout_start_blocking();
+    clearflags();
+    incorrect_state = true;
+    Paint_SelectImage((UBYTE *)s_buffer);
+    Paint_Clear(BLACK);
+    Paint_DrawString_EN (110, 100, "BOOM", &Font24, RED, BLACK);
+    LCD_2IN_Display((UBYTE *)s_buffer);
     break;
   case 0:
-    explosion_draw(268, 108, 1);
+    
     break;
   default:
   break;
@@ -269,6 +272,7 @@ inline static void game_UI()
     }
 
     drive_hex(9 - index);
+    draw_mini_hex(9 - index, true);
     //tone(&tone_gen, NOTE_C3, value / 50);
     loading_bar();
 }
@@ -285,16 +289,17 @@ inline static void display_key()
     //   printf("Buffer full, hit delete or numlock->insert to clear\n");
     //   return;
     // }
-    char character = (char)score_d;
+    character = (char)score_d;
     if (!enabled){
      if (character == 'e'){
             enabled = !enabled;
+            type_state = true;
             return;
-     }
-     else{
+     }else{
        return;
      }
     }
+
     long long op1;
     char *endptr = str_buffer;
     char operand;
@@ -460,7 +465,7 @@ inline static void display_key()
     // printf("%c%c%c%c", 0x1B, 0x5B, 0x32, 0x4A); //This clears the serial terminal
     // printf("%s    %u %u", str_buffer, str_idx,calc_idx);
     tone(&tone_gen, NOTE_A3, 50);
-
+    Paint_Clear(BLACK);
     if (str_idx >= 5)
     {
         if (str_buffer[str_idx - 5] == '.' && str_buffer[str_idx - 4] == '.' &&
@@ -484,7 +489,6 @@ inline static void display_key()
         }
     }
 
-    Paint_ClearWindows(0, 0, 320, 18, BLACK);
     Paint_DrawString_EN(5, 5, str_buffer, &Font16, WHITE, BLACK);
     LCD_2IN_Display((uint8_t *)s_buffer);
 }

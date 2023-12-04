@@ -34,13 +34,14 @@ static uint8_t score_d;
 static states state = LOADING;
 static uint8_t index;
 static struct tonegenerator_t tone_gen;
-
+static char character;
 bool select_state = 0;
 bool game_state = 0;
 bool load_state = 0;
 bool key_state = 0;
 bool restart_state = 0;
 bool incorrect_state = 0;
+bool type_state = 0;
 
 
 
@@ -52,6 +53,8 @@ inline static void clearflags(){
       load_state = false;
       key_state = false;
       restart_state = false;
+      incorrect_state = false;
+      type_state = false;
 }
 
 
@@ -139,43 +142,47 @@ inline static void wire_draw(uint8_t base_color){
   if(base_color == 1) //action is prompted
   {
   //draw a circle for the wire protruding from the top of the enclosure
-  Paint_DrawCircle(168, 38, 8, RED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  Paint_DrawCircle(168, 38, 8, RED, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
   //draw a rectangle to cover the bottom half of the circle
   Paint_DrawRectangle(151, 38, 187, 57, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw 2 circles for the terminals
   Paint_DrawCircle(160, 47, 6, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
   //draw a line from where the circle meets the top to the middle of the left terminal
-  Paint_DrawLine(160, 38, 160, 47, RED, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(160, 38, 160, 47, RED, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
   }
   else if(base_color == 2) //action input successfully by player
   {
-  Paint_DrawCircle(168, 38, 8, GREEN, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  Paint_DrawCircle(168, 38, 8, GREEN, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
   Paint_DrawRectangle(151, 38, 187, 57, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawLine(160, 38, 160, 47, GREEN, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(160, 38, 160, 47, GREEN, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
   }
   else //default colors
   {
-  Paint_DrawCircle(168, 38, 8, WHITE, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
+  Paint_DrawCircle(168, 38, 8, WHITE, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
   Paint_DrawRectangle(151, 38, 187, 57, MAGENTA, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, BLUE, DOT_FILL_AROUND, DRAW_FILL_FULL);
   Paint_DrawCircle(160, 47, 6, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawLine(160, 38, 160, 47, WHITE, DOT_FILL_AROUND, LINE_STYLE_SOLID);
+  Paint_DrawLine(160, 38, 160, 47, WHITE, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
   }
 
   //TODO: partial update for wire
   LCD_2IN_DisplayWindows(24, 151, 57, 187, s_buffer);
 }
 
-inline static void draw_mini_hex(){
+inline static void draw_mini_hex(uint8_t hex,bool enabled){
   char hex_str[2];
   Paint_SelectImage((UBYTE *)s_buffer);
   Paint_ClearWindows(151, 176, 163, 193, BLACK);
   //draw the number 8 in red on the index display
-  sprintf(hex_str, "%x", (9 - index));
+
+  sprintf(hex_str, "%x", hex);
+  if(enabled)
   Paint_DrawChar(152, 177, hex_str[0], &Font16, BLACK, RED);
+
+  LCD_2IN_DisplayWindows(176, 151, 193, 163, s_buffer);
 }
 
 inline static void enclosure(int8_t prompt, bool correct){
@@ -207,8 +214,7 @@ inline static void enclosure(int8_t prompt, bool correct){
   Paint_DrawLine(177, 151, 248, 151, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
   Paint_DrawLine(177, 168, 248, 168, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
   //draw the rectangle for the index display
-  draw_mini_hex();
-  
+  draw_mini_hex(index, false);
   //partially update the display for the enclosure
   //TODO: partial update
   LCD_2IN_DisplayWindows(35, 143, 202, 283, s_buffer);
@@ -271,14 +277,14 @@ inline static void explosion_draw(int x_cen, int y_cen, double radfactor){
   //need to partially update ONLY the area around the circle
   //take x_cen and y_cen, subtract both by 48*radfactor to get starting coords
   //add both by 48*radfactor to get end coords
-  //int adjustedrad = (uint16_t)(48*radfactor) + 2;
+  // int adjustedrad = (uint16_t)(48*radfactor) + 2;
 
   // int x1 = (x_cen - adjustedrad > 0)? x_cen - adjustedrad : 0;
   // int x2 = (x_cen + adjustedrad < 319)? x_cen + adjustedrad : 319;
   // int y1 = (y_cen - adjustedrad > 0)? y_cen - adjustedrad : 0;
   // int y2 = (y_cen + adjustedrad < 239)? y_cen + adjustedrad : 239;
 
-  //LCD_2IN_DisplayWindows(y1, x1, y2, x2, s_buffer); // experimenting with just updating the whole display
+ // LCD_2IN_DisplayWindows(y1, x1, y2, x2, s_buffer); // experimenting with just updating the whole display
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
@@ -293,7 +299,7 @@ inline static void selction (){
     
     Paint_SelectImage((UBYTE *)s_buffer);
 
-    if (!fired && !select_state){
+    if ((!fired && !select_state) || restart_state){
         clearflags();
         select_state = true;
         Paint_Clear(BLACK);
@@ -408,7 +414,7 @@ inline static void prompt_start(){
   Paint_Clear(BLACK);
   Paint_DrawString_EN(35, 112, "PRESS ENTER TO CONTINUE", &Font16, GREEN, BLACK);
   Paint_DrawRectangle(33, 110, 300, 130, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
-  if(key_state) Paint_Clear(BLACK);  
+  if(key_state && character == 'e') Paint_Clear(BLACK);  
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 
