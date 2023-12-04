@@ -169,18 +169,19 @@ void core_one_interrupt_handler (void){
       action--;
 
   //TODO I think this is a possible solution for integrating the keyboard
-  //Right now its only relevant for RANDOM_KEY, RESTART, and SELECT, as well as the easteregg if it actually works
+  //Right now its only relevant for RANDOM_KEY, RESTART, SELECT, and CONTINUE as well as the easteregg if it actually works
   if (KEYPRESS == new_state){
     switch(state){
-      case SELECT: break;
-      case CONTINUE: type_state = true; state = KEYPRESS; break;
+      case CONTINUE: type_state = true; state = new_state; break;
+      case SELECT:
       case COUNTDOWN:
       case GAME:
       case CORRECT:
       case INCORRECT:
       case RANDOM_KEY:
+      break;
       default:
-      state = new_state;
+      display_functions[new_state].func();
       break; 
     }
   }
