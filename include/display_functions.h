@@ -178,7 +178,7 @@ inline static void incorrect_disp(){  //BEING CHANGED
     clearflags();
     incorrect_state = true;
     Paint_SelectImage((UBYTE *)s_buffer);
-    Paint_ClearWindows(90, 80, 217, 140, BLACK);
+    Paint_Clear(BLACK);
     Paint_DrawString_EN (110, 100, "BOOM", &Font24, RED, BLACK);
     LCD_2IN_Display((UBYTE *)s_buffer);
   }
@@ -228,7 +228,6 @@ switch(index){
     break;
   case 1:
     explosion_draw(77, 174, 1);
-    busy_wait_ms(10);
     multicore_lockout_start_blocking();
     break;
   case 0:

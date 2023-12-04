@@ -3,7 +3,6 @@
 
 static alarm_pool_t *core1_pool;
 static repeating_timer_t idx_timer;
-static bool *key_lock;
 
 typedef void (*function_ptr)(void);
 typedef struct{
@@ -11,7 +10,7 @@ typedef struct{
   bool repeating;
 }function_holder;
 //{LOADING, SELECT, CONTINUE, COUNTDOWN, GAME, KEYPRESS, CORRECT, INCORRECT, RANDOM_KEY, RESTART} states;
-function_holder display_functions[10] = {
+function_holder display_functions[9] = {
     {loading_bar, 1},
     {selction, 0},
     {prompt_start, 0},
@@ -20,7 +19,6 @@ function_holder display_functions[10] = {
     {display_key, 0},
     {correct_disp, 0},
     {incorrect_disp, 1},
-    {play_again, 1},
     {random_key, 0},
 };
 
@@ -133,14 +131,11 @@ bool idx_timer_callback(repeating_timer_t *rt){
   
   //calls the function pointer in the struct
   display_functions[state].func();
-
-
   ++index;
 
   
 
   fired = true;
-
   if (index > 9 || !display_functions[state].repeating) {
     clear_hex();
     index = 0;
@@ -167,8 +162,8 @@ void core_one_interrupt_handler (void){
      data = multicore_fifo_pop_blocking ();
 
   value       = (data & 0xFFFF0000) >> 16;
-  score_d     = (data & 0x0000FF00) >> 8;
-  action      = (data & 0x000000F0) >> 4;
+  score_d     = (data & 0x0000FF00) >>  8;
+  action      = (data & 0x000000F0) >>  4;
   new_state   =  data & 0x0000000F;
   if(action == 0)
       action = NOP;
