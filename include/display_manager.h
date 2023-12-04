@@ -28,7 +28,6 @@
 
 static bool fired;
 static bool enabled;
-static bool *key_lock;
 static uint16_t value;
 static uint8_t action;
 static uint8_t score_d;
@@ -81,8 +80,8 @@ inline static void yank_draw(uint8_t base_color){
   else //default colors
   {
   Paint_DrawRectangle(108, 155, 145, 159, RED, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawRectangle(108, 160, 145, 164, BLUE, DOT_FILL_AROUND, DRAW_FILL_FULL);
-  Paint_DrawRectangle(108, 165, 145, 169, GREEN, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(108, 160, 145, 164, GRAY, DOT_FILL_AROUND, DRAW_FILL_FULL);
+  Paint_DrawRectangle(108, 165, 145, 169, WHITE, DOT_FILL_AROUND, DRAW_FILL_FULL);
   }
 
   //TODO: partial update for yank
@@ -405,12 +404,11 @@ inline static void selction (){
 
 inline static void prompt_start(){
   Paint_SelectImage((UBYTE *)s_buffer);
+  if(!key_state)
   Paint_Clear(BLACK);
   Paint_DrawString_EN(35, 112, "PRESS ENTER TO CONTINUE", &Font16, GREEN, BLACK);
   Paint_DrawRectangle(33, 110, 300, 130, GRED, DOT_FILL_AROUND, DRAW_FILL_EMPTY);
-  if(*key_lock){
-    Paint_Clear(BLACK);
-  }
+  if(key_state) Paint_Clear(BLACK);  
   LCD_2IN_Display((UBYTE *)s_buffer);
 }
 

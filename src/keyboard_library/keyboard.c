@@ -3,8 +3,8 @@
 #include "pico/printf.h"
 #include "keyboard.pio.h"
 
-#define DATA_PIN 20
-#define CLOCK_PIN 21
+#define DATA_PIN 21
+#define CLOCK_PIN 22
 
 char scan_codes[] = {
 	'7', '8', '9', 'i', '/', '4', '5', '6', '\b', '*', '1',  '2', '3',  '^', '-', '+',  '0', '.', '\n',

@@ -152,7 +152,6 @@ void core_one_interrupt_handler (void){
 
   if(state == NULL_STATE){
   while(!multicore_fifo_rvalid()){tight_loop_contents();}
-   key_lock =  (bool *)multicore_fifo_pop_blocking();
    state = LOADING;
    return;
   }
@@ -175,7 +174,7 @@ void core_one_interrupt_handler (void){
   if (KEYPRESS == new_state){
     switch(state){
       case SELECT: break;
-      case CONTINUE: *key_lock = true; break;
+      case CONTINUE: key_state = true; break;
       case COUNTDOWN:
       case GAME:
       case CORRECT:

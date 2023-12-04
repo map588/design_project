@@ -184,7 +184,6 @@ int64_t game_timer_callback(alarm_id_t id, void * user_data){
   return 0;
 }
 
-
  int main(){
 start:
   init();
@@ -288,9 +287,28 @@ select:
   if(score == 100)
     cancel_alarm(timer);
 
-  busy_wait_ms(1000);
+  busy_wait_ms(4000);
   irq_set_enabled(PIO0_IRQ_0, true);
-  busy_wait_ms(1000);
+  busy_wait_ms(500);
+
+  do{
+    if(key_press){
+      if(*g_key == '\n')
+       key_press = false;
+       select_key = *g_key;
+    }
+  } while (select_key != '\n');
+  select_key = ' ';
+  state = CONTINUE;
+  multicore_fifo_push_blocking(assemble_packet(state, NOP, 0, 0));
+  do{
+    if(key_press){
+      if(*g_key == '\n')
+       key_press = false;
+       select_key = *g_key;
+    }
+  } while (select_key != '\n');
+
   state = LOADING;
   goto select;
 

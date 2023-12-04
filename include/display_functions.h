@@ -173,7 +173,7 @@ inline static void correct_disp(){
 }
 
 inline static void incorrect_disp(){  //BEING CHANGED
-  if(!fired || !incorrect_state){
+  if(!incorrect_state){
     clearflags();
     incorrect_state = true;
     Paint_SelectImage((UBYTE *)s_buffer);
@@ -289,12 +289,12 @@ inline static void display_key()
     if (!enabled){
      if (character == 'e'){
             enabled = !enabled;
-            *key_lock = true;
             return;
-     }else
-       *key_lock = false;
+     }
+     else{
+       return;
+     }
     }
-
     long long op1;
     char *endptr = str_buffer;
     char operand;
@@ -333,7 +333,7 @@ inline static void display_key()
         break;
     case 'e':
         enabled = !enabled;
-        *key_lock = false;
+        key_state = !key_state;
         break;
     case '\n':
         if (!calculator_mode)
